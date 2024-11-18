@@ -13,8 +13,7 @@
       xmlns:model="clr-namespace:GsdmlLinker.Models" 
       d:DataContext="{d:DesignInstance Type=viewModel:DevicesViewModel}"
       mc:Ignorable="d" 
-            Dialog:DialogParticipation.Register="{Binding}"
-      >
+            Dialog:DialogParticipation.Register="{Binding}">
     <Page.Resources>
         <converters:StringEmptyToVisibilityConverter x:Key="StringEmptyToVisibilityConverter"/>
         <converters:StringEmptyToCollapsedConverter x:Key="StringEmptyToCollapsedConverter"/>

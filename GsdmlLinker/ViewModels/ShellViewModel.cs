@@ -54,6 +54,8 @@ public class ShellViewModel(INavigationService navigationService,
     public ObservableCollection<HamburgerMenuItem> MenuItems { get; } =
     [
         new HamburgerMenuGlyphItem() { Label = Resources.ShellDevicesPage, Glyph = "\uE7F7", TargetPageType = typeof(DevicesViewModel) },
+        //new HamburgerMenuIconItem() {Label = Resources.ShellDevicesPage, Icon = "/Assets/iolink.png" , TargetPageType = typeof(DevicesViewModel)},
+        new HamburgerMenuGlyphItem() { Label = Resources.ShellDevicesPage, Glyph = "\uE721", TargetPageType = typeof(IoddfinderViewModel) },
         //new HamburgerMenuGlyphItem() { Label = Resources.ShellProfinetDevicePage, Glyph = "\uE7F7", TargetPageType = typeof(ProfinetDeviceViewModel) },
         //new HamburgerMenuGlyphItem() { Label = Resources.ShellIOLinkDevicePage, Glyph = "\uED10", TargetPageType = typeof(IOLinkDeviceViewModel) },
     ];
@@ -165,7 +167,6 @@ public class ShellViewModel(INavigationService navigationService,
         if (Directory.Exists(Path.Combine(localAppData, directory, fileName)))
         {
             /// TODO: Message Dossier existant
-
             Directory.Delete(Path.Combine(localAppData, directory, fileName), true);
         }
 

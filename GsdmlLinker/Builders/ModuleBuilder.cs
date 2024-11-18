@@ -1,5 +1,7 @@
 ﻿using GsdmlLinker.Contracts.Builders;
 
+using Windows.Devices.Portable;
+
 namespace GsdmlLinker.Builders;
 
 public class ModuleBuilder(Core.PN.Contracts.Services.IDevicesService gsdDevicesService, Core.IOL.Contracts.Services.IDevicesService iolDevicesService,
@@ -13,7 +15,7 @@ public class ModuleBuilder(Core.PN.Contracts.Services.IDevicesService gsdDevices
     private Core.PN.Models.Device? MasterDevice { get; set; }
     private Core.IOL.Models.Device? Device { get; set; }
 
-    public void CreateModule(Models.DeviceItem masterDevice, Models.DeviceItem slaveDevice, IEnumerable<IGrouping< ushort, Core.Models.DeviceParameter>> parameters)
+    public void CreateModule(Models.DeviceItem masterDevice, Models.DeviceItem slaveDevice, IEnumerable<IGrouping<ushort, Core.Models.DeviceParameter>> parameters, string? moduleID = null)
     {
         MasterDevice = masterDevice.device as Core.PN.Models.Device;
         Device = slaveDevice.device as Core.IOL.Models.Device;
@@ -21,10 +23,15 @@ public class ModuleBuilder(Core.PN.Contracts.Services.IDevicesService gsdDevices
         string cateroryRef = string.Empty;
         if (MasterDevice is null || Device is null) return;
 
-        Builder = devicesFactory.CreateModule(MasterDevice, Device);
+        Builder = devicesFactory.CreateModule(MasterDevice);
         if (Builder is null) return;
 
         //MasterDevice.BeginEdit();
+
+        if(!string.IsNullOrEmpty(moduleID))
+        {
+
+        }
 
         if (MasterDevice.ExternalTextList is not null && MasterDevice.CategoryList is not null)
         {
@@ -34,7 +41,7 @@ public class ModuleBuilder(Core.PN.Contracts.Services.IDevicesService gsdDevices
         var categoryVendor = AddCategoryVendor(MasterDevice.ExternalTextList!, MasterDevice.CategoryList!, Device.VendorId, Device.VendorName);
         var indentNumber = MasterDevice.GetLastIndentNumber(MasterDevice.IdentNumberList);
 
-        Builder.CreateRecordParameters(Device.DataStorage, Device.SupportBlockParameter, indentNumber, parameters);
+        Builder.CreateRecordParameters(Device, Device.DataStorage, Device.SupportBlockParameter, indentNumber, parameters);
 
         if (Device.ProcessDatas is not null)
         {
@@ -77,8 +84,20 @@ public class ModuleBuilder(Core.PN.Contracts.Services.IDevicesService gsdDevices
         //    }
         //}
 
-        Builder.BuildModule(indentNumber, cateroryRef, categoryVendor, Device.Name ?? "");
+        Builder.BuildModule(Device, indentNumber, cateroryRef, categoryVendor, Device.Name ?? "");
         MasterDevice.IdentNumberList.Add(indentNumber);
+    }
+
+    public void DeletedModule(Models.DeviceItem masterDevice, string moduleId)
+    {
+        MasterDevice = masterDevice.device as Core.PN.Models.Device;
+
+        if (MasterDevice is null) return;
+        Builder = devicesFactory.CreateModule(MasterDevice);
+
+        if (Builder is null) return;
+        Builder.DeletModule(moduleId);
+
     }
 
     internal string AddCategoryRef(Dictionary<string, string> externalText, Dictionary<string, string> categories)

@@ -2,10 +2,12 @@
 
 namespace GsdmlLinker.Core.PN.Builders.Manufacturers;
 
-public class IfmModuleBuilderV2(Core.Models.Device masterDevice, Core.Models.Device? device) : IfmModuleBuilder(masterDevice, device)
+public class IfmModuleBuilderV2(Core.Models.Device masterDevice) : IfmModuleBuilder(masterDevice)
 {
-    public override void BuildModule(string indentNumber, string categoryRef, string categoryVendor, string deviceName)
+    public override void BuildModule(Core.Models.Device? device, string indentNumber, string categoryRef, string categoryVendor, string deviceName)
     {
+        if (device is null) return;
+
         var ioData = new GSDML.DeviceProfile.SubmoduleItemBaseTIOData
         {
             Input = new GSDML.DeviceProfile.IODataT
@@ -73,12 +75,12 @@ public class IfmModuleBuilderV2(Core.Models.Device masterDevice, Core.Models.Dev
         }
     }
 
-
-
-    public override void CreateRecordParameters(Core.Models.DeviceDataStorage dataStorage, bool supportBlockParameter, string indentNumber, IEnumerable<IGrouping<ushort, Core.Models.DeviceParameter>> parameters)
+    public override void CreateRecordParameters(Core.Models.Device? device, Core.Models.DeviceDataStorage dataStorage, bool supportBlockParameter, string indentNumber, IEnumerable<IGrouping<ushort, Core.Models.DeviceParameter>> parameters)
     {
         ushort transfertSequence = 3;
         uint index = 1024;
+
+        if (device is null) return;
 
         RecordDataList = [
             BuildPortParameters(dataStorage, ((Models.Device)masterDevice).SetModuleVendorId(Convert.ToUInt16(device.VendorId)),
@@ -102,7 +104,7 @@ public class IfmModuleBuilderV2(Core.Models.Device masterDevice, Core.Models.Dev
 
             foreach (var variable in parameters)
             {
-                var recordData = BuildRecordParameter($"IOLD_{indentNumber}_Par{variable.Key:D3}", index, transfertSequence, variable);
+                var recordData = BuildRecordParameter($"IOLD_{indentNumber}_Par{variable.Key:D3}", index, transfertSequence, variable, device.ExternalTextList);
 
                 if (recordData is not null)
                 {

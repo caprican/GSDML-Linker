@@ -7,6 +7,7 @@ using GsdmlLinker.Core.PN.Models;
 using GsdmlLinker.Core.PN.Models.Manufacturers;
 
 using GSDML = ISO15745.GSDML;
+using GsdmlLinker.Core.PN.Contracts.Builders;
 
 namespace GsdmlLinker.Core.PN.Factories;
 
@@ -33,29 +34,16 @@ public class DevicesFactory : IDevicesFactory
         };
     }
 
-    public Contracts.Builders.IModuleBuilder? CreateModule(Core.Models.Device masterDevice, Core.Models.Device device) =>
+    public Contracts.Builders.IModuleBuilder? CreateModule(Core.Models.Device masterDevice) =>
         masterDevice.VendorId switch
         {
-            BalluffDevice.ManufactuereId => new Builders.Manufacturers.BalluffModuleBuilder(masterDevice, device),
+            BalluffDevice.ManufactuereId => new Builders.Manufacturers.BalluffModuleBuilder(masterDevice),
             IfmDevice.ManufactuereId => masterDevice.DeviceId switch
             {
-                IfmDeviceV2.AL140x => new Builders.Manufacturers.IfmModuleBuilderV2(masterDevice, device),
-                _ => new Builders.Manufacturers.IfmModuleBuilder(masterDevice, device)
+                IfmDeviceV2.AL140x => new Builders.Manufacturers.IfmModuleBuilderV2(masterDevice),
+                _ => new Builders.Manufacturers.IfmModuleBuilder(masterDevice)
             },
-            MurrElectronicDevice.ManufactuereId => new Builders.Manufacturers.MurrElectronicModuleBuilder(masterDevice, device),
-            _ => null
-        };
-
-    public Contracts.Builders.IModuleBuilder? ReadModule(Core.Models.Device masterDevice) =>
-        masterDevice.VendorId switch
-        {
-            BalluffDevice.ManufactuereId => new Builders.Manufacturers.BalluffModuleBuilder(masterDevice, null),
-            IfmDevice.ManufactuereId => masterDevice.DeviceId switch
-            {
-                IfmDeviceV2.AL140x => new Builders.Manufacturers.IfmModuleBuilderV2(masterDevice, null),
-                _ => new Builders.Manufacturers.IfmModuleBuilder(masterDevice, null)
-            },
-            MurrElectronicDevice.ManufactuereId => new Builders.Manufacturers.MurrElectronicModuleBuilder(masterDevice, null),
+            MurrElectronicDevice.ManufactuereId => new Builders.Manufacturers.MurrElectronicModuleBuilder(masterDevice),
             _ => null
         };
 }

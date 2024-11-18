@@ -619,8 +619,7 @@ public class DevicesViewModel(ISettingsService settingsService,
         if (MasterDeviceSelected is not null && SlaveDeviceSelected is not null)
         {
             var moduleParameters = SlaveParameters.OrderBy(param => param.Index).OrderBy(param => param.Subindex).GroupBy(group => group.Index);
-            moduleBuilder.CreateModule(MasterDeviceSelected, SlaveDeviceSelected, moduleParameters.Where(w => w.First().IsSelected));
-
+            moduleBuilder.CreateModule(MasterDeviceSelected, SlaveDeviceSelected, moduleParameters.Where(w => w.First().IsSelected), MasterModuleSelected?.ProfinetDeviceId);
             //caretaker.Backup(MasterDeviceSelected.device);
         }
 
@@ -648,18 +647,19 @@ public class DevicesViewModel(ISettingsService settingsService,
         var diag = await DialogCoordinator.Instance.ShowMessageAsync(this, "Delet module", "Vraiment ?", MessageDialogStyle.AffirmativeAndNegative);
         if (diag == MessageDialogResult.Affirmative)
         {
-            SlaveDeviceSelected = null;
-
-            foreach (var masterModule in MasterModules)
+            if(MasterDeviceSelected is not null)
             {
-                if (masterModule.Submodules is not null)
-                {
-                    if (masterModule.Submodules.Remove(module)) break;
-                }
+                moduleBuilder.DeletedModule(MasterDeviceSelected, module.ProfinetDeviceId ?? string.Empty);
             }
+            
+
+
+            SlaveDeviceSelected = null;
+            MasterModuleSelected = null;
+            GetMasterDevices();
         }
 
-        CollectionViewSource.GetDefaultView(MasterModules).Refresh();
+        //CollectionViewSource.GetDefaultView(MasterModules).Refresh();
     }
 
     private void OnSaveMasterDevice()

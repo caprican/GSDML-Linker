@@ -1,4 +1,6 @@
 ﻿
+using System.IO.Compression;
+
 namespace GsdmlLinker.Core.IOL.Contracts.Services;
 
 public interface IDevicesService
@@ -9,6 +11,7 @@ public interface IDevicesService
     public void InitializeSettings();
 
     public void AddDevice(string path);
+    public void AddDevice(ZipArchive archive);
 
     public IEnumerable<Core.Models.DeviceParameter>? GetParameters(string vendorId, string deviceId);
 }

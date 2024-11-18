@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.IO.Compression;
+using System.Text.RegularExpressions;
 
 using GsdmlLinker.Core.IOL.Contracts.Services;
 using GsdmlLinker.Core.IOL.Models;
@@ -70,6 +71,44 @@ public class DevicesService(IOptions<Core.Models.AppConfig> appConfig) : IDevice
                     foreach (var graphic in device.GraphicsList)
                     {
                         File.Copy(Path.Combine(folderPath!, graphic.Value), Path.Combine(localFilePath, graphic.Value), true);
+                    }
+                }
+
+                devices.Add(device);
+
+                DeviceAdded?.Invoke(this, new Core.Models.DeviceEventArgs { Device = device });
+            }
+        }
+    }
+
+    public void AddDevice(ZipArchive archive)
+    {
+        foreach (var file in archive.Entries.Where(w => w.Name.EndsWith(".xml")))
+        {
+            var fileName = Path.GetFileNameWithoutExtension(file.Name);
+            if (Regexs.FileNameRegex().Match(fileName) is Match IODDmatch && IODDmatch.Success)
+            {
+                //<vendor>-<code_produit>-<date>-IODD<version>(-<langue>)?
+                var schematicVersion = IODDmatch.Groups[4].Value;
+                var name = IODDmatch.Groups[2].Value;
+                var manufacturerName = IODDmatch.Groups[1].Value;
+
+                var localFilePath = Path.Combine(localAppData, appConfig.Value.IODDFolder, manufacturerName, $"{name}-IODD{schematicVersion}");
+                if (!Directory.Exists(localFilePath))
+                {
+                    Directory.CreateDirectory(localFilePath);
+                }
+
+                file.ExtractToFile(Path.Combine(localFilePath, Path.GetFileName(file.Name)), true);
+
+                var device = new Device(Path.Combine(localFilePath, Path.GetFileName(file.Name)), IODDmatch);
+
+                if (device.GraphicsList is not null)
+                {
+                    foreach (var graphic in device.GraphicsList)
+                    {
+                        var zipGraphic = archive.Entries.SingleOrDefault(s => s.Name.EndsWith($"{graphic.Value}.bmp"));
+                        zipGraphic?.ExtractToFile(Path.Combine(localFilePath, graphic.Value), true);
                     }
                 }
 

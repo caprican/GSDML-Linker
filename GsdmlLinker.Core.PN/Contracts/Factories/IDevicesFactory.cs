@@ -8,7 +8,5 @@ public interface IDevicesFactory
 {
     public Device CreateDevice(string filePath, Match? match);
     
-    public Builders.IModuleBuilder? CreateModule(Core.Models.Device masterDevice, Core.Models.Device device);
-
-    public Builders.IModuleBuilder? ReadModule(Core.Models.Device masterDevice);
+    public Builders.IModuleBuilder? CreateModule(Core.Models.Device masterDevice);
 }

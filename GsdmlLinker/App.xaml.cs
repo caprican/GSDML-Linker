@@ -51,6 +51,7 @@ public partial class App : Application
 
         // Core Services
         services.AddSingleton<IFileService, FileService>();
+        services.AddTransient<IIoddfinderService, IoddfinderService>();
         
         // Profinet core services
         services.AddSingleton<Core.PN.Contracts.Services.IDevicesService, Core.PN.Services.DevicesService>();
@@ -84,6 +85,9 @@ public partial class App : Application
 
         services.AddTransient<DevicesViewModel>();
         services.AddTransient<DevicesPage>();
+
+        services.AddTransient<IoddfinderViewModel>();
+        services.AddTransient<IoddfinderPage>();
 
         services.AddTransient<SettingsViewModel>();
         services.AddTransient<SettingsPage>();

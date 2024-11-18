@@ -4,7 +4,7 @@ using GSDML = ISO15745.GSDML;
 
 namespace GsdmlLinker.Core.PN.Builders;
 
-public abstract class ModuleBuilder(Core.Models.Device masterDevice, Core.Models.Device? device) : IModuleBuilder, Core.Contracts.IMementoable
+public abstract class ModuleBuilder(Core.Models.Device masterDevice) : IModuleBuilder, Core.Contracts.IMementoable
 {
     internal List<GSDML.DeviceProfile.IODataTDataItem>? inputDatas;
     internal List<GSDML.DeviceProfile.IODataTDataItem>? outputDatas;
@@ -12,17 +12,19 @@ public abstract class ModuleBuilder(Core.Models.Device masterDevice, Core.Models
     internal List<GSDML.DeviceProfile.ParameterRecordDataT>? RecordDataList;
 
     internal Core.Models.Device masterDevice = masterDevice;
-    internal Core.Models.Device? device = device;
+    //internal Core.Models.Device? device = device;
 
-    public abstract void CreateRecordParameters(Core.Models.DeviceDataStorage dataStorage, bool supportBlockParameter, string indentNumber, IEnumerable<IGrouping<ushort, Core.Models.DeviceParameter>> parameters);
+    public abstract void CreateRecordParameters(Core.Models.Device? device, Core.Models.DeviceDataStorage dataStorage, bool supportBlockParameter, string indentNumber, IEnumerable<IGrouping<ushort, Core.Models.DeviceParameter>> parameters);
 
     public abstract void CreateDataProcess(string indentNumber, IEnumerable<IGrouping<string?, Core.Models.DeviceProcessData>> ProcessDatas);
 
-    public abstract List<Core.Models.DeviceParameter> ReadRecordParameter(/*GSDML.DeviceProfile.ParameterRecordDataT parameterRecordData*/ string deviceId);
+    public abstract List<Core.Models.DeviceParameter> ReadRecordParameter(string deviceId);
 
-    public abstract void BuildModule(string indentNumber, string categoryRef, string categoryVendor, string deviceName);
+    public abstract void BuildModule(Core.Models.Device device, string indentNumber, string categoryRef, string categoryVendor, string deviceName);
 
-    public abstract GSDML.DeviceProfile.ParameterRecordDataT? BuildRecordParameter(string textId, uint index, ushort transfertSequence, IGrouping<ushort, Core.Models.DeviceParameter>? variable);
+    public abstract GSDML.DeviceProfile.ParameterRecordDataT? BuildRecordParameter(string textId, uint index, ushort transfertSequence, IGrouping<ushort, Core.Models.DeviceParameter>? variable, Dictionary<string, string>? externalTextList);
+
+    public abstract void DeletModule(string moduleID);
 
     internal protected (uint, GSDML.DeviceProfile.RecordDataRefT) BoolToRecordDataRef(string textId, uint byteOffset, Core.Models.DeviceParameter parameter, Dictionary<string, string>? IOLExternalText)
     {
@@ -239,8 +241,6 @@ public abstract class ModuleBuilder(Core.Models.Device masterDevice, Core.Models
         return (byteCount, floatDataRef);
     }
 
-
-
     protected internal (uint, GSDML.DeviceProfile.RecordDataRefT) StringToRecordDataRef(string textId, uint byteOffset, Core.Models.DeviceParameter parameter, Dictionary<string, string>? IOLExternalText)
     {
         uint byteCount = parameter.FixedLength;
@@ -313,6 +313,6 @@ public abstract class ModuleBuilder(Core.Models.Device masterDevice, Core.Models
             GSDML.Primitives.RecordDataRefTypeEnumT.Integer64 => RecordDataRefToInteger(recordDataRef, index, subindex),
             GSDML.Primitives.RecordDataRefTypeEnumT.Unsigned64 => RecordDataRefToInteger(recordDataRef, index, subindex),
 
-            _ => new Core.Models.DeviceParameter()//throw new NotImplementedException()
+            _ => throw new NotImplementedException()
         };
 }

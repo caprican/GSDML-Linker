@@ -2,13 +2,15 @@
 
 namespace GsdmlLinker.Core.PN.Builders.Manufacturers;
 
-public class IfmModuleBuilder(Core.Models.Device masterDevice, Core.Models.Device? device) : ModuleBuilder(masterDevice, device)
+public class IfmModuleBuilder(Core.Models.Device masterDevice) : ModuleBuilder(masterDevice)
 {
     internal static string HexValue(uint value) => $"0x{$"{value:X4}"[..2]},0x{$"{value:X4}".Substring(2, 2)}";
     static int IntValue(string hexValue) => int.Parse(hexValue.Replace("0x", string.Empty), System.Globalization.NumberStyles.HexNumber);
 
-    public override void BuildModule(string indentNumber, string categoryRef, string categoryVendor,string deviceName)
+    public override void BuildModule(Core.Models.Device? device, string indentNumber, string categoryRef, string categoryVendor,string deviceName)
     {
+        if (device is null) return;
+
         var ioData = new GSDML.DeviceProfile.SubmoduleItemBaseTIOData
         {
             Input = new GSDML.DeviceProfile.IODataT
@@ -76,7 +78,8 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice, Core.Models.Devic
         }
     }
 
-    public override GSDML.DeviceProfile.ParameterRecordDataT? BuildRecordParameter(string textId, uint index, ushort transfertSequence, IGrouping<ushort, Core.Models.DeviceParameter>? variable)
+    public override GSDML.DeviceProfile.ParameterRecordDataT? BuildRecordParameter(string textId, uint index, ushort transfertSequence, 
+                                                                                    IGrouping<ushort, Core.Models.DeviceParameter>? variable, Dictionary<string, string>? externalTextList)
     {
         List<object> items = [];
         var recordConst = new GSDML.DeviceProfile.RecordDataConstT { Data = HexValue(variable!.Key) };
@@ -91,7 +94,7 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice, Core.Models.Devic
             case Core.Models.DeviceDatatypes.StringT:
             case Core.Models.DeviceDatatypes.OctetStringT :
 
-                (byteCount, var stringDataRef) = StringToRecordDataRef(textId, byteOffset, parameter, device.ExternalTextList);
+                (byteCount, var stringDataRef) = StringToRecordDataRef(textId, byteOffset, parameter, externalTextList);
                 items.Add(stringDataRef);
 
                 recordConst.Data += $"," + HexValue(byteCount) + string.Concat(Enumerable.Repeat(",0x00", (int)byteCount));
@@ -104,7 +107,7 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice, Core.Models.Devic
             case Core.Models.DeviceDatatypes.TimeSpanT :
                 break;
             case Core.Models.DeviceDatatypes.BooleanT :
-                (byteCount, var boolDataRef) = BoolToRecordDataRef(textId, byteOffset, parameter, device.ExternalTextList);
+                (byteCount, var boolDataRef) = BoolToRecordDataRef(textId, byteOffset, parameter, externalTextList);
 
                 items.Add(boolDataRef);
 
@@ -115,7 +118,7 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice, Core.Models.Devic
             case Core.Models.DeviceDatatypes.UIntegerT :
             case Core.Models.DeviceDatatypes.IntegerT :
 
-                (byteCount, var intDataRef) = IntegerToRecordDataRef(textId, byteOffset, parameter, device.ExternalTextList);
+                (byteCount, var intDataRef) = IntegerToRecordDataRef(textId, byteOffset, parameter, externalTextList);
                 items.Add(intDataRef);
 
                 recordConst.Data += $"," + HexValue(byteCount) + string.Concat(Enumerable.Repeat(",0x00", (int)byteCount));
@@ -124,7 +127,7 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice, Core.Models.Devic
 
                 break;
             case Core.Models.DeviceDatatypes.Float32T :
-                (byteCount, var floatDataRef) = FloatToRecordDataRef(textId, byteOffset, parameter, device.ExternalTextList);
+                (byteCount, var floatDataRef) = FloatToRecordDataRef(textId, byteOffset, parameter, externalTextList);
 
                 items.Add(floatDataRef);
 
@@ -160,7 +163,7 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice, Core.Models.Devic
                         {
                             case Core.Models.DeviceDatatypes.BooleanT :
 
-                                (recordByteCount, var boolRecord) = BoolToRecordDataRef($"{textId}-{record.Subindex:D2}", byteOffset, record, device.ExternalTextList);
+                                (recordByteCount, var boolRecord) = BoolToRecordDataRef($"{textId}-{record.Subindex:D2}", byteOffset, record, externalTextList);
 
                                 if (record.BitOffset is not null)
                                 {
@@ -177,7 +180,7 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice, Core.Models.Devic
                             case Core.Models.DeviceDatatypes.UIntegerT :
                             case Core.Models.DeviceDatatypes.IntegerT :
 
-                                (recordByteCount, var intRecord) = IntegerToRecordDataRef($"{textId}-{record.Subindex:D2}", byteOffset, record, device.ExternalTextList);
+                                (recordByteCount, var intRecord) = IntegerToRecordDataRef($"{textId}-{record.Subindex:D2}", byteOffset, record, externalTextList);
 
                                 if (record.BitOffset is not null)
                                 {
@@ -192,7 +195,7 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice, Core.Models.Devic
                                 }
                                 break;
                             case Core.Models.DeviceDatatypes.Float32T :
-                                (recordByteCount, var floatRecord) = FloatToRecordDataRef(textId, byteOffset, parameter, device.ExternalTextList);
+                                (recordByteCount, var floatRecord) = FloatToRecordDataRef(textId, byteOffset, parameter, externalTextList);
 
                                 if (record.BitOffset is not null)
                                 {
@@ -229,12 +232,9 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice, Core.Models.Devic
                             byteOffset += recordByteCount;
                             byteCount += recordByteCount;
                         }
-
-
                     }
                     recordConst.Data += $"," + HexValue(byteCount) + string.Concat(Enumerable.Repeat(",0x00", (int)byteCount));
                 }
-
                 break;
         }
         items.Insert(0, recordConst);
@@ -296,10 +296,13 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice, Core.Models.Devic
         inputDatas.Add(PQIBuid());
     }
     
-    public override void CreateRecordParameters(Core.Models.DeviceDataStorage dataStorage, bool supportBlockParameter, string indentNumber, IEnumerable<IGrouping<ushort, Core.Models.DeviceParameter>> parameters)
+    public override void CreateRecordParameters(Core.Models.Device? device, Core.Models.DeviceDataStorage dataStorage, bool supportBlockParameter, string indentNumber, 
+                                                IEnumerable<IGrouping<ushort, Core.Models.DeviceParameter>> parameters)
     {
         ushort transfertSequence = 3;
         uint index = 1024;
+
+        if (device is null) return;
 
         RecordDataList = [
             BuildPortParameters(dataStorage, ((Models.Device)masterDevice).SetModuleVendorId(Convert.ToUInt16(device.VendorId)), 
@@ -323,7 +326,7 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice, Core.Models.Devic
 
             foreach (var variable in parameters)
             {
-                var recordData = BuildRecordParameter($"IOLD_{indentNumber}_Par{variable.Key:D3}", index, transfertSequence, variable);
+                var recordData = BuildRecordParameter($"IOLD_{indentNumber}_Par{variable.Key:D3}", index, transfertSequence, variable, device.ExternalTextList);
 
                 if (recordData is not null)
                 {
@@ -381,7 +384,27 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice, Core.Models.Devic
         return parameters;
     }
 
+    public override void DeletModule(string moduleId)
+    {
+        ((Models.Device)masterDevice).SubmoduleList?.RemoveAll(a => a.ID == moduleId);
 
+        foreach(var dap in ((Models.Device)masterDevice).DeviceAccessPoints)
+        {
+            if(dap.Modules is not null)
+            {
+                foreach(var module in dap.Modules)
+                {
+                    if(module.Submodules is not null)
+                    {
+                        foreach (var submodule in module.Submodules.Where(w => w.ProfinetDeviceId == moduleId).ToArray())
+                        {
+                            module.Submodules.Remove(submodule);
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     internal static GSDML.DeviceProfile.ParameterRecordDataT BuildPortParameters(Core.Models.DeviceDataStorage dataStorage, string vendorId, string deviceId) =>
      new()

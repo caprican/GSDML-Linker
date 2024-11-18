@@ -142,57 +142,60 @@ public class XDocumentService(IOptions<Core.Models.AppConfig> appConfig) : IXDoc
 
         if (device.SubmoduleList is not null)
         {
-            if(device.SubmoduleList.Count > submoduleList.Elements().Count())
+            //if(device.SubmoduleList.Count > submoduleList.Elements().Count())
+            //{
+            //    submoduleList.Add(new XComment($"GSDML linker - Add {DateTime.Today.ToShortDateString()}"));
+
+            var submoduleId = submoduleList.Descendants(ns + "SubmoduleItem").Select(e => e.Attribute("ID")!.Value);
+
+            foreach (var submodule in device.SubmoduleList)
             {
-                submoduleList.Add(new XComment($"GSDML linker - Add {DateTime.Today.ToShortDateString()}"));
-                foreach (var submodule in device.SubmoduleList)
+                if (!submoduleList.Descendants(ns + "SubmoduleItem").Any(e => e.Attribute("ID")!.Value == submodule.ID))
                 {
-                    if (!submoduleList.Descendants(ns + "SubmoduleItem").Any(e => e.Attribute("ID")!.Value == submodule.ID))
+                    using var memoryStream = new MemoryStream();
+                    using TextWriter streamWriter = new StreamWriter(memoryStream);
+                    submoduleList.Add(new XComment($"{submodule.ModuleInfo?.OrderNumber?.Value} IO-Link device"));
+                    var subList = new List<GSDML.DeviceProfile.SubmoduleItemT> { submodule };
+
+                    var xmlSerializer = new XmlSerializer(typeof(GSDML.DeviceProfile.SubmoduleItemT[]), ns.NamespaceName);
+                    xmlSerializer.Serialize(streamWriter, subList.ToArray());
+
+                    var xelement = XElement.Parse(encoding.GetString(memoryStream.ToArray()));
+
+                    submoduleList.Add(xelement.Elements().First());
+
+                    foreach (var moduleItem in moduleList.Descendants(ns + "ModuleItem"))
                     {
-                        using var memoryStream = new MemoryStream();
-                        using TextWriter streamWriter = new StreamWriter(memoryStream);
-                        submoduleList.Add(new XComment($"{submodule.ModuleInfo?.OrderNumber?.Value} IO-Link device"));
-                        var subList = new List<GSDML.DeviceProfile.SubmoduleItemT> { submodule };
-
-                        var xmlSerializer = new XmlSerializer(typeof(GSDML.DeviceProfile.SubmoduleItemT[]), ns.NamespaceName);
-                        xmlSerializer.Serialize(streamWriter, subList.ToArray());
-
-                        var xelement = XElement.Parse(encoding.GetString(memoryStream.ToArray()));
-
-                        submoduleList.Add(xelement.Elements().First());
-
-                        foreach (var moduleItem in moduleList.Descendants(ns + "ModuleItem"))
+                        var module = device.ModuleList?.Find(f => f.ID == moduleItem.Attribute("ID")!.Value);
+                        var allowedInSubslots = module?.PhysicalSubslots;
+                        if(allowedInSubslots?.Contains("..") == true)
                         {
-                            var module = device.ModuleList?.Find(f => f.ID == moduleItem.Attribute("ID")!.Value);
-                            var allowedInSubslots = module?.PhysicalSubslots;
-                            if(allowedInSubslots?.Contains("..") == true)
-                            {
-                                var split = allowedInSubslots.Split("..");
-                                var min = int.Parse(split[0]);
-                                var max = int.Parse(split[1]);
-                                var fixedInSubslots = int.Parse(module?.UseableSubmodules?.Max(m => m.FixedInSubslots) ?? "0");
+                            var split = allowedInSubslots.Split("..");
+                            var min = int.Parse(split[0]);
+                            var max = int.Parse(split[1]);
+                            var fixedInSubslots = int.Parse(module?.UseableSubmodules?.Max(m => m.FixedInSubslots) ?? "0");
 
-                                min = (fixedInSubslots > 0 ? fixedInSubslots + 1 : min);
+                            min = (fixedInSubslots > 0 ? fixedInSubslots + 1 : min);
 
-                                if (min == max)
-                                    allowedInSubslots = $"{min}";
-                                else
-                                    allowedInSubslots = $"{min}..{max}";
-                            }
-
-                            var useableSubmodules = moduleItem.Descendants(ns + "UseableSubmodules").FirstOrDefault();
-                            useableSubmodules!.Add(new XComment($"GSDML linker - Add {DateTime.Today.ToShortDateString()}"));
-                            useableSubmodules!.Add(new XElement(ns + "SubmoduleItemRef", new XAttribute("SubmoduleItemTarget", submodule.ID!),
-                                                                                         new XAttribute("AllowedInSubslots", allowedInSubslots!)));
+                            if (min == max)
+                                allowedInSubslots = $"{min}";
+                            else
+                                allowedInSubslots = $"{min}..{max}";
                         }
+
+                        var useableSubmodules = moduleItem.Descendants(ns + "UseableSubmodules").FirstOrDefault();
+                        useableSubmodules!.Add(new XComment($"GSDML linker - Add {DateTime.Today.ToShortDateString()}"));
+                        useableSubmodules!.Add(new XElement(ns + "SubmoduleItemRef", new XAttribute("SubmoduleItemTarget", submodule.ID!),
+                                                                                        new XAttribute("AllowedInSubslots", allowedInSubslots!)));
                     }
                 }
             }
-            else if (device.SubmoduleList.Count < submoduleList.Elements().Count())
-            {
-                submoduleList.Add(new XComment($"GSDML linker - removed {DateTime.Today.ToShortDateString()}"));
+            //}
+            //else if (device.SubmoduleList.Count < submoduleList.Elements().Count())
+            //{
+            //    submoduleList.Add(new XComment($"GSDML linker - removed {DateTime.Today.ToShortDateString()}"));
 
-            }
+            //}
         }
 
         if (device.ValueList?.Count > 0)

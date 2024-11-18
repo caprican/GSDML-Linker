@@ -2,9 +2,9 @@
 
 namespace GsdmlLinker.Core.PN.Builders.Manufacturers;
 
-public class BalluffModuleBuilder(Core.Models.Device masterDevice, Core.Models.Device? device) : ModuleBuilder(masterDevice, device)
+public class BalluffModuleBuilder(Core.Models.Device masterDevice) : ModuleBuilder(masterDevice)
 {
-    public override void BuildModule(string indentNumber, string categoryRef, string categoryVendor, string deviceName)
+    public override void BuildModule(Core.Models.Device device, string indentNumber, string categoryRef, string categoryVendor, string deviceName)
     {
         var ioData = new GSDML.DeviceProfile.SubmoduleItemBaseTIOData
         {
@@ -49,7 +49,7 @@ public class BalluffModuleBuilder(Core.Models.Device masterDevice, Core.Models.D
 
         foreach (var dap in ((Models.Device)masterDevice).DeviceAccessPoints)
         {
-            if (dap.Modules is not null)
+            if (dap?.Modules is not null)
             {
                 dap.Modules.Add(new Core.Models.Module
                 {
@@ -70,12 +70,14 @@ public class BalluffModuleBuilder(Core.Models.Device masterDevice, Core.Models.D
         }
     }
 
-    public override GSDML.DeviceProfile.ParameterRecordDataT? BuildRecordParameter(string textId, uint index, ushort transfertSequence, IGrouping<ushort, Core.Models.DeviceParameter>? variable)
+    public override GSDML.DeviceProfile.ParameterRecordDataT? BuildRecordParameter(string textId, uint index, ushort transfertSequence, 
+                                                                                    IGrouping<ushort, Core.Models.DeviceParameter>? variable, Dictionary<string, string>? externalTextList)
     {
         List<object> items = [];
         uint paramaterLengt = 4;
         uint byteCount = 0, byteOffset = 4;
 
+        if (variable is null) return null;
         var parameter = variable.First();
         var records = variable.Skip(1);
 
@@ -84,7 +86,7 @@ public class BalluffModuleBuilder(Core.Models.Device masterDevice, Core.Models.D
             case Core.Models.DeviceDatatypes.StringT:
             case Core.Models.DeviceDatatypes.OctetStringT:
 
-                (byteCount, var stringDataRef) = StringToRecordDataRef(textId, byteOffset, parameter, device.ExternalTextList);
+                (byteCount, var stringDataRef) = StringToRecordDataRef(textId, byteOffset, parameter, externalTextList);
                 items.Add(stringDataRef);
 
                 paramaterLengt += byteCount;
@@ -95,7 +97,7 @@ public class BalluffModuleBuilder(Core.Models.Device masterDevice, Core.Models.D
             case Core.Models.DeviceDatatypes.TimeSpanT:
                 break;
             case Core.Models.DeviceDatatypes.BooleanT:
-                (byteCount, var boolDataRef) = BoolToRecordDataRef(textId, byteOffset, parameter, device.ExternalTextList);
+                (byteCount, var boolDataRef) = BoolToRecordDataRef(textId, byteOffset, parameter, externalTextList);
 
                 items.Add(boolDataRef);
 
@@ -105,7 +107,7 @@ public class BalluffModuleBuilder(Core.Models.Device masterDevice, Core.Models.D
             case Core.Models.DeviceDatatypes.UIntegerT:
             case Core.Models.DeviceDatatypes.IntegerT:
 
-                (byteCount, var intDataRef) = IntegerToRecordDataRef(textId, byteOffset, parameter, device.ExternalTextList);
+                (byteCount, var intDataRef) = IntegerToRecordDataRef(textId, byteOffset, parameter, externalTextList);
                 items.Add(intDataRef);
 
                 paramaterLengt += byteCount;
@@ -113,7 +115,7 @@ public class BalluffModuleBuilder(Core.Models.Device masterDevice, Core.Models.D
 
                 break;
             case Core.Models.DeviceDatatypes.Float32T:
-                (byteCount, var floatDataRef) = FloatToRecordDataRef(textId, byteOffset, parameter, device.ExternalTextList);
+                (byteCount, var floatDataRef) = FloatToRecordDataRef(textId, byteOffset, parameter, externalTextList);
 
                 items.Add(floatDataRef);
 
@@ -148,7 +150,7 @@ public class BalluffModuleBuilder(Core.Models.Device masterDevice, Core.Models.D
                         {
                             case Core.Models.DeviceDatatypes.BooleanT:
 
-                                (recordByteCount, var boolRecord) = BoolToRecordDataRef($"{textId}-{record.Subindex:D2}", byteOffset, record, device.ExternalTextList);
+                                (recordByteCount, var boolRecord) = BoolToRecordDataRef($"{textId}-{record.Subindex:D2}", byteOffset, record, externalTextList);
 
                                 if (record.BitOffset is not null)
                                 {
@@ -165,7 +167,7 @@ public class BalluffModuleBuilder(Core.Models.Device masterDevice, Core.Models.D
                             case Core.Models.DeviceDatatypes.UIntegerT:
                             case Core.Models.DeviceDatatypes.IntegerT:
 
-                                (recordByteCount, var intRecord) = IntegerToRecordDataRef($"{textId}-{record.Subindex:D2}", byteOffset, record, device.ExternalTextList);
+                                (recordByteCount, var intRecord) = IntegerToRecordDataRef($"{textId}-{record.Subindex:D2}", byteOffset, record, externalTextList);
 
                                 if (record.BitOffset is not null)
                                 {
@@ -180,7 +182,7 @@ public class BalluffModuleBuilder(Core.Models.Device masterDevice, Core.Models.D
                                 }
                                 break;
                             case Core.Models.DeviceDatatypes.Float32T:
-                                (recordByteCount, var floatRecord) = FloatToRecordDataRef(textId, byteOffset, parameter, device.ExternalTextList);
+                                (recordByteCount, var floatRecord) = FloatToRecordDataRef(textId, byteOffset, parameter, externalTextList);
 
                                 if (record.BitOffset is not null)
                                 {
@@ -280,10 +282,13 @@ public class BalluffModuleBuilder(Core.Models.Device masterDevice, Core.Models.D
         }
     }
 
-    public override void CreateRecordParameters(Core.Models.DeviceDataStorage dataStorage, bool supportBlockParameter, string indentNumber, IEnumerable<IGrouping<ushort, Core.Models.DeviceParameter>> parameters)
+    public override void CreateRecordParameters(Core.Models.Device? device, Core.Models.DeviceDataStorage dataStorage, bool supportBlockParameter, string indentNumber, 
+                                                IEnumerable<IGrouping<ushort, Core.Models.DeviceParameter>> parameters)
     {
         ushort transfertSequence = 5;
         uint index = 16;
+
+        if (device is not null) return;
 
         RecordDataList = [
             BuildPortParameter1(),
@@ -308,7 +313,7 @@ public class BalluffModuleBuilder(Core.Models.Device masterDevice, Core.Models.D
 
             foreach (var variable in parameters)
             {
-                var recordData = BuildRecordParameter($"TOK_{indentNumber}_Par{variable.Key:D3}", index, transfertSequence, variable);
+                var recordData = BuildRecordParameter($"TOK_{indentNumber}_Par{variable.Key:D3}", index, transfertSequence, variable, device.ExternalTextList);
 
                 if (recordData is not null)
                 {
@@ -366,6 +371,11 @@ public class BalluffModuleBuilder(Core.Models.Device masterDevice, Core.Models.D
 
         }
         return parameters;
+    }
+
+    public override void DeletModule(string moduleId)
+    {
+
     }
 
     internal static GSDML.DeviceProfile.ParameterRecordDataT BuildPortParameter1() =>

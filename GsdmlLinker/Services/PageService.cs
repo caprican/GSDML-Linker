@@ -17,8 +17,11 @@ public class PageService : IPageService
     {
         this.serviceProvider = serviceProvider;
         Configure<DevicesViewModel, DevicesPage>();
+        Configure<IoddfinderViewModel, IoddfinderPage>();
+
         //Configure<ProfinetDeviceViewModel, ProfinetDevicePage>();
         //Configure<IOLinkDeviceViewModel, IOLinkDevicePage>();
+        
         Configure<SettingsViewModel, SettingsPage>();
     }
 

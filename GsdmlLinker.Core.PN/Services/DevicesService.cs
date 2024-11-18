@@ -1,13 +1,8 @@
-﻿using System.Buffers.Text;
-using System.Globalization;
-using System.Text.RegularExpressions;
-using System.Text.Unicode;
+﻿using System.Text.RegularExpressions;
 
 using GsdmlLinker.Core.PN.Contracts.Factories;
 using GsdmlLinker.Core.PN.Contracts.Services;
 using GsdmlLinker.Core.PN.Models;
-
-using ISO15745.GSDML.DeviceProfile;
 
 using Microsoft.Extensions.Options;
 
@@ -104,7 +99,7 @@ public class DevicesService(IOptions<Core.Models.AppConfig> appConfig, IDevicesF
 
         if (device is not null)
         {
-            var factory = devicesFactory.ReadModule(device);
+            var factory = devicesFactory.CreateModule(device);
             if (factory is null) return parameters;
 
             parameters.AddRange(factory.ReadRecordParameter(profinetDeviceId));
