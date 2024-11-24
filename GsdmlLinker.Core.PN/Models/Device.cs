@@ -16,8 +16,8 @@ public abstract record Device : Core.Models.Device
     public abstract string SetModuleDeviceId(uint Id);
 
     public List<string> IdentNumberList { get; set; } = [];
-    public List<GSDML.DeviceProfile.ModuleItemT>? ModuleList { get; set; }
-    public List<GSDML.DeviceProfile.SubmoduleItemT>? SubmoduleList { get; set; }
+    public List<ModuleItem>? ModuleList { get; set; }
+    public List<SubmoduleItem>? SubmoduleList { get; set; }
 
     public Dictionary<string, string>? CategoryList { get; init; }
     public Dictionary<string, List<GSDML.DeviceProfile.Assign>>? ValueList { get; init; }
@@ -110,7 +110,7 @@ public abstract record Device : Core.Models.Device
             SubmoduleList = [];
             foreach (var submodule in device.ProfileBody.ApplicationProcess.SubmoduleList)
             {
-                if(submodule is GSDML.DeviceProfile.SubmoduleItemT mod) SubmoduleList.Add(mod);
+                if(submodule is GSDML.DeviceProfile.SubmoduleItemT item) SubmoduleList.Add(new SubmoduleItem(item));
             }
         }
 
@@ -119,7 +119,7 @@ public abstract record Device : Core.Models.Device
             ModuleList = [];
             foreach (var module in device.ProfileBody.ApplicationProcess.ModuleList)
             {
-                ModuleList.Add(module);
+                ModuleList.Add(new ModuleItem(module));
             }
         }
 
@@ -173,7 +173,6 @@ public abstract record Device : Core.Models.Device
                             if(module?.UseableSubmodules is not null)
                             {
                                 //UseableSubmodules = [.. module.UseableSubmodules];
-
                                 foreach (var useableSubmodule in module.UseableSubmodules)
                                 {
                                     var submodule = SubmoduleList?.Find(f => f.ID == useableSubmodule.SubmoduleItemTarget);
@@ -183,45 +182,24 @@ public abstract record Device : Core.Models.Device
                                     var vendorRecord = (GSDML.DeviceProfile.RecordDataRefT?)ProfileParameter?.Items?.FirstOrDefault(param => param is GSDML.DeviceProfile.RecordDataRefT recordData && recordData.ByteOffset == VendorIdSubIndex);
                                     var deviceRecord = (GSDML.DeviceProfile.RecordDataRefT?)ProfileParameter?.Items?.FirstOrDefault(param => param is GSDML.DeviceProfile.RecordDataRefT recordData && recordData.ByteOffset == DeviceIdSubIndex);
 
-                                    submodules.Add(new Core.Models.Module
-                                    {
-                                        Name = (!string.IsNullOrEmpty(submodule.ModuleInfo?.Name?.TextId) ? ExternalTextList?[submodule.ModuleInfo.Name.TextId] : string.Empty) ?? string.Empty,
-                                        Description = !string.IsNullOrEmpty(submodule.ModuleInfo?.InfoText?.TextId) ? ExternalTextList?[submodule.ModuleInfo.InfoText.TextId] : string.Empty,
-                                        VendorName = submodule.ModuleInfo?.VendorName?.Value ?? string.Empty,
-                                        OrderNumber = submodule.ModuleInfo?.OrderNumber?.Value ?? string.Empty,
-                                        HardwareRelease = submodule.ModuleInfo?.HardwareRelease?.Value ?? string.Empty,
-                                        SoftwareRelease = submodule.ModuleInfo?.SoftwareRelease?.Value ?? string.Empty,
-                                        CategoryRef = GetCategoryText(submodule.ModuleInfo?.CategoryRef),
-                                        SubCategoryRef = GetCategoryText(submodule.ModuleInfo?.SubCategory1Ref),
-
-                                        VendorId = GetModuleVendorId(submodule.RecordDataList?.ParameterRecordDataItem),//Convert.ToUInt16(vendorRecord?.DefaultValue),
-                                        DeviceId = GetModuleDeviceId(submodule.RecordDataList?.ParameterRecordDataItem),//Convert.ToUInt32(deviceRecord?.DefaultValue),
-                                        ProfinetDeviceId = submodule.ID
-                                    });
+                                    submodule.Name = (!string.IsNullOrEmpty(submodule.ModuleInfo?.Name?.TextId) ? ExternalTextList?[submodule.ModuleInfo.Name.TextId] : string.Empty) ?? string.Empty;
+                                    submodule.Description = !string.IsNullOrEmpty(submodule.ModuleInfo?.InfoText?.TextId) ? ExternalTextList?[submodule.ModuleInfo.InfoText.TextId] : string.Empty;
+                                    submodule.CategoryRef = GetCategoryText(submodule.ModuleInfo?.CategoryRef);
+                                    submodule.SubCategoryRef = GetCategoryText(submodule.ModuleInfo?.SubCategory1Ref);
+                                    submodule.VendorId = GetModuleVendorId(submodule.RecordDataList?.ParameterRecordDataItem);
+                                    submodule.DeviceId = GetModuleDeviceId(submodule.RecordDataList?.ParameterRecordDataItem);
+                                    submodules.Add(submodule);
                                 }
                             }
 
-                            //var ProfileParameter = module.RecordDataList?.ParameterRecordDataItem?.FirstOrDefault(param => param.Index == ProfileParameterIndex);
-                            //var vendorRecord = (GSDML.DeviceProfile.RecordDataRefT?)ProfileParameter?.Items?.FirstOrDefault(param => param is GSDML.DeviceProfile.RecordDataRefT recordData && recordData.ByteOffset == VendorIdSubIndex);
-                            //var deviceRecord = (GSDML.DeviceProfile.RecordDataRefT?)ProfileParameter?.Items?.FirstOrDefault(param => param is GSDML.DeviceProfile.RecordDataRefT recordData && recordData.ByteOffset == DeviceIdSubIndex);
-
-                            modules.Add(new Core.Models.Module
-                            {
-                                Name = (!string.IsNullOrEmpty(module!.ModuleInfo?.Name?.TextId) ? ExternalTextList?[module.ModuleInfo.Name.TextId] : string.Empty) ?? string.Empty,
-                                Description = !string.IsNullOrEmpty(module.ModuleInfo?.InfoText?.TextId) ? ExternalTextList?[module.ModuleInfo.InfoText.TextId] : string.Empty,
-                                VendorName = module.ModuleInfo?.VendorName?.Value ?? string.Empty,
-                                OrderNumber = module.ModuleInfo?.OrderNumber?.Value ?? string.Empty,
-                                HardwareRelease = module.ModuleInfo?.HardwareRelease?.Value ?? string.Empty,
-                                SoftwareRelease = module.ModuleInfo?.SoftwareRelease?.Value ?? string.Empty,
-                                CategoryRef = GetCategoryText(module.ModuleInfo?.CategoryRef),
-                                SubCategoryRef = GetCategoryText(module.ModuleInfo?.SubCategory1Ref),
-
-                                VendorId = GetModuleVendorId(module.VirtualSubmoduleList?.First().RecordDataList?.ParameterRecordDataItem),//VendorId = Convert.ToUInt16(vendorRecord?.DefaultValue),
-                                DeviceId = GetModuleDeviceId(module.VirtualSubmoduleList?.First().RecordDataList?.ParameterRecordDataItem),//DeviceId = Convert.ToUInt32(deviceRecord?.DefaultValue),
-                                ProfinetDeviceId = module.ID,
-
-                                Submodules = submodules,
-                            });
+                            module!.Name = (!string.IsNullOrEmpty(module!.ModuleInfo?.Name?.TextId) ? ExternalTextList?[module.ModuleInfo.Name.TextId] : string.Empty) ?? string.Empty;
+                            module.Description = !string.IsNullOrEmpty(module.ModuleInfo?.InfoText?.TextId) ? ExternalTextList?[module.ModuleInfo.InfoText.TextId] : string.Empty;
+                            module.CategoryRef = GetCategoryText(module.ModuleInfo?.CategoryRef);
+                            module.SubCategoryRef = GetCategoryText(module.ModuleInfo?.SubCategory1Ref);
+                            module.VendorId = GetModuleVendorId(module.VirtualSubmoduleList?.First().RecordDataList?.ParameterRecordDataItem);
+                            module.DeviceId = GetModuleDeviceId(module.VirtualSubmoduleList?.First().RecordDataList?.ParameterRecordDataItem);
+                            module.Submodules = submodules;
+                            modules.Add(module);
                         }
                     }
 

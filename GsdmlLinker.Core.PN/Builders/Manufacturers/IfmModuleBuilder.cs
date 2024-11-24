@@ -28,7 +28,7 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice) : ModuleBuilder(m
             };
         }
 
-        var submodule = new GSDML.DeviceProfile.SubmoduleItemT
+        var submodule = new Models.SubmoduleItem(new GSDML.DeviceProfile.SubmoduleItemT
         {
             ID = $"IDS {deviceName} {indentNumber}",
             SubmoduleIdentNumber = indentNumber,
@@ -41,6 +41,9 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice) : ModuleBuilder(m
                 ParameterRecordDataItem = [.. RecordDataList]
             },
             //Graphics = graphics is not null ? [.. graphics] : null
+        })
+        {
+            State = Core.Models.ItemState.Created
         };
 
         //((Models.Device)masterDevice).UseableSubmodules?.Add(new GSDML.DeviceProfile.UseableSubmodulesTSubmoduleItemRef

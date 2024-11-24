@@ -9,7 +9,6 @@ using CommunityToolkit.Mvvm.Input;
 using GsdmlLinker.Contracts.Services;
 using GsdmlLinker.Contracts.ViewModels;
 using GsdmlLinker.Core.Contracts.Services;
-using GsdmlLinker.Services;
 
 using MahApps.Metro.Controls.Dialogs;
 
@@ -41,9 +40,10 @@ public class DevicesViewModel(ISettingsService settingsService,
     private ICommand? cancelMasterDeviceCommand;
     private ICommand? viewSubParametersCommand;
 
+    private ObservableCollection<Core.Models.ModuleTreeItem>? masterModules;
     private Models.DeviceItem? masterDeviceSelected;
     private Models.DeviceItem? slaveDeviceSelected;
-    private Core.Models.Module? masterModuleSelected;
+    private Core.Models.ModuleTreeItem? masterModuleSelected;
     private Visibility slaveListVisibility = Visibility.Collapsed;
     private double? firstColumnSize = null;
     private double? thirdColumnSize = 0;
@@ -57,7 +57,12 @@ public class DevicesViewModel(ISettingsService settingsService,
 
     public ObservableCollection<Models.VendorItem> MasterVendors { get; set; } = [];
     public ObservableCollection<Models.VendorItem> SlaveVendors { get; set; } = [];
-    public ObservableCollection<Core.Models.Module> MasterModules { get; set; } = [];
+    public ObservableCollection<Core.Models.ModuleTreeItem>? MasterModules 
+    {
+        get => masterModules;
+        set => SetProperty(ref masterModules, value);
+    }
+
     public ObservableCollection<Core.Models.DeviceParameter> SlaveParameters { get; set; } = [];
 
     public Models.DeviceItem? MasterDeviceSelected
@@ -107,7 +112,7 @@ public class DevicesViewModel(ISettingsService settingsService,
         }
     }
 
-    public Core.Models.Module? MasterModuleSelected
+    public Core.Models.ModuleTreeItem? MasterModuleSelected
     {
         get => masterModuleSelected;
         set
@@ -189,7 +194,7 @@ public class DevicesViewModel(ISettingsService settingsService,
     public ICommand AddSlaveDeviceCommand => addSlaveDeviceCommand ??= new RelayCommand(OnAddSlaveDevice);
     public ICommand CloseSlaveDeviceCommand => closeSlaveDeviceCommand ??= new RelayCommand(OnCloseSlaveDevice);
     public ICommand SaveSlaveDeviceCommand => saveSlaveDeviceCommand ??= new RelayCommand(OnSaveSlaveDevice);
-    public ICommand DeletSlaveDeviceCommand => deleteSlaveDeviceCommand ??= new AsyncRelayCommand<Core.Models.Module>(OnDeletSlaveDevice);
+    public ICommand DeletSlaveDeviceCommand => deleteSlaveDeviceCommand ??= new AsyncRelayCommand<Core.Models.ModuleTreeItem>(OnDeletSlaveDevice);
     public ICommand RenameDeviceCommand => renameDeviceCommand ??= new AsyncRelayCommand(OnRenameDevice);
     public ICommand SaveMasterDeviceCommand => saveMasterDeviceCommand ??= new RelayCommand(OnSaveMasterDevice);
     public ICommand CancelMasterDeviceCommand => cancelMasterDeviceCommand ??= new RelayCommand(OnCancelMasterDevice);
@@ -213,13 +218,13 @@ public class DevicesViewModel(ISettingsService settingsService,
 
     private void PnDevicesService_DeviceAdded(object? sender, Core.Models.DeviceEventArgs e)
     {
-        DialogCoordinator.Instance.ShowMessageAsync(this, "GSDML added", $"New GSDML added ", MessageDialogStyle.Affirmative);
+        DialogCoordinator.Instance.ShowMessageAsync(this, "GSDML added", $"New GSDML added {e.Device?.Name}", MessageDialogStyle.Affirmative);
         GetMasterDevices();
     }
 
     private void IolDevicesService_DeviceAdded(object? sender, Core.Models.DeviceEventArgs e)
     {
-        DialogCoordinator.Instance.ShowMessageAsync(this, "IODD added", $"New IODD added ", MessageDialogStyle.Affirmative);
+        DialogCoordinator.Instance.ShowMessageAsync(this, "IODD added", $"New IODD added {e.Device?.Name}", MessageDialogStyle.Affirmative);
         GetSlaveDevices();
     }
 
@@ -362,7 +367,7 @@ public class DevicesViewModel(ISettingsService settingsService,
 
     private void GetMasterModule()
     {
-        MasterModules.Clear();
+        MasterModules = [];
         if(MasterDeviceSelected is not null)
         {
             var modules = pnDevicesService.GetModules(MasterDeviceSelected.VendorId, MasterDeviceSelected.DeviceId, MasterDeviceSelected.DeviceAccessId, MasterDeviceSelected.Version);
@@ -370,36 +375,91 @@ public class DevicesViewModel(ISettingsService settingsService,
             {
                 foreach (var module in modules)
                 {
-                    module.SubmodulesCaterogies ??= [];
-                    if(module.Submodules is not null && module.Submodules.Count > 0)
+                    var moduleTree = new Core.Models.ModuleTreeItem(module);
+
+                    if(module.Submodules is null)
+                    {
+                        if (string.IsNullOrEmpty(module.CategoryRef))
+                        {
+                            MasterModules.Add(moduleTree);
+                        }
+                        else
+                        {
+                            if (string.IsNullOrEmpty(module.SubCategoryRef))
+                            {
+                                if (!MasterModules.Any(a => a.Name == module.CategoryRef))
+                                {
+                                    MasterModules.Add(new Core.Models.ModuleTreeItem(module.CategoryRef)
+                                    {
+                                        SubmodulesCaterogies = [new Core.Models.ModuleTreeItem(module)]
+                                    });
+                                }
+                                else
+                                {
+                                    MasterModules.First(f => f.Name == module.CategoryRef).SubmodulesCaterogies ??= [];
+                                    MasterModules.First(f => f.Name == module.CategoryRef).SubmodulesCaterogies?.Add(new Core.Models.ModuleTreeItem(module));
+                                }
+                            }
+                            else
+                            {
+                                if (!MasterModules.Any(a => a.Name == module.CategoryRef))
+                                {
+                                    MasterModules.Add(new Core.Models.ModuleTreeItem(module.CategoryRef)
+                                    {
+                                        SubmodulesCaterogies = [new Core.Models.ModuleTreeItem(module.SubCategoryRef)
+                                        {
+                                            SubmodulesCaterogies = [new Core.Models.ModuleTreeItem(module)]
+                                        }]
+                                    });
+                                }
+                                else
+                                {
+                                    MasterModules.First(f => f.Name == module.CategoryRef).SubmodulesCaterogies ??= [];
+                                    if (!MasterModules.First(f => f.Name == module.CategoryRef).SubmodulesCaterogies!.Any(a => a.Name == module.SubCategoryRef))
+                                    {
+                                        MasterModules.First(f => f.Name == module.CategoryRef).SubmodulesCaterogies!.Add(new Core.Models.ModuleTreeItem(module.SubCategoryRef)
+                                        {
+                                            SubmodulesCaterogies = [new Core.Models.ModuleTreeItem(module)]
+                                        });
+                                    }
+                                    else
+                                    {
+                                        MasterModules.First(f => f.Name == module.CategoryRef).SubmodulesCaterogies!.First(f => f.Name == module.SubCategoryRef).SubmodulesCaterogies ??= [];
+                                        MasterModules.First(f => f.Name == module.CategoryRef).SubmodulesCaterogies!.First(f => f.Name == module.SubCategoryRef).SubmodulesCaterogies!.Add(new Core.Models.ModuleTreeItem(module));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    else
                     {
                         foreach (var submodule in module.Submodules)
                         {
-                            if(!module.SubmodulesCaterogies.Any(a => a.Name == submodule.CategoryRef))
+                            if (moduleTree.SubmodulesCaterogies?.Any(a => a.Name == submodule.CategoryRef) != true)
                             {
                                 if (string.IsNullOrEmpty(submodule.CategoryRef))
                                 {
-                                    module.SubmodulesCaterogies.Add(submodule);
+                                    moduleTree.SubmodulesCaterogies ??= [];
+                                    moduleTree.SubmodulesCaterogies.Add(new Core.Models.ModuleTreeItem(submodule));
                                 }
                                 else
                                 {
                                     if (string.IsNullOrEmpty(submodule.SubCategoryRef))
                                     {
-                                        module.SubmodulesCaterogies.Add(new Core.Models.Module
+                                        moduleTree.SubmodulesCaterogies ??= [];
+                                        moduleTree.SubmodulesCaterogies.Add(new Core.Models.ModuleTreeItem(submodule.CategoryRef)
                                         {
-                                            Name = submodule.CategoryRef,
-                                            SubmodulesCaterogies = [submodule]
+                                            SubmodulesCaterogies = [new Core.Models.ModuleTreeItem(submodule)]
                                         });
                                     }
                                     else
                                     {
-                                        module.SubmodulesCaterogies.Add(new Core.Models.Module
+                                        moduleTree.SubmodulesCaterogies ??= [];
+                                        moduleTree.SubmodulesCaterogies.Add(new Core.Models.ModuleTreeItem(submodule.CategoryRef)
                                         {
-                                            Name = submodule.CategoryRef,
-                                            SubmodulesCaterogies = [new Core.Models.Module
+                                            SubmodulesCaterogies = [new Core.Models.ModuleTreeItem(submodule.SubCategoryRef)
                                             {
-                                                Name = submodule.SubCategoryRef,
-                                                SubmodulesCaterogies = [submodule]
+                                                SubmodulesCaterogies = [new Core.Models.ModuleTreeItem(submodule)]
                                             }]
                                         });
                                     }
@@ -407,105 +467,46 @@ public class DevicesViewModel(ISettingsService settingsService,
                             }
                             else
                             {
-                                var mod = module.SubmodulesCaterogies.First(f => f.Name == submodule.CategoryRef);
-                                mod.SubmodulesCaterogies ??= [];
+                                var moduleTreeItem = moduleTree.SubmodulesCaterogies.First(f => f.Name == submodule.CategoryRef);
+                                moduleTreeItem.SubmodulesCaterogies ??= [];
                                 if (string.IsNullOrEmpty(submodule.SubCategoryRef))
                                 {
-                                    mod.SubmodulesCaterogies?.Add(submodule);
+                                    moduleTreeItem.SubmodulesCaterogies?.Add(new Core.Models.ModuleTreeItem(submodule));
                                 }
                                 else
                                 {
-                                    if (!mod.SubmodulesCaterogies.Any(a => a.Name == submodule.SubCategoryRef))
+                                    if (!moduleTreeItem.SubmodulesCaterogies.Any(a => a.Name == submodule.SubCategoryRef))
                                     {
-                                        mod.SubmodulesCaterogies.Add(new Core.Models.Module
+                                        moduleTreeItem.SubmodulesCaterogies.Add(new Core.Models.ModuleTreeItem(submodule.SubCategoryRef)
                                         {
-                                            Name = submodule.SubCategoryRef,
-                                            SubmodulesCaterogies = [submodule]
+                                            SubmodulesCaterogies = [new Core.Models.ModuleTreeItem(submodule)]
                                         });
                                     }
                                     else
                                     {
                                         if (string.IsNullOrEmpty(submodule.SubCategoryRef))
                                         {
-                                            mod.SubmodulesCaterogies.Add(new Core.Models.Module
+                                            moduleTreeItem.SubmodulesCaterogies.Add(new Core.Models.ModuleTreeItem(submodule.SubCategoryRef)
                                             {
-                                                Name = submodule.SubCategoryRef,
-                                                SubmodulesCaterogies = [submodule]
+                                                SubmodulesCaterogies = [new Core.Models.ModuleTreeItem(submodule)]
                                             });
                                         }
                                         else
                                         {
-                                            mod.SubmodulesCaterogies.First(f => f.Name == submodule.SubCategoryRef).SubmodulesCaterogies ??= [];
-                                            mod.SubmodulesCaterogies.First(f => f.Name == submodule.SubCategoryRef).SubmodulesCaterogies?.Add(submodule);
+                                            moduleTreeItem.SubmodulesCaterogies.First(f => f.Name == submodule.SubCategoryRef).SubmodulesCaterogies ??= [];
+                                            moduleTreeItem.SubmodulesCaterogies.First(f => f.Name == submodule.SubCategoryRef).SubmodulesCaterogies?.Add(new Core.Models.ModuleTreeItem(submodule));
                                         }
                                     }
                                 }
                             }
                         }
-                        MasterModules.Add(module);
+                        MasterModules.Add(moduleTree);
                     }
-                    else
-                    {
-                        if(string.IsNullOrEmpty(module.CategoryRef))
-                        {
-                            MasterModules.Add(module);
-                        }
-                        else
-                        {
-                            if(string.IsNullOrEmpty(module.SubCategoryRef))
-                            {
-                                if(!MasterModules.Any(a => a.Name == module.CategoryRef))
-                                {
-                                    MasterModules.Add(new Core.Models.Module
-                                    {
-                                        Name = module.CategoryRef,
-                                        SubmodulesCaterogies = [module]
-                                    });
-                                }
-                                else
-                                {
-                                    MasterModules.First(f => f.Name == module.CategoryRef).SubmodulesCaterogies ??= [];
-                                    MasterModules.First(f => f.Name == module.CategoryRef).SubmodulesCaterogies?.Add(module);
-                                }
-                            }
-                            else
-                            {
-                                if(!MasterModules.Any(a => a.Name == module.CategoryRef))
-                                {
-                                    MasterModules.Add(new Core.Models.Module
-                                    {
-                                        Name =module.CategoryRef,
-                                        SubmodulesCaterogies = [new Core.Models.Module
-                                        {
-                                            Name = module.SubCategoryRef,
-                                            SubmodulesCaterogies = [module]
-                                        }]
-                                    });
-                                }
-                                else
-                                {
-                                    MasterModules.First(f => f.Name == module.CategoryRef).SubmodulesCaterogies ??= [];
-                                    if(!MasterModules.First(f => f.Name == module.CategoryRef).SubmodulesCaterogies!.Any(a => a.Name == module.SubCategoryRef))
-                                    {
-                                        MasterModules.First(f => f.Name == module.CategoryRef).SubmodulesCaterogies!.Add(new Core.Models.Module
-                                        {
-                                            Name = module.SubCategoryRef,
-                                            SubmodulesCaterogies = [module]
-                                        });
-                                    }
-                                    else
-                                    {
-                                        MasterModules.First(f => f.Name == module.CategoryRef).SubmodulesCaterogies!.First(f => f.Name == module.SubCategoryRef).SubmodulesCaterogies ??= [];
-                                        MasterModules.First(f => f.Name == module.CategoryRef).SubmodulesCaterogies!.First(f => f.Name == module.SubCategoryRef).SubmodulesCaterogies!.Add(module);
-                                    }
-                                }
-                            }
-                        }
-                    }
-
                 }
             }
         }
+
+        CollectionViewSource.GetDefaultView(MasterModules).Refresh();
     }
 
     private void GetSlaveParameters()
@@ -626,40 +627,56 @@ public class DevicesViewModel(ISettingsService settingsService,
         SlaveDeviceSelected = null;
         GetSlaveDevices();
         int masterIndex = -1;
-        if (MasterModuleSelected is not null)
+        if (MasterModules is not null && MasterModuleSelected is not null)
         {
             masterIndex = MasterModules.IndexOf(MasterModuleSelected);
         }
 
         GetMasterModule();
 
-        if (masterIndex >= 0)
+        if (MasterModules is not null && masterIndex >= 0)
         {
             MasterModuleSelected = MasterModules[masterIndex];
         }
-        CanSaveMasterDevice = MasterDeviceSelected?.device?.Editing == true;
+        CanSaveMasterDevice = /*MasterDeviceSelected?.device?.Editing ==*/ true;
     }
 
-    private async Task OnDeletSlaveDevice(Core.Models.Module? module)
+    private async Task OnDeletSlaveDevice(Core.Models.ModuleTreeItem? module)
     {
         if (module is null) return;
 
-        var diag = await DialogCoordinator.Instance.ShowMessageAsync(this, "Delet module", "Vraiment ?", MessageDialogStyle.AffirmativeAndNegative);
-        if (diag == MessageDialogResult.Affirmative)
+        switch(module.State)
         {
-            if(MasterDeviceSelected is not null)
-            {
-                moduleBuilder.DeletedModule(MasterDeviceSelected, module.ProfinetDeviceId ?? string.Empty);
-            }
-            
+            case Core.Models.ItemState.None:
+            case Core.Models.ItemState.Original:
+                module.State = Core.Models.ItemState.Deleted;
+                break;
+            case Core.Models.ItemState.Created:
+                var diag = await DialogCoordinator.Instance.ShowMessageAsync(this, "Delet module", "Vraiment ?", MessageDialogStyle.AffirmativeAndNegative);
+                if (diag == MessageDialogResult.Affirmative)
+                {
+                    if (MasterDeviceSelected is not null)
+                    {
+                        moduleBuilder.DeletedModule(MasterDeviceSelected, module.ProfinetDeviceId ?? string.Empty);
+                    }
 
+                    CanSaveMasterDevice = true;
 
-            SlaveDeviceSelected = null;
-            MasterModuleSelected = null;
-            GetMasterDevices();
+                    SlaveDeviceSelected = null;
+                    MasterModuleSelected = null;
+                    //GetMasterModule();
+                }
+                break;
+            case Core.Models.ItemState.Editing:
+            case Core.Models.ItemState.Modified:
+                break;
+            case Core.Models.ItemState.Deleted:
+                module.State = module.OriginalState;
+                break;
         }
 
-        //CollectionViewSource.GetDefaultView(MasterModules).Refresh();
+
+        
     }
 
     private void OnSaveMasterDevice()

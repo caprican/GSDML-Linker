@@ -7,6 +7,7 @@ using Microsoft.Extensions.Options;
 using System.Xml.Serialization;
 
 using GSDML = ISO15745.GSDML;
+using System.Xml;
 
 namespace GsdmlLinker.Core.PN.Services;
 
@@ -86,116 +87,142 @@ public class XDocumentService(IOptions<Core.Models.AppConfig> appConfig) : IXDoc
 
         if (device.ModuleList is not null)
         {
-            if(device.ModuleList.Count > moduleList.Elements().Count())
+
+            moduleList.Add(new XComment($"GSDML linker - Add {DateTime.Today.ToShortDateString()}"));
+            foreach (var module in device.ModuleList)
             {
-                moduleList.Add(new XComment($"GSDML linker - Add {DateTime.Today.ToShortDateString()}"));
-                foreach (var module in device.ModuleList)
-                {
-                    if(!moduleList.Descendants(ns + "ModuleItem").Any(e => e.Attribute("ID")!.Value == module.ID))
-                    {
-                        using var memoryStream = new MemoryStream();
-                        using TextWriter streamWriter = new StreamWriter(memoryStream);
-                        moduleList.Add(new XComment($"{module.ModuleInfo?.OrderNumber?.Value} IO-Link device"));
-                        var subList = new List<GSDML.DeviceProfile.ModuleItemT> { module };
-
-                        var xmlSerializer = new XmlSerializer(typeof(GSDML.DeviceProfile.ModuleItemT[]), ns.NamespaceName);
-                        xmlSerializer.Serialize(streamWriter, subList.ToArray());
-
-                        var xelement = XElement.Parse(encoding.GetString(memoryStream.ToArray()));
-
-                        moduleList.Add(xelement.Elements().First());
-
-                        foreach (var deviceAccessPointItem in deviceAccessPointList.Descendants(ns + "UseableModules"))
-                        {
-                            var deviceAccessPoint = device.DeviceAccessPoints.First(f => f.Id == deviceAccessPointItem.Attribute("ID")!.Value);
-                            var allowedInSlots = deviceAccessPoint.PhysicalSlots;
-
-                            if (allowedInSlots?.Contains("..") == true)
-                            {
-                                var split = allowedInSlots.Split("..");
-                                var min = int.Parse(split[0]);
-                                var max = int.Parse(split[1]);
-                                var fixedInSlots = int.Parse(deviceAccessPoint.FixedInSlots ?? "0");
-
-                                min = (fixedInSlots > 0 ? fixedInSlots + 1 : min);
-
-                                if (min == max)
-                                    allowedInSlots = $"{min}";
-                                else
-                                    allowedInSlots = $"{min}..{max}";
-                            }
-
-                            var useableMmodules = deviceAccessPointItem.Descendants(ns + "UseableModules").FirstOrDefault();
-                            useableMmodules!.Add(new XComment($"GSDML linker - Add {DateTime.Today.ToShortDateString()}"));
-                            useableMmodules!.Add(new XElement(ns + "ModuleItemRef", new XAttribute("ModuleItemTarget", module.ID!),
-                                                                                         new XAttribute("AllowedInSlots", allowedInSlots!)));
-                        }
-                    }
-                }
-            }
-            else if(device.ModuleList.Count < moduleList.Elements().Count())
-            {
-                moduleList.Add(new XComment($"GSDML linker - removed {DateTime.Today.ToShortDateString()}"));
-
-            }
-        }
-
-        if (device.SubmoduleList is not null)
-        {
-            //if(device.SubmoduleList.Count > submoduleList.Elements().Count())
-            //{
-            //    submoduleList.Add(new XComment($"GSDML linker - Add {DateTime.Today.ToShortDateString()}"));
-
-            var submoduleId = submoduleList.Descendants(ns + "SubmoduleItem").Select(e => e.Attribute("ID")!.Value);
-
-            foreach (var submodule in device.SubmoduleList)
-            {
-                if (!submoduleList.Descendants(ns + "SubmoduleItem").Any(e => e.Attribute("ID")!.Value == submodule.ID))
+                if(!moduleList.Descendants(ns + "ModuleItem").Any(e => e.Attribute("ID")!.Value == module.ID))
                 {
                     using var memoryStream = new MemoryStream();
                     using TextWriter streamWriter = new StreamWriter(memoryStream);
-                    submoduleList.Add(new XComment($"{submodule.ModuleInfo?.OrderNumber?.Value} IO-Link device"));
-                    var subList = new List<GSDML.DeviceProfile.SubmoduleItemT> { submodule };
+                    moduleList.Add(new XComment($"{module.ModuleInfo?.OrderNumber?.Value} IO-Link device"));
+                    var subList = new List<GSDML.DeviceProfile.ModuleItemT> { module.Item };
 
-                    var xmlSerializer = new XmlSerializer(typeof(GSDML.DeviceProfile.SubmoduleItemT[]), ns.NamespaceName);
+                    var xmlSerializer = new XmlSerializer(typeof(GSDML.DeviceProfile.ModuleItemT[]), ns.NamespaceName);
                     xmlSerializer.Serialize(streamWriter, subList.ToArray());
 
                     var xelement = XElement.Parse(encoding.GetString(memoryStream.ToArray()));
 
-                    submoduleList.Add(xelement.Elements().First());
+                    moduleList.Add(xelement.Elements().First());
 
-                    foreach (var moduleItem in moduleList.Descendants(ns + "ModuleItem"))
+                    foreach (var deviceAccessPointItem in deviceAccessPointList.Descendants(ns + "UseableModules"))
                     {
-                        var module = device.ModuleList?.Find(f => f.ID == moduleItem.Attribute("ID")!.Value);
-                        var allowedInSubslots = module?.PhysicalSubslots;
-                        if(allowedInSubslots?.Contains("..") == true)
+                        var deviceAccessPoint = device.DeviceAccessPoints.First(f => f.Id == deviceAccessPointItem.Attribute("ID")!.Value);
+                        var allowedInSlots = deviceAccessPoint.PhysicalSlots;
+
+                        if (allowedInSlots?.Contains("..") == true)
                         {
-                            var split = allowedInSubslots.Split("..");
+                            var split = allowedInSlots.Split("..");
                             var min = int.Parse(split[0]);
                             var max = int.Parse(split[1]);
-                            var fixedInSubslots = int.Parse(module?.UseableSubmodules?.Max(m => m.FixedInSubslots) ?? "0");
+                            var fixedInSlots = int.Parse(deviceAccessPoint.FixedInSlots ?? "0");
 
-                            min = (fixedInSubslots > 0 ? fixedInSubslots + 1 : min);
+                            min = (fixedInSlots > 0 ? fixedInSlots + 1 : min);
 
                             if (min == max)
-                                allowedInSubslots = $"{min}";
+                                allowedInSlots = $"{min}";
                             else
-                                allowedInSubslots = $"{min}..{max}";
+                                allowedInSlots = $"{min}..{max}";
                         }
 
-                        var useableSubmodules = moduleItem.Descendants(ns + "UseableSubmodules").FirstOrDefault();
-                        useableSubmodules!.Add(new XComment($"GSDML linker - Add {DateTime.Today.ToShortDateString()}"));
-                        useableSubmodules!.Add(new XElement(ns + "SubmoduleItemRef", new XAttribute("SubmoduleItemTarget", submodule.ID!),
-                                                                                        new XAttribute("AllowedInSubslots", allowedInSubslots!)));
+                        var useableMmodules = deviceAccessPointItem.Descendants(ns + "UseableModules").FirstOrDefault();
+                        useableMmodules!.Add(new XComment($"GSDML linker - Add {DateTime.Today.ToShortDateString()}"));
+                        useableMmodules!.Add(new XElement(ns + "ModuleItemRef", new XAttribute("ModuleItemTarget", module.ID!),
+                                                                                        new XAttribute("AllowedInSlots", allowedInSlots!)));
                     }
                 }
             }
-            //}
-            //else if (device.SubmoduleList.Count < submoduleList.Elements().Count())
-            //{
-            //    submoduleList.Add(new XComment($"GSDML linker - removed {DateTime.Today.ToShortDateString()}"));
 
-            //}
+        }
+
+        if (device.SubmoduleList is not null)
+        {
+            // Remove submodule
+            foreach (var submoduleId in submoduleList.Descendants(ns + "SubmoduleItem").Select(e => e.Attribute("ID")!.Value).ToArray())
+            {
+                if(!device.SubmoduleList.Select(s => s.ID).Contains(submoduleId))
+                {
+                    foreach(var xElement in submoduleList.Descendants(ns + "SubmoduleItem").Where(e => e.Attribute("ID")!.Value == submoduleId).ToList())
+                    {
+                        xElement.Remove();
+                    }
+                    foreach (var moduleItem in moduleList.Descendants(ns + "ModuleItem"))
+                    {
+                        foreach(var submoduleItemRef in moduleItem.Descendants(ns + "SubmoduleItemRef").Where(e => e.Attribute("SubmoduleItemTarget")!.Value == submoduleId).ToList())
+                        {
+                            submoduleItemRef.Remove();
+                        }
+                    }
+                }
+            }
+
+            // Add or update msubmodule
+            foreach (var submodule in device.SubmoduleList)
+            {
+                switch(submodule.State)
+                {
+                    case Core.Models.ItemState.Created:
+                        using (var memoryStream = new MemoryStream())
+                        {
+                            using TextWriter streamWriter = new StreamWriter(memoryStream);
+                            submoduleList.Add(new XComment($"{submodule.ModuleInfo?.OrderNumber?.Value} IO-Link device"));
+                            var subList = new List<GSDML.DeviceProfile.SubmoduleItemT> { submodule.Item };
+
+                            var xmlSerializer = new XmlSerializer(typeof(GSDML.DeviceProfile.SubmoduleItemT[]), ns.NamespaceName);
+                            xmlSerializer.Serialize(streamWriter, subList.ToArray());
+
+                            var xelement = XElement.Parse(encoding.GetString(memoryStream.ToArray()));
+
+                            submoduleList.Add(xelement.Elements().First());
+
+                            foreach (var moduleItem in moduleList.Descendants(ns + "ModuleItem"))
+                            {
+                                var module = device.ModuleList?.Find(f => f.ID == moduleItem.Attribute("ID")!.Value);
+                                var allowedInSubslots = module?.PhysicalSubslots;
+                                if (allowedInSubslots?.Contains("..") == true)
+                                {
+                                    var split = allowedInSubslots.Split("..");
+                                    var min = int.Parse(split[0]);
+                                    var max = int.Parse(split[1]);
+                                    var fixedInSubslots = int.Parse(module?.UseableSubmodules?.Max(m => m.FixedInSubslots) ?? "0");
+
+                                    min = (fixedInSubslots > 0 ? fixedInSubslots + 1 : min);
+
+                                    if (min == max)
+                                        allowedInSubslots = $"{min}";
+                                    else
+                                        allowedInSubslots = $"{min}..{max}";
+                                }
+
+                                var useableSubmodules = moduleItem.Descendants(ns + "UseableSubmodules").FirstOrDefault();
+                                useableSubmodules!.Add(new XComment($"GSDML linker - Add {DateTime.Today.ToShortDateString()}"));
+                                useableSubmodules!.Add(new XElement(ns + "SubmoduleItemRef", new XAttribute("SubmoduleItemTarget", submodule.ID!),
+                                                                                                new XAttribute("AllowedInSubslots", allowedInSubslots!)));
+                            }
+                        }
+                        break;
+                    case Core.Models.ItemState.Modified:
+                        break;
+                    case Core.Models.ItemState.Deleted:
+                        foreach (var submoduleItem in submoduleList.Descendants(ns + "SubmoduleItem").Where(e => e.Attribute("ID")!.Value == submodule.ID).ToList())
+                            submoduleItem.Remove();
+                        foreach (var moduleItem in moduleList.Descendants(ns + "ModuleItem"))
+                        {
+                            foreach (var submoduleItemRef in moduleItem.Descendants(ns + "SubmoduleItemRef").Where(e => e.Attribute("SubmoduleItemTarget")!.Value == submodule.ID).ToList())
+                            {
+                                submoduleItemRef.Remove();
+                            }
+                        }
+                        break;
+                }
+                if (!submoduleList.Descendants(ns + "SubmoduleItem").Any(e => e.Attribute("ID")!.Value == submodule.ID) || submodule.State == Core.Models.ItemState.Created )
+                {
+                }
+                else
+                {
+
+                }
+            }
         }
 
         if (device.ValueList?.Count > 0)

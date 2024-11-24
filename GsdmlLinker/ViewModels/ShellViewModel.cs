@@ -131,29 +131,32 @@ public class ShellViewModel(INavigationService navigationService,
         {
             settingsService.SaveNavigationFolder(Path.GetDirectoryName(openFolder.FolderName)!);
 
-            foreach (var filePath in openFolder.FolderNames)
+            foreach (var folderName in openFolder.FolderNames)
             {
-                var fileName = Path.GetFileNameWithoutExtension(filePath);
+                foreach(var filePath in Directory.EnumerateFiles(folderName))
+                {
+                    var fileName = Path.GetFileNameWithoutExtension(filePath);
 
-                if(Path.GetExtension(filePath) == ".zip")
-                {
-                    var folderPath = Unzip(filePath, appConfig.GSDMLFolder);
-                }
-                else if (Core.PN.Regexs.FileNameRegex().Match(fileName).Success || fileName.Contains("gsdml", StringComparison.InvariantCultureIgnoreCase))
-                {
-                    gsdDevicesService.AddDevice(filePath);
+                    if(Path.GetExtension(filePath) == ".zip")
+                    {
+                        var folderPath = Unzip(filePath, appConfig.GSDMLFolder);
+                    }
+                    else if (Core.PN.Regexs.FileNameRegex().Match(fileName).Success || fileName.Contains("gsdml", StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        gsdDevicesService.AddDevice(folderName);
                  
-                    //_navigationService.NavigateTo(typeof(ProfinetDeviceViewModel).FullName!);
-                }
-                else if (Core.IOL.Regexs.FileNameRegex().Match(fileName).Success || fileName.Contains("iodd", StringComparison.InvariantCultureIgnoreCase))
-                {
-                    iodDevicesService.AddDevice(filePath);
+                        //_navigationService.NavigateTo(typeof(ProfinetDeviceViewModel).FullName!);
+                    }
+                    else if (Core.IOL.Regexs.FileNameRegex().Match(fileName).Success || fileName.Contains("iodd", StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        iodDevicesService.AddDevice(folderName);
 
-                    //_navigationService.NavigateTo(typeof(IOLinkDeviceViewModel).FullName!);
-                }
-                else
-                {
-                    //DialogCoordinator.Instance.ShowMessageAsync(this, "unknown file", @$"no GSDML file or IODD file found on {filePath}", MessageDialogStyle.Affirmative);
+                        //_navigationService.NavigateTo(typeof(IOLinkDeviceViewModel).FullName!);
+                    }
+                    else
+                    {
+                        //DialogCoordinator.Instance.ShowMessageAsync(this, "unknown file", @$"no GSDML file or IODD file found on {filePath}", MessageDialogStyle.Affirmative);
+                    }
                 }
             }
         }

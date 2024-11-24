@@ -6,11 +6,16 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <ApplicationIcon>Dessin1.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <None Remove="Assets\io-link.svg" />
     <None Remove="Assets\profinet.svg" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Dessin1.ico" />
   </ItemGroup>
 
   <ItemGroup>

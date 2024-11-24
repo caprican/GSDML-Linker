@@ -27,20 +27,24 @@ public class MurrElectronicModuleBuilder(Core.Models.Device masterDevice) : Modu
             };
         }
 
-        var submodule = new GSDML.DeviceProfile.SubmoduleItemT
-        {
-            ID = $"IDS {deviceName} {indentNumber}",
-            SubmoduleIdentNumber = indentNumber,
-            API = 0,
-            MayIssueProcessAlarm = true,
-            ModuleInfo = ModuleInfo(categoryRef, categoryVendor, indentNumber, deviceName),
-            IOData = ioData,
-            RecordDataList = new GSDML.DeviceProfile.SubmoduleItemBaseTRecordDataList
+        var submodule = new Models.SubmoduleItem(new GSDML.DeviceProfile.SubmoduleItemT
             {
-                ParameterRecordDataItem = [.. RecordDataList]
-            },
-            //Graphics = graphics is not null ? [.. graphics] : null
+                ID = $"IDS {deviceName} {indentNumber}",
+                SubmoduleIdentNumber = indentNumber,
+                API = 0,
+                MayIssueProcessAlarm = true,
+                ModuleInfo = ModuleInfo(categoryRef, categoryVendor, indentNumber, deviceName),
+                IOData = ioData,
+                RecordDataList = new GSDML.DeviceProfile.SubmoduleItemBaseTRecordDataList
+                {
+                    ParameterRecordDataItem = [.. RecordDataList]
+                },
+                //Graphics = graphics is not null ? [.. graphics] : null
+            })
+        {
+            State = Core.Models.ItemState.Created
         };
+
         ((Models.Device)masterDevice).SubmoduleList?.Add(submodule);
         foreach (var dap in ((Models.Device)masterDevice).DeviceAccessPoints)
         {

@@ -23,7 +23,7 @@ public class BalluffModuleBuilder(Core.Models.Device masterDevice) : ModuleBuild
             };
         }
 
-        var module = new GSDML.DeviceProfile.ModuleItemT
+        var module =new Models.ModuleItem(new GSDML.DeviceProfile.ModuleItemT
         {
             ID = $"ID_Mod_{deviceName}_{indentNumber}",
             ModuleIdentNumber = indentNumber,
@@ -44,6 +44,9 @@ public class BalluffModuleBuilder(Core.Models.Device masterDevice) : ModuleBuild
                 }
             ]
             //Graphics = graphics is not null ? [.. graphics] : null
+        })
+        { 
+            State = Core.Models.ItemState.Created
         };
         ((Models.Device)masterDevice).ModuleList?.Add(module);
 

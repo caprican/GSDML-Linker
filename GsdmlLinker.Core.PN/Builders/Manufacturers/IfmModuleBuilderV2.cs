@@ -1,4 +1,6 @@
-﻿using GSDML = ISO15745.GSDML;
+﻿using GsdmlLinker.Core.Models.IoddFinder;
+
+using GSDML = ISO15745.GSDML;
 
 namespace GsdmlLinker.Core.PN.Builders.Manufacturers;
 
@@ -25,21 +27,29 @@ public class IfmModuleBuilderV2(Core.Models.Device masterDevice) : IfmModuleBuil
             };
         }
 
-        var submodule = new GSDML.DeviceProfile.SubmoduleItemT
-        {
-            ID = $"IDS {deviceName} {indentNumber}",
-            SubmoduleIdentNumber = indentNumber,
-            API = 19969,
-            MayIssueProcessAlarm = false,
-            ModuleInfo = ModuleInfo(categoryRef, categoryVendor, indentNumber, deviceName),
-            IOData = ioData,
-            RecordDataList = new GSDML.DeviceProfile.SubmoduleItemBaseTRecordDataList
+        var submodule = new Models.SubmoduleItem(new GSDML.DeviceProfile.SubmoduleItemT
             {
-                ParameterRecordDataItem = [.. RecordDataList]
-            },
-            //Graphics = graphics is not null ? [.. graphics] : null
+                ID = $"IDS {deviceName} {indentNumber}",
+                SubmoduleIdentNumber = indentNumber,
+                API = 19969,
+                MayIssueProcessAlarm = false,
+                ModuleInfo = ModuleInfo(categoryRef, categoryVendor, indentNumber, deviceName),
+                IOData = ioData,
+                RecordDataList = new GSDML.DeviceProfile.SubmoduleItemBaseTRecordDataList
+                {
+                    ParameterRecordDataItem = [.. RecordDataList]
+                },
+                //Graphics = graphics is not null ? [.. graphics] : null
+            })
+        {
+            State = Core.Models.ItemState.Created,
         };
-
+        submodule.Name = (!string.IsNullOrEmpty(submodule.ModuleInfo?.Name?.TextId) ? masterDevice.ExternalTextList?[submodule.ModuleInfo.Name.TextId] : string.Empty) ?? string.Empty;
+        submodule.Description = !string.IsNullOrEmpty(submodule.ModuleInfo?.InfoText?.TextId) ? masterDevice.ExternalTextList?[submodule.ModuleInfo.InfoText.TextId] : string.Empty;
+        submodule.CategoryRef = ((Models.Device)masterDevice).GetCategoryText(submodule.ModuleInfo?.CategoryRef);
+        submodule.SubCategoryRef = ((Models.Device)masterDevice).GetCategoryText(submodule.ModuleInfo?.SubCategory1Ref);
+        submodule.VendorId = Convert.ToUInt16(device.VendorId);
+        submodule.DeviceId = Convert.ToUInt32(device.DeviceId);
         //((Models.Device)masterDevice).UseableSubmodules?.Add(new GSDML.DeviceProfile.UseableSubmodulesTSubmoduleItemRef
         //{
         //    AllowedInSubslots="2..9",
@@ -52,24 +62,10 @@ public class IfmModuleBuilderV2(Core.Models.Device masterDevice) : IfmModuleBuil
         {
             if (dap.Modules is not null)
             {
-                foreach (var module in dap.Modules)
+                foreach (var module in dap.Modules.Where(module => module.Submodules?.Contains(submodule) != true))
                 {
                     module.Submodules ??= [];
-                    module.Submodules.Add(new Core.Models.Module
-                    {
-                        Name = (!string.IsNullOrEmpty(submodule.ModuleInfo?.Name?.TextId) ? masterDevice.ExternalTextList?[submodule.ModuleInfo.Name.TextId] : string.Empty) ?? string.Empty,
-                        Description = !string.IsNullOrEmpty(submodule.ModuleInfo?.InfoText?.TextId) ? masterDevice.ExternalTextList?[submodule.ModuleInfo.InfoText.TextId] : string.Empty,
-                        VendorName = submodule.ModuleInfo?.VendorName?.Value ?? string.Empty,
-                        OrderNumber = submodule.ModuleInfo?.OrderNumber?.Value ?? string.Empty,
-                        HardwareRelease = submodule.ModuleInfo?.HardwareRelease?.Value ?? string.Empty,
-                        SoftwareRelease = submodule.ModuleInfo?.SoftwareRelease?.Value ?? string.Empty,
-                        CategoryRef = ((Models.Device)masterDevice).GetCategoryText(submodule.ModuleInfo?.CategoryRef),
-                        SubCategoryRef = ((Models.Device)masterDevice).GetCategoryText(submodule.ModuleInfo?.SubCategory1Ref),
-
-                        VendorId = Convert.ToUInt16(device.VendorId),
-                        DeviceId = Convert.ToUInt32(device.DeviceId),
-                        ProfinetDeviceId = submodule.ID
-                    });
+                    module.Submodules.Add(submodule);
                 }
             }
         }
