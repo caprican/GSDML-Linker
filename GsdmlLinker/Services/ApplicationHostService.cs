@@ -21,7 +21,7 @@ public class ApplicationHostService(IServiceProvider serviceProvider, INavigatio
     private readonly Core.PN.Contracts.Services.IDevicesService gsdDevicesService = gsdDevicesService;
     private readonly Core.IOL.Contracts.Services.IDevicesService IoddDevicesService = IoddDevicesService;
 
-    private bool _isInitialized;
+    private bool isInitialized;
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
@@ -32,7 +32,7 @@ public class ApplicationHostService(IServiceProvider serviceProvider, INavigatio
 
         // Tasks after activation
         await StartupAsync();
-        _isInitialized = true;
+        isInitialized = true;
     }
 
     public async Task StopAsync(CancellationToken cancellationToken)
@@ -43,7 +43,7 @@ public class ApplicationHostService(IServiceProvider serviceProvider, INavigatio
 
     private async Task InitializeAsync()
     {
-        if (!_isInitialized)
+        if (!isInitialized)
         {
             persistAndRestoreService.RestoreData();
             themeSelectorService.InitializeTheme();
@@ -61,7 +61,7 @@ public class ApplicationHostService(IServiceProvider serviceProvider, INavigatio
 
     private async Task StartupAsync()
     {
-        if (!_isInitialized)
+        if (!isInitialized)
         {
             await Task.CompletedTask;
         }

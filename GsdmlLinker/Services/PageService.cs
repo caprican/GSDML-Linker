@@ -19,8 +19,8 @@ public class PageService : IPageService
         Configure<DevicesViewModel, DevicesPage>();
         Configure<IoddfinderViewModel, IoddfinderPage>();
 
-        //Configure<ProfinetDeviceViewModel, ProfinetDevicePage>();
-        //Configure<IOLinkDeviceViewModel, IOLinkDevicePage>();
+        Configure<ProfinetDeviceViewModel, ProfinetDevicePage>();
+        Configure<IOLinkDeviceViewModel, IOLinkDevicePage>();
         
         Configure<SettingsViewModel, SettingsPage>();
     }

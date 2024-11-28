@@ -1,12 +1,15 @@
 ﻿using System.Collections.ObjectModel;
-using System.ComponentModel;
 
-namespace GsdmlLinker.Core.Models;
+using CommunityToolkit.Mvvm.ComponentModel;
 
-public record ModuleTreeItem : INotifyPropertyChanged
+using GsdmlLinker.Core.Models;
+
+namespace GsdmlLinker.Models;
+
+public class ModuleTreeItem : ObservableObject
 {
     private ItemState state;
-    private Module? module;
+    private readonly Module? module;
 
     public string Name { get; init; } = string.Empty;
 
@@ -21,14 +24,15 @@ public record ModuleTreeItem : INotifyPropertyChanged
         get => state;
         set
         {
-            state = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(State)));
+            SetProperty(ref state, value);
+            if(module is not null)
+            {
+                module.State = State;
+            }
         }
     }
 
     public ObservableCollection<ModuleTreeItem>? SubmodulesCaterogies { get; set; }
-
-    public event PropertyChangedEventHandler? PropertyChanged;
 
     public ModuleTreeItem(string name)
     {

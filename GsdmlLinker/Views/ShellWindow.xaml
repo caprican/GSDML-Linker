@@ -57,7 +57,7 @@
                             <ColumnDefinition />
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"
-                            FontFamily="Segoe MDL2 Assets" Text="{Binding Glyph}" ToolTip="{Binding Label}">
+                                   FontFamily="Segoe MDL2 Assets" Text="{Binding Glyph}" ToolTip="{Binding Label}">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Visibility" Value="Visible"/>
@@ -90,19 +90,36 @@
                     </Grid>
                 </DataTemplate>
             </templateSelectors:MenuItemTemplateSelector.ImageDataTemplate>
+            <templateSelectors:MenuItemTemplateSelector.IconDataTemplate>
+                <DataTemplate DataType="{x:Type controls:HamburgerMenuIconItem}">
+                    <Grid Height="48">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="48" />
+                            <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
+                        <Rectangle Grid.Column="0" Width="40" Height="40" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                 ToolTip="{Binding Label}">
+                            <Rectangle.Fill>
+                                <ImageBrush ImageSource="{Binding Icon}" Stretch="Uniform"/>
+                            </Rectangle.Fill>
+                        </Rectangle>
+                        <TextBlock Grid.Column="1" VerticalAlignment="Center" FontSize="16" Text="{Binding Label}" />
+                    </Grid>
+                </DataTemplate>
+            </templateSelectors:MenuItemTemplateSelector.IconDataTemplate>
         </templateSelectors:MenuItemTemplateSelector>
     </controls:MetroWindow.Resources>
     <controls:MetroWindow.Content>
         <controls:HamburgerMenu x:Name="hamburgerMenu" IsPaneOpen="False" DisplayMode="CompactInline"
-            HamburgerButtonName="{x:Static properties:Resources.ShellHamburgerButtonName}"
-            ItemsSource="{Binding MenuItems}"
-            SelectedItem="{Binding SelectedMenuItem}"
-            ItemCommand="{Binding MenuItemInvokedCommand}"
-            OptionsItemsSource="{Binding OptionMenuItems}"
-            SelectedOptionsItem="{Binding SelectedOptionsMenuItem}"
-            OptionsItemCommand="{Binding OptionsMenuItemInvokedCommand}"
-            OptionsItemTemplateSelector="{StaticResource MenuItemTemplateSelector}"
-            ItemTemplateSelector="{StaticResource MenuItemTemplateSelector}">
+                                HamburgerButtonName="{x:Static properties:Resources.ShellHamburgerButtonName}"
+                                ItemsSource="{Binding MenuItems}"
+                                SelectedItem="{Binding SelectedMenuItem}"
+                                ItemCommand="{Binding MenuItemInvokedCommand}"
+                                OptionsItemsSource="{Binding OptionMenuItems}"
+                                SelectedOptionsItem="{Binding SelectedOptionsMenuItem}"
+                                OptionsItemCommand="{Binding OptionsMenuItemInvokedCommand}"
+                                OptionsItemTemplateSelector="{StaticResource MenuItemTemplateSelector}"
+                                ItemTemplateSelector="{StaticResource MenuItemTemplateSelector}">
             <controls:HamburgerMenu.Content>
                 <Frame x:Name="shellFrame" Grid.Row="1" NavigationUIVisibility="Hidden" Focusable="False" />
             </controls:HamburgerMenu.Content>

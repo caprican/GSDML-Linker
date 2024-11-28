@@ -56,8 +56,8 @@ public class BalluffModuleBuilder(Core.Models.Device masterDevice) : ModuleBuild
             {
                 dap.Modules.Add(new Core.Models.Module
                 {
-                    Name = (!string.IsNullOrEmpty(module.ModuleInfo?.Name?.TextId) ? masterDevice.ExternalTextList?[module.ModuleInfo.Name.TextId] : string.Empty) ?? string.Empty,
-                    Description = !string.IsNullOrEmpty(module.ModuleInfo?.InfoText?.TextId) ? masterDevice.ExternalTextList?[module.ModuleInfo.InfoText.TextId] : string.Empty,
+                    Name = (!string.IsNullOrEmpty(module.ModuleInfo?.Name?.TextId) ? masterDevice.ExternalTextList?[module.ModuleInfo.Name.TextId].Item : string.Empty) ?? string.Empty,
+                    Description = !string.IsNullOrEmpty(module.ModuleInfo?.InfoText?.TextId) ? masterDevice.ExternalTextList?[module.ModuleInfo.InfoText.TextId].Item : string.Empty,
                     VendorName = module.ModuleInfo?.VendorName?.Value ?? string.Empty,
                     OrderNumber = module.ModuleInfo?.OrderNumber?.Value ?? string.Empty,
                     HardwareRelease = module.ModuleInfo?.HardwareRelease?.Value ?? string.Empty,
@@ -74,7 +74,7 @@ public class BalluffModuleBuilder(Core.Models.Device masterDevice) : ModuleBuild
     }
 
     public override GSDML.DeviceProfile.ParameterRecordDataT? BuildRecordParameter(string textId, uint index, ushort transfertSequence, 
-                                                                                    IGrouping<ushort, Core.Models.DeviceParameter>? variable, Dictionary<string, string>? externalTextList)
+                                                                                    IGrouping<ushort, Core.Models.DeviceParameter>? variable, Dictionary<string, Core.Models.ExternalTextItem>? externalTextList)
     {
         List<object> items = [];
         uint paramaterLengt = 4;
@@ -164,7 +164,7 @@ public class BalluffModuleBuilder(Core.Models.Device masterDevice) : ModuleBuild
 
                                 if (!string.IsNullOrEmpty(record.Name) && !string.IsNullOrEmpty(boolRecord.TextId))
                                 {
-                                    masterDevice.ExternalTextList?.Add(boolRecord.TextId, record.Name);
+                                    masterDevice.ExternalTextList?.Add(boolRecord.TextId, new(boolRecord.TextId, record.Name));
                                 }
                                 break;
                             case Core.Models.DeviceDatatypes.UIntegerT:
@@ -181,7 +181,7 @@ public class BalluffModuleBuilder(Core.Models.Device masterDevice) : ModuleBuild
 
                                 if (!string.IsNullOrEmpty(record.Name) && !string.IsNullOrEmpty(intRecord.TextId))
                                 {
-                                    masterDevice.ExternalTextList?.Add(intRecord.TextId, record.Name);
+                                    masterDevice.ExternalTextList?.Add(intRecord.TextId, new(intRecord.TextId, record.Name));
                                 }
                                 break;
                             case Core.Models.DeviceDatatypes.Float32T:
@@ -196,7 +196,7 @@ public class BalluffModuleBuilder(Core.Models.Device masterDevice) : ModuleBuild
 
                                 if (!string.IsNullOrEmpty(record.Name) && !string.IsNullOrEmpty(floatRecord.TextId))
                                 {
-                                    masterDevice.ExternalTextList?.Add(floatRecord.TextId, record.Name);
+                                    masterDevice.ExternalTextList?.Add(floatRecord.TextId, new(floatRecord.TextId, record.Name));
                                 }
                                 break;
 
@@ -241,7 +241,7 @@ public class BalluffModuleBuilder(Core.Models.Device masterDevice) : ModuleBuild
         if (!string.IsNullOrEmpty(parameter.Name))
         {
             parameterRecord.Name = new GSDML.Primitives.ExternalTextRefT { TextId = $"{textId}" };
-            masterDevice.ExternalTextList?.Add(parameterRecord.Name.TextId, parameter.Name);
+            masterDevice.ExternalTextList?.Add(parameterRecord.Name.TextId, new(parameterRecord.Name.TextId, parameter.Name));
         }
 
         return parameterRecord;
@@ -259,27 +259,29 @@ public class BalluffModuleBuilder(Core.Models.Device masterDevice) : ModuleBuild
 
             if (inputLength is not null)
             {
+                var id = $"TOK_Input_DataItem_{indentNumber}_{processDataIndex:D2}";
                 inputDatas.Add(new GSDML.DeviceProfile.IODataTDataItem
                 {
                     DataType = GSDML.Primitives.DataItemTypeEnumT.OctetString,
                     Length = (ushort)(inputLength / 8),
                     LengthSpecified = true,
-                    TextId = $"TOK_Input_DataItem_{indentNumber}_{processDataIndex:D2}"
+                    TextId = id
                 });
-                masterDevice.ExternalTextList?.Add($"TOK_Input_DataItem_{indentNumber}_{processDataIndex:D2}", $"Input data {inputLength} bits");
+                masterDevice.ExternalTextList?.Add(id, new(id, $"Input data {inputLength} bits"));
             }
 
             if (outputLength is not null)
             {
+                var id = $"TOK_Output_DataItem_{indentNumber}_{processDataIndex:D2}";
                 outputDatas ??= [];
                 outputDatas.Add(new GSDML.DeviceProfile.IODataTDataItem
                 {
                     DataType = GSDML.Primitives.DataItemTypeEnumT.OctetString,
                     Length = (ushort)(outputLength / 8),
                     LengthSpecified = true,
-                    TextId = $"TOK_Output_DataItem_{indentNumber}_{processDataIndex:D2}"
+                    TextId = id
                 });
-                masterDevice.ExternalTextList?.Add($"TOK_Output_DataItem_{indentNumber}_{processDataIndex:D2}", $"Output data {outputLength} bits");
+                masterDevice.ExternalTextList?.Add(id, new(id, $"Output data {outputLength} bits"));
             }
             processDataIndex++;
         }

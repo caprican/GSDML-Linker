@@ -8,7 +8,7 @@ public class Vendor
     public string Name { get; set; } = string.Empty;
 
     [JsonPropertyName("vendorId")]
-    public long VendorId { get; set; }
+    public uint VendorId { get; set; }
 
     [JsonPropertyName("url")]
     public string? Url { get; set; }

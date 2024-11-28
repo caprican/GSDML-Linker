@@ -18,7 +18,9 @@ public record Device : Core.Models.Device
     public bool SupportBlockParameter { get; }
 
     public List<DeviceVariantDescription>? Variants { get; init; }
-    public Dictionary<string, IODD.Datatypes.DatatypeT>? DatatypeList { get; }
+
+    public Dictionary<string, DatatypeItem>? DatatypeList { get; }
+    
     public List<Core.Models.DeviceParameter>? Parameters { get; }
 
     public IEnumerable<IGrouping<string?, Core.Models.DeviceProcessData>>? ProcessDatas { get; }
@@ -92,7 +94,10 @@ public record Device : Core.Models.Device
                 ExternalTextList = [];
                 foreach (var extText in extTexts)
                 {
-                    ExternalTextList.Add(extText.Id!, extText.Value ?? string.Empty);
+                    if (!string.IsNullOrEmpty(extText?.Id) && extText?.Value is not null)
+                    {
+                        ExternalTextList.Add(extText.Id, new(extText.Id, extText.Value));
+                    }
                 }
             }
 
@@ -101,7 +106,7 @@ public record Device : Core.Models.Device
                 DatatypeList = [];
                 foreach (var dataType in device.ProfileBody.DeviceFunction.DatatypeCollection.Datatype!)
                 {
-                    DatatypeList.Add(dataType.Id, dataType);
+                    DatatypeList.Add(dataType.Id, new(dataType));
                 }
             }
 
@@ -121,12 +126,12 @@ public record Device : Core.Models.Device
                         ProcessDataIn = processData.ProcessDataIn is not null ? new Core.Models.DeviceProcessDataIn
                         {
                             BitLength = processData.ProcessDataIn.BitLength,
-                            Name = ExternalTextList?[processData.ProcessDataIn.Name?.TextId!] ?? string.Empty
+                            Name = ExternalTextList?[processData.ProcessDataIn.Name?.TextId!].Item ?? string.Empty
                         } : null,
                         ProcessDataOut = processData.ProcessDataOut is not null ? new Core.Models.DeviceProcessDataOut
                         {
                             BitLength = processData.ProcessDataOut.BitLength,
-                            Name = ExternalTextList?[processData.ProcessDataOut.Name?.TextId!] ?? string.Empty
+                            Name = ExternalTextList?[processData.ProcessDataOut.Name?.TextId!].Item ?? string.Empty
                         } : null
                     };
                     processDatas.Add(processDataItem);
@@ -152,10 +157,10 @@ public record Device : Core.Models.Device
             {
                 if (ExternalTextList is not null)
                 {
-                    VendorText = !string.IsNullOrEmpty(deviceIdentity.VendorText?.TextId) ? ExternalTextList[deviceIdentity.VendorText.TextId] : null;
-                    VendorUrl = !string.IsNullOrEmpty(deviceIdentity.VendorUrl?.TextId) ? ExternalTextList[deviceIdentity.VendorUrl.TextId] : null;
-                    Name = !string.IsNullOrEmpty(deviceIdentity.DeviceName?.TextId) ? ExternalTextList[deviceIdentity.DeviceName.TextId] : null;
-                    DeviceFamily = !string.IsNullOrEmpty(deviceIdentity.DeviceFamily?.TextId) ? ExternalTextList[deviceIdentity.DeviceFamily.TextId] : null;
+                    VendorText = !string.IsNullOrEmpty(deviceIdentity.VendorText?.TextId) ? ExternalTextList[deviceIdentity.VendorText.TextId].Item : null;
+                    VendorUrl = !string.IsNullOrEmpty(deviceIdentity.VendorUrl?.TextId) ? ExternalTextList[deviceIdentity.VendorUrl.TextId].Item : null;
+                    Name = !string.IsNullOrEmpty(deviceIdentity.DeviceName?.TextId) ? ExternalTextList[deviceIdentity.DeviceName.TextId].Item : null;
+                    DeviceFamily = !string.IsNullOrEmpty(deviceIdentity.DeviceFamily?.TextId) ? ExternalTextList[deviceIdentity.DeviceFamily.TextId].Item : null;
                 }
 
                 var folderPath = Path.GetDirectoryName(filePath);
@@ -164,7 +169,7 @@ public record Device : Core.Models.Device
                     VendorLogo = !string.IsNullOrEmpty(folderPath) ? Path.Combine(folderPath, deviceIdentity.VendorLogo.Name) : string.Empty;
 
                     GraphicsList = [];
-                    GraphicsList.Add("VendorLogo", deviceIdentity.VendorLogo.Name);
+                    GraphicsList.Add("VendorLogo", new("VendorLogo", deviceIdentity.VendorLogo.Name));
                 }
 
                 if (deviceIdentity.DeviceVariantCollection?.DeviceVariant is not null)
@@ -172,16 +177,16 @@ public record Device : Core.Models.Device
                     Variants = [];
                     foreach (var variant in deviceIdentity.DeviceVariantCollection.DeviceVariant)
                     {
-                        var name = ExternalTextList is not null && !string.IsNullOrEmpty(variant.Name?.TextId) ? ExternalTextList[variant.Name.TextId] : string.Empty;
-                        var description = ExternalTextList is not null && !string.IsNullOrEmpty(variant.Description?.TextId) ? ExternalTextList[variant.Description.TextId] : string.Empty;
+                        var name = ExternalTextList is not null && !string.IsNullOrEmpty(variant.Name?.TextId) ? ExternalTextList[variant.Name.TextId].Item : string.Empty;
+                        var description = ExternalTextList is not null && !string.IsNullOrEmpty(variant.Description?.TextId) ? ExternalTextList[variant.Description.TextId].Item : string.Empty;
 
                         if (string.IsNullOrEmpty(name))
                         {
-                            name = ExternalTextList is not null && !string.IsNullOrEmpty(variant.ProductName?.TextId) ? ExternalTextList[variant.ProductName.TextId] : string.Empty;
+                            name = ExternalTextList is not null && !string.IsNullOrEmpty(variant.ProductName?.TextId) ? ExternalTextList[variant.ProductName.TextId].Item : string.Empty;
                         }
                         if (string.IsNullOrEmpty(description))
                         {
-                            description = ExternalTextList is not null && !string.IsNullOrEmpty(variant.ProductText?.TextId) ? ExternalTextList[variant.ProductText.TextId] : string.Empty;
+                            description = ExternalTextList is not null && !string.IsNullOrEmpty(variant.ProductText?.TextId) ? ExternalTextList[variant.ProductText.TextId].Item : string.Empty;
                         }
 
                         Variants.Add(new DeviceVariantDescription
@@ -196,11 +201,11 @@ public record Device : Core.Models.Device
                         GraphicsList ??= [];
                         if (!string.IsNullOrEmpty(variant.DeviceSymbol))
                         {
-                            GraphicsList.Add($"{variant.ProductId}_Symbol", variant.DeviceSymbol);
+                            GraphicsList.Add($"{variant.ProductId}_Symbol", new($"{variant.ProductId}_Symbol", variant.DeviceSymbol));
                         }
                         if (!string.IsNullOrEmpty(variant.DeviceIcon))
                         {
-                            GraphicsList.Add($"{variant.ProductId}_Icon", variant.DeviceIcon);
+                            GraphicsList.Add($"{variant.ProductId}_Icon", new($"{variant.ProductId}_Icon", variant.DeviceIcon));
                         }
                     }
                 }
@@ -229,9 +234,9 @@ public record Device : Core.Models.Device
         switch (deviceVariable)
         {
             case IODD.Variables.VariableCollectionTVariable tVariable:
-                description = !string.IsNullOrEmpty(tVariable.Description?.TextId) ? ExternalTextList?[tVariable.Description.TextId] ?? string.Empty : string.Empty;
+                description = !string.IsNullOrEmpty(tVariable.Description?.TextId) ? ExternalTextList?[tVariable.Description.TextId].Item ?? string.Empty : string.Empty;
                 defaultValue = tVariable.DefaultValue ?? string.Empty;
-                name = !string.IsNullOrEmpty(tVariable.Name?.TextId) ? ExternalTextList?[tVariable.Name.TextId] ?? string.Empty : string.Empty;
+                name = !string.IsNullOrEmpty(tVariable.Name?.TextId) ? ExternalTextList?[tVariable.Name.TextId].Item ?? string.Empty : string.Empty;
                 index = tVariable.Index;
 
                 isReadOnly = tVariable.AccessRights != IODD.Primitives.AccessRightsT.rw;
@@ -240,7 +245,7 @@ public record Device : Core.Models.Device
                 recordInfo = tVariable.RecordItemInfo?.ToList();
                 if (tVariable.Item is IODD.Datatypes.DatatypeRefT dtref)
                 {
-                    var dt = DatatypeList?[dtref.DatatypeId];
+                    var dt = DatatypeList?[dtref.DatatypeId].Item;
                     variable = dt;
                 }
                 else
@@ -249,9 +254,9 @@ public record Device : Core.Models.Device
                 }
                 break;
             case IODD.Datatypes.RecordItemT recItem:
-                description = !string.IsNullOrEmpty(recItem.Description?.TextId) ? ExternalTextList?[recItem.Description.TextId] ?? string.Empty : string.Empty;
+                description = !string.IsNullOrEmpty(recItem.Description?.TextId) ? ExternalTextList?[recItem.Description.TextId].Item ?? string.Empty : string.Empty;
                 //defaultValue = recItem.DefaultValue ?? string.Empty;
-                name = !string.IsNullOrEmpty(recItem.Name?.TextId) ? ExternalTextList?[recItem.Name.TextId] ?? string.Empty : string.Empty;
+                name = !string.IsNullOrEmpty(recItem.Name?.TextId) ? ExternalTextList?[recItem.Name.TextId].Item ?? string.Empty : string.Empty;
                 //index = recItem.Index;
 
                 isReadOnly = recItem.AccessRightRestriction != IODD.Primitives.AccessRightsT.rw && recItem.AccessRightRestrictionSpecified;
@@ -259,7 +264,7 @@ public record Device : Core.Models.Device
 
                 if (recItem.Item is IODD.Datatypes.DatatypeRefT itemDtref)
                 {
-                    var dt = DatatypeList?[itemDtref.DatatypeId];
+                    var dt = DatatypeList?[itemDtref.DatatypeId].Item;
                     variable = dt;
                 }
                 else
@@ -454,7 +459,7 @@ public record Device : Core.Models.Device
                     {
                         if (!string.IsNullOrEmpty(item.Name?.TextId) && ExternalTextList is not null)
                         {
-                            values.Add(item.Value.ToString(), ExternalTextList[item.Name.TextId]);
+                            values.Add(item.Value.ToString(), ExternalTextList[item.Name.TextId].Item);
                         }
                     }
                     break;
@@ -477,7 +482,7 @@ public record Device : Core.Models.Device
                     {
                         if (!string.IsNullOrEmpty(item.Name?.TextId) && ExternalTextList is not null)
                         {
-                            values.Add(item.Value.ToString(), ExternalTextList[item.Name.TextId]);
+                            values.Add(item.Value.ToString(), ExternalTextList[item.Name.TextId].Item);
                         }
                     }
                     break;
@@ -490,7 +495,7 @@ public record Device : Core.Models.Device
                                 if (!string.IsNullOrEmpty(item.Name?.TextId) && ExternalTextList is not null)
                                 {
                                     values ??= [];
-                                    values.Add(uIntegerValues.Value.ToString(), ExternalTextList[item.Name.TextId]);
+                                    values.Add(uIntegerValues.Value.ToString(), ExternalTextList[item.Name.TextId].Item);
                                 }
 
                                 break;
@@ -520,7 +525,7 @@ public record Device : Core.Models.Device
                     {
                         if (!string.IsNullOrEmpty(item.Name?.TextId) && ExternalTextList is not null)
                         {
-                            values.Add(item.Value.ToString(), ExternalTextList[item.Name.TextId]);
+                            values.Add(item.Value.ToString(), ExternalTextList[item.Name.TextId].Item);
                         }
                     }
                     break;
@@ -533,7 +538,7 @@ public record Device : Core.Models.Device
                                 if (!string.IsNullOrEmpty(item.Name?.TextId) && ExternalTextList is not null)
                                 {
                                     values ??= [];
-                                    values.Add(integerValues.Value.ToString(), ExternalTextList[item.Name.TextId]);
+                                    values.Add(integerValues.Value.ToString(), ExternalTextList[item.Name.TextId].Item);
                                 }
 
                                 break;
@@ -563,7 +568,7 @@ public record Device : Core.Models.Device
                     {
                         if (!string.IsNullOrEmpty(item.Name?.TextId) && ExternalTextList is not null)
                         {
-                            values.Add(item.Value.ToString(), ExternalTextList[item.Name.TextId]);
+                            values.Add(item.Value.ToString(), ExternalTextList[item.Name.TextId].Item);
                         }
                     }
                     break;
@@ -576,7 +581,7 @@ public record Device : Core.Models.Device
                                 if (!string.IsNullOrEmpty(item.Name?.TextId) && ExternalTextList is not null)
                                 {
                                     values ??= [];
-                                    values.Add(floatValues.Value.ToString(), ExternalTextList[item.Name.TextId]);
+                                    values.Add(floatValues.Value.ToString(), ExternalTextList[item.Name.TextId].Item);
                                 }
 
                                 break;

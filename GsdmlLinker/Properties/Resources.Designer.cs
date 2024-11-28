@@ -232,6 +232,24 @@ namespace GsdmlLinker.Properties {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à IO-Link devices.
+        /// </summary>
+        public static string ShellIOLinkDevicesPage {
+            get {
+                return ResourceManager.GetString("ShellIOLinkDevicesPage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Profinet devices.
+        /// </summary>
+        public static string ShellProfinetDevicePage {
+            get {
+                return ResourceManager.GetString("ShellProfinetDevicePage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Settings.
         /// </summary>
         public static string ShellSettingsPage {

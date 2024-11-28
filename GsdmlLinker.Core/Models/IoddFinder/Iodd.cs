@@ -29,10 +29,10 @@ public class Iodd
     [JsonPropertyName("vendorName")]
     public string? VendorName { get; set; }
     [JsonPropertyName("vendorId")]
-    public int VendorId { get; set; }
+    public uint VendorId { get; set; }
 
     [JsonPropertyName("deviceId")]
-    public long DeviceId { get; set; }
+    public uint DeviceId { get; set; }
     [JsonPropertyName("deviceFamily")]
     public string? DeviceFamily { get; set; }
     [JsonPropertyName("deviceName")]

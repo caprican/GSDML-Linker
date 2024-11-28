@@ -63,8 +63,8 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice) : ModuleBuilder(m
                     module.Submodules ??= [];
                     module.Submodules.Add(new Core.Models.Module
                     {
-                        Name = (!string.IsNullOrEmpty(submodule.ModuleInfo?.Name?.TextId) ? masterDevice.ExternalTextList?[submodule.ModuleInfo.Name.TextId] : string.Empty) ?? string.Empty,
-                        Description = !string.IsNullOrEmpty(submodule.ModuleInfo?.InfoText?.TextId) ? masterDevice.ExternalTextList?[submodule.ModuleInfo.InfoText.TextId] : string.Empty,
+                        Name = (!string.IsNullOrEmpty(submodule.ModuleInfo?.Name?.TextId) ? masterDevice.ExternalTextList?[submodule.ModuleInfo.Name.TextId].Item : string.Empty) ?? string.Empty,
+                        Description = !string.IsNullOrEmpty(submodule.ModuleInfo?.InfoText?.TextId) ? masterDevice.ExternalTextList?[submodule.ModuleInfo.InfoText.TextId].Item : string.Empty,
                         VendorName = submodule.ModuleInfo?.VendorName?.Value ?? string.Empty,
                         OrderNumber = submodule.ModuleInfo?.OrderNumber?.Value ?? string.Empty,
                         HardwareRelease = submodule.ModuleInfo?.HardwareRelease?.Value ?? string.Empty,
@@ -82,7 +82,7 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice) : ModuleBuilder(m
     }
 
     public override GSDML.DeviceProfile.ParameterRecordDataT? BuildRecordParameter(string textId, uint index, ushort transfertSequence, 
-                                                                                    IGrouping<ushort, Core.Models.DeviceParameter>? variable, Dictionary<string, string>? externalTextList)
+                                                                                    IGrouping<ushort, Core.Models.DeviceParameter>? variable, Dictionary<string, Core.Models.ExternalTextItem>? externalTextList)
     {
         List<object> items = [];
         var recordConst = new GSDML.DeviceProfile.RecordDataConstT { Data = HexValue(variable!.Key) };
@@ -177,7 +177,7 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice) : ModuleBuilder(m
 
                                 if (!string.IsNullOrEmpty(record.Name) && !string.IsNullOrEmpty(boolRecord.TextId))
                                 {
-                                    masterDevice.ExternalTextList?.Add(boolRecord.TextId, record.Name);
+                                    masterDevice.ExternalTextList?.Add(boolRecord.TextId, new(boolRecord.TextId, record.Name) { State = Core.Models.ItemState.Created });
                                 }
                                 break;
                             case Core.Models.DeviceDatatypes.UIntegerT :
@@ -194,7 +194,7 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice) : ModuleBuilder(m
 
                                 if (!string.IsNullOrEmpty(record.Name) && !string.IsNullOrEmpty(intRecord.TextId))
                                 {
-                                    masterDevice.ExternalTextList?.Add(intRecord.TextId, record.Name);
+                                    masterDevice.ExternalTextList?.Add(intRecord.TextId, new(intRecord.TextId, record.Name) { State = Core.Models.ItemState.Created });
                                 }
                                 break;
                             case Core.Models.DeviceDatatypes.Float32T :
@@ -209,7 +209,7 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice) : ModuleBuilder(m
 
                                 if (!string.IsNullOrEmpty(record.Name) && !string.IsNullOrEmpty(floatRecord.TextId))
                                 {
-                                    masterDevice.ExternalTextList?.Add(floatRecord.TextId, record.Name);
+                                    masterDevice.ExternalTextList?.Add(floatRecord.TextId, new(floatRecord.TextId, record.Name) { State = Core.Models.ItemState.Created });
                                 }
                                 break;
 
@@ -253,7 +253,7 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice) : ModuleBuilder(m
         if (!string.IsNullOrEmpty(parameter.Name))
         {
             parameterRecord.Name = new GSDML.Primitives.ExternalTextRefT { TextId = $"{textId}_Text" };
-            masterDevice.ExternalTextList?.Add(parameterRecord.Name.TextId, parameter.Name);
+            masterDevice.ExternalTextList?.Add(parameterRecord.Name.TextId, new(parameterRecord.Name.TextId, parameter.Name) { State = Core.Models.ItemState.Created });
         }
 
         return parameterRecord;
@@ -271,27 +271,29 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice) : ModuleBuilder(m
 
             if (inputLength is not null)
             {
+                var id = $"IOLD_{indentNumber}_inputDatas{processDataIndex:D2}_Text";
                 inputDatas.Add(new GSDML.DeviceProfile.IODataTDataItem
                 {
                     DataType = GSDML.Primitives.DataItemTypeEnumT.OctetString,
                     Length = (ushort)(inputLength / 8),
                     LengthSpecified = true,
-                    TextId = $"IOLD_{indentNumber}_inputDatas{processDataIndex:D2}_Text"
+                    TextId = id
                 });
-                masterDevice.ExternalTextList?.Add($"IOLD_{indentNumber}_inputDatas{processDataIndex:D2}_Text", $"Input data {inputLength} bits");
+                masterDevice.ExternalTextList?.Add(id, new(id, $"Input data {inputLength} bits") { State = Core.Models.ItemState.Created });
             }
 
             if (outputLength is not null)
             {
+                var id = $"IOLD_{indentNumber}_outputDatas{processDataIndex:D2}_Text";
                 outputDatas ??= [];
                 outputDatas.Add(new GSDML.DeviceProfile.IODataTDataItem
                 {
                     DataType = GSDML.Primitives.DataItemTypeEnumT.OctetString,
                     Length = (ushort)(outputLength / 8),
                     LengthSpecified = true,
-                    TextId = $"IOLD_{indentNumber}_outputDatas{processDataIndex:D2}_Text"
+                    TextId = id
                 });
-                masterDevice.ExternalTextList?.Add($"IOLD_{indentNumber}_outputDatas{processDataIndex:D2}_Text", $"Output data {outputLength} bits");
+                masterDevice.ExternalTextList?.Add(id, new(id, $"Output data {outputLength} bits") { State = Core.Models.ItemState.Created });
             }
             processDataIndex++;
         }
@@ -383,7 +385,6 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice) : ModuleBuilder(m
                 }
             }
         }
-
         return parameters;
     }
 
@@ -552,7 +553,7 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice) : ModuleBuilder(m
 
     internal GSDML.DeviceProfile.ParameterRecordDataT BuildStartRecord(uint index, ushort transfertSequence)
     {
-        var Textadded = masterDevice.ExternalTextList?.TryAdd($"T_ParamDownloadStart", "Blockparameterization ParamDownloadStart");
+        var Textadded = masterDevice.ExternalTextList?.TryAdd($"T_ParamDownloadStart", new($"T_ParamDownloadStart", "Blockparameterization ParamDownloadStart") { State = Core.Models.ItemState.Created });
 
         return new GSDML.DeviceProfile.ParameterRecordDataT
         {
@@ -566,7 +567,7 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice) : ModuleBuilder(m
 
     internal GSDML.DeviceProfile.ParameterRecordDataT BuildEndRecord(uint index, ushort transfertSequence)
     {
-        var Textadded = masterDevice.ExternalTextList?.TryAdd($"T_ParamDownloadEnd", "Blockparameterization ParamDownloadEnd");
+        var Textadded = masterDevice.ExternalTextList?.TryAdd($"T_ParamDownloadEnd", new($"T_ParamDownloadEnd", "Blockparameterization ParamDownloadEnd") { State = Core.Models.ItemState.Created });
 
         return new GSDML.DeviceProfile.ParameterRecordDataT
         {
@@ -577,5 +578,4 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice) : ModuleBuilder(m
             Items = [new GSDML.DeviceProfile.RecordDataConstT { Data = "0x00,0x02,0x00,0x01,0x04" }]
         };
     }
-
 }

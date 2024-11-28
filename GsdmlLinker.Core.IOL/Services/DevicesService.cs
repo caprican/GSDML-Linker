@@ -70,7 +70,7 @@ public class DevicesService(IOptions<Core.Models.AppConfig> appConfig) : IDevice
                     var folderPath = Path.GetDirectoryName(filePath);
                     foreach (var graphic in device.GraphicsList)
                     {
-                        File.Copy(Path.Combine(folderPath!, graphic.Value), Path.Combine(localFilePath, graphic.Value), true);
+                        File.Copy(Path.Combine(folderPath!, graphic.Value.Item), Path.Combine(localFilePath, graphic.Value.Item), true);
                     }
                 }
 
@@ -108,7 +108,7 @@ public class DevicesService(IOptions<Core.Models.AppConfig> appConfig) : IDevice
                     foreach (var graphic in device.GraphicsList)
                     {
                         var zipGraphic = archive.Entries.SingleOrDefault(s => s.Name.EndsWith($"{graphic.Value}.bmp"));
-                        zipGraphic?.ExtractToFile(Path.Combine(localFilePath, graphic.Value), true);
+                        zipGraphic?.ExtractToFile(Path.Combine(localFilePath, graphic.Value.Item), true);
                     }
                 }
 

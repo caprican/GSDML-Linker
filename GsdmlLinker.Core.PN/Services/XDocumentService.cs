@@ -85,78 +85,91 @@ public class XDocumentService(IOptions<Core.Models.AppConfig> appConfig) : IXDoc
         var xCommentElement = (from d in xDevice.Nodes() where d is XComment select d).FirstOrDefault();
         var deviceIdentity = (from d in xDevice.Descendants() where d.Name.LocalName == "DeviceIdentity" select d).First();
 
-        if (device.ModuleList is not null)
-        {
+        var resumeActions = "";
 
-            moduleList.Add(new XComment($"GSDML linker - Add {DateTime.Today.ToShortDateString()}"));
+        if (device.ModuleList?.Count > 0)
+        {
             foreach (var module in device.ModuleList)
             {
-                if(!moduleList.Descendants(ns + "ModuleItem").Any(e => e.Attribute("ID")!.Value == module.ID))
+                switch(module.State)
                 {
-                    using var memoryStream = new MemoryStream();
-                    using TextWriter streamWriter = new StreamWriter(memoryStream);
-                    moduleList.Add(new XComment($"{module.ModuleInfo?.OrderNumber?.Value} IO-Link device"));
-                    var subList = new List<GSDML.DeviceProfile.ModuleItemT> { module.Item };
-
-                    var xmlSerializer = new XmlSerializer(typeof(GSDML.DeviceProfile.ModuleItemT[]), ns.NamespaceName);
-                    xmlSerializer.Serialize(streamWriter, subList.ToArray());
-
-                    var xelement = XElement.Parse(encoding.GetString(memoryStream.ToArray()));
-
-                    moduleList.Add(xelement.Elements().First());
-
-                    foreach (var deviceAccessPointItem in deviceAccessPointList.Descendants(ns + "UseableModules"))
-                    {
-                        var deviceAccessPoint = device.DeviceAccessPoints.First(f => f.Id == deviceAccessPointItem.Attribute("ID")!.Value);
-                        var allowedInSlots = deviceAccessPoint.PhysicalSlots;
-
-                        if (allowedInSlots?.Contains("..") == true)
+                    case Core.Models.ItemState.Created:
+                        using (var memoryStream = new MemoryStream())
                         {
-                            var split = allowedInSlots.Split("..");
-                            var min = int.Parse(split[0]);
-                            var max = int.Parse(split[1]);
-                            var fixedInSlots = int.Parse(deviceAccessPoint.FixedInSlots ?? "0");
+                            using TextWriter streamWriter = new StreamWriter(memoryStream);
+                            moduleList.Add(new XComment($"{module.ModuleInfo?.OrderNumber?.Value} IO-Link device"));
+                            var subList = new List<GSDML.DeviceProfile.ModuleItemT> { module.Item };
 
-                            min = (fixedInSlots > 0 ? fixedInSlots + 1 : min);
+                            var xmlSerializer = new XmlSerializer(typeof(GSDML.DeviceProfile.ModuleItemT[]), ns.NamespaceName);
+                            xmlSerializer.Serialize(streamWriter, subList.ToArray());
+                            var xelement = XElement.Parse(encoding.GetString(memoryStream.ToArray()));
 
-                            if (min == max)
-                                allowedInSlots = $"{min}";
-                            else
-                                allowedInSlots = $"{min}..{max}";
+                            moduleList.Add(xelement.Elements().First());
+
+                            foreach (var deviceAccessPointItem in deviceAccessPointList.Descendants(ns + "UseableModules"))
+                            {
+                                var deviceAccessPoint = device.DeviceAccessPoints.First(f => f.Id == deviceAccessPointItem.Attribute("ID")!.Value);
+                                var allowedInSlots = deviceAccessPoint.PhysicalSlots;
+
+                                if (allowedInSlots?.Contains("..") == true)
+                                {
+                                    var split = allowedInSlots.Split("..");
+                                    var min = int.Parse(split[0]);
+                                    var max = int.Parse(split[1]);
+                                    var fixedInSlots = int.Parse(deviceAccessPoint.FixedInSlots ?? "0");
+
+                                    min = (fixedInSlots > 0 ? fixedInSlots + 1 : min);
+
+                                    if (min == max)
+                                        allowedInSlots = $"{min}";
+                                    else
+                                        allowedInSlots = $"{min}..{max}";
+                                }
+
+                                var useableMmodules = deviceAccessPointItem.Descendants(ns + "UseableModules").FirstOrDefault();
+                                useableMmodules!.Add(new XComment($"GSDML linker - Add {DateTime.Today.ToShortDateString()}"));
+                                useableMmodules!.Add(new XElement(ns + "ModuleItemRef", new XAttribute("ModuleItemTarget", module.ID!),
+                                                                                                new XAttribute("AllowedInSlots", allowedInSlots!)));
+                            }
+
+                            resumeActions += HistoryRelease($"create {module.Name}");
+                        }
+                        break;
+                    case Core.Models.ItemState.Modified:
+                        using (var memoryStream = new MemoryStream())
+                        {
+                            using TextWriter streamWriter = new StreamWriter(memoryStream);
+                            moduleList.Add(new XComment($"{module.ModuleInfo?.OrderNumber?.Value} IO-Link device"));
+                            var subList = new List<GSDML.DeviceProfile.ModuleItemT> { module.Item };
+
+                            var xmlSerializer = new XmlSerializer(typeof(GSDML.DeviceProfile.ModuleItemT[]), ns.NamespaceName);
+                            xmlSerializer.Serialize(streamWriter, subList.ToArray());
+                            var xelement = XElement.Parse(encoding.GetString(memoryStream.ToArray()));
+
+                            moduleList.Descendants(ns + "ModuleItem").SingleOrDefault(e => e.Attribute("ID")!.Value == module.ID)?.ReplaceWith(xelement);
+
+                            resumeActions += HistoryRelease($"update {module.Name}");
+                        }
+                        break;
+                    case Core.Models.ItemState.Deleted:
+                        foreach (var moduleItem in moduleList.Descendants(ns + "ModuleItem").Where(e => e.Attribute("ID")!.Value == module.ID).ToList())
+                            moduleItem.Remove();
+                        foreach (var moduleItem in moduleList.Descendants(ns + "ModuleItem"))
+                        {
+                            foreach (var moduleItemRef in moduleItem.Descendants(ns + "ModuleItemRef").Where(e => e.Attribute("SubmoduleItemTarget")!.Value == module.ID).ToList())
+                            {
+                                moduleItemRef.Remove();
+                            }
                         }
 
-                        var useableMmodules = deviceAccessPointItem.Descendants(ns + "UseableModules").FirstOrDefault();
-                        useableMmodules!.Add(new XComment($"GSDML linker - Add {DateTime.Today.ToShortDateString()}"));
-                        useableMmodules!.Add(new XElement(ns + "ModuleItemRef", new XAttribute("ModuleItemTarget", module.ID!),
-                                                                                        new XAttribute("AllowedInSlots", allowedInSlots!)));
-                    }
+                        resumeActions += HistoryRelease($"delete {module.Name}");
+                        break;
                 }
             }
-
         }
 
-        if (device.SubmoduleList is not null)
+        if (device.SubmoduleList?.Count > 0)
         {
-            // Remove submodule
-            foreach (var submoduleId in submoduleList.Descendants(ns + "SubmoduleItem").Select(e => e.Attribute("ID")!.Value).ToArray())
-            {
-                if(!device.SubmoduleList.Select(s => s.ID).Contains(submoduleId))
-                {
-                    foreach(var xElement in submoduleList.Descendants(ns + "SubmoduleItem").Where(e => e.Attribute("ID")!.Value == submoduleId).ToList())
-                    {
-                        xElement.Remove();
-                    }
-                    foreach (var moduleItem in moduleList.Descendants(ns + "ModuleItem"))
-                    {
-                        foreach(var submoduleItemRef in moduleItem.Descendants(ns + "SubmoduleItemRef").Where(e => e.Attribute("SubmoduleItemTarget")!.Value == submoduleId).ToList())
-                        {
-                            submoduleItemRef.Remove();
-                        }
-                    }
-                }
-            }
-
-            // Add or update msubmodule
             foreach (var submodule in device.SubmoduleList)
             {
                 switch(submodule.State)
@@ -170,7 +183,6 @@ public class XDocumentService(IOptions<Core.Models.AppConfig> appConfig) : IXDoc
 
                             var xmlSerializer = new XmlSerializer(typeof(GSDML.DeviceProfile.SubmoduleItemT[]), ns.NamespaceName);
                             xmlSerializer.Serialize(streamWriter, subList.ToArray());
-
                             var xelement = XElement.Parse(encoding.GetString(memoryStream.ToArray()));
 
                             submoduleList.Add(xelement.Elements().First());
@@ -199,9 +211,24 @@ public class XDocumentService(IOptions<Core.Models.AppConfig> appConfig) : IXDoc
                                 useableSubmodules!.Add(new XElement(ns + "SubmoduleItemRef", new XAttribute("SubmoduleItemTarget", submodule.ID!),
                                                                                                 new XAttribute("AllowedInSubslots", allowedInSubslots!)));
                             }
+
+                            resumeActions += HistoryRelease($"create {submodule.Name}");
                         }
                         break;
                     case Core.Models.ItemState.Modified:
+                        using (var memoryStream = new MemoryStream())
+                        {
+                            using TextWriter streamWriter = new StreamWriter(memoryStream);
+
+                            var subList = new List<GSDML.DeviceProfile.SubmoduleItemT> { submodule.Item };
+                            var xmlSerializer = new XmlSerializer(typeof(GSDML.DeviceProfile.SubmoduleItemT[]), ns.NamespaceName);
+                            xmlSerializer.Serialize(streamWriter, subList.ToArray());
+                            var xelement = XElement.Parse(encoding.GetString(memoryStream.ToArray()));
+
+                            submoduleList.Descendants(ns + "SubmoduleItem").SingleOrDefault(e => e.Attribute("ID")!.Value == submodule.ID)?.ReplaceWith(xelement);
+
+                            resumeActions += HistoryRelease($"update {submodule.Name}");
+                        }
                         break;
                     case Core.Models.ItemState.Deleted:
                         foreach (var submoduleItem in submoduleList.Descendants(ns + "SubmoduleItem").Where(e => e.Attribute("ID")!.Value == submodule.ID).ToList())
@@ -213,88 +240,105 @@ public class XDocumentService(IOptions<Core.Models.AppConfig> appConfig) : IXDoc
                                 submoduleItemRef.Remove();
                             }
                         }
-                        break;
-                }
-                if (!submoduleList.Descendants(ns + "SubmoduleItem").Any(e => e.Attribute("ID")!.Value == submodule.ID) || submodule.State == Core.Models.ItemState.Created )
-                {
-                }
-                else
-                {
 
+                        resumeActions += HistoryRelease($"delete {submodule.Name}");
+
+                        break;
                 }
             }
         }
 
         if (device.ValueList?.Count > 0)
         {
-            valueList.Add(new XComment($"GSDML linker - Add {DateTime.Today.ToShortDateString()}"));
+            //valueList.Add(new XComment($"GSDML linker - Add {DateTime.Today.ToShortDateString()}"));
             foreach (var value in device.ValueList)
             {
-                if(!valueList.Descendants(ns + "ValueItem").Any(e => e.Attribute("ID")!.Value == value.Key))
+                var valueItem = value.Value;
+                switch(valueItem.State)
                 {
-                    using var memoryStreamValueList = new MemoryStream();
-                    using TextWriter streamWriterValueList = new StreamWriter(memoryStreamValueList);
-                    var xmlSerializer = new XmlSerializer(typeof(GSDML.DeviceProfile.ValueItemT[]), ns.NamespaceName);
-                    xmlSerializer.Serialize(streamWriterValueList, new GSDML.DeviceProfile.ValueItemT[] { new GSDML.DeviceProfile.ValueItemT  { ID = value.Key, Assignments = [.. value.Value] } });
+                    case Core.Models.ItemState.Created:
+                        using (var memoryStreamValueList = new MemoryStream())
+                        {
+                            using TextWriter streamWriterValueList = new StreamWriter(memoryStreamValueList);
+                            var xmlSerializer = new XmlSerializer(typeof(GSDML.DeviceProfile.ValueItemT[]), ns.NamespaceName);
+                            xmlSerializer.Serialize(streamWriterValueList, new GSDML.DeviceProfile.ValueItemT[] { new GSDML.DeviceProfile.ValueItemT  { ID = value.Key, Assignments = valueItem.Assigments.ToArray()/*[.. value.Value]*/ } });
 
-                    var xelement = XElement.Parse(encoding.GetString(memoryStreamValueList.ToArray()));
-                    valueList.Add(xelement.Elements());
+                            var xelement = XElement.Parse(encoding.GetString(memoryStreamValueList.ToArray()));
+                            valueList.Add(xelement.Elements());
+                        }
+                        break;
+                    case Core.Models.ItemState.Modified:
+                        break;
+                    case Core.Models.ItemState.Deleted:
+                        break;
                 }
             }
         }
 
         if (device.CategoryList?.Count > 0)
         {
-            categoryList.Add(new XComment($"GSDML linker - Add {DateTime.Today.ToShortDateString()}"));
+            //categoryList.Add(new XComment($"GSDML linker - Add {DateTime.Today.ToShortDateString()}"));
             foreach (var category in device.CategoryList)
             {
-                if (!categoryList.Descendants(ns + "CategoryItem").Any(e => e.Attribute("ID")!.Value == category.Key))
+                var categoryItem = category.Value;
+                switch(categoryItem.State)
                 {
-                    categoryList.Add(new XElement(ns + "CategoryItem", new XAttribute("ID", category.Key), new XAttribute("TextId", category.Value)));
+                    case Core.Models.ItemState.Created:
+                        categoryList.Add(new XElement(ns + "CategoryItem", new XAttribute("ID", category.Key), new XAttribute("TextId", categoryItem.Item)));
+                        break;
+                    case Core.Models.ItemState.Modified:
+                        break;
+                    case Core.Models.ItemState.Deleted:
+                        break;
                 }
             }
         }
 
         if (device.GraphicsList?.Count > 0)
         {
-            graphicList.Add(new XComment($"GSDML linker - Add {DateTime.Today.ToShortDateString()}"));
+            //graphicList.Add(new XComment($"GSDML linker - Add {DateTime.Today.ToShortDateString()}"));
             foreach (var graphic in device.GraphicsList)
             {
                 graphicsPath ??= [];
-                if(File.Exists(Path.Combine(localFilePath, graphic.Value + ".bmp")))
+                var graphicItem = graphic.Value;
+                if(File.Exists(Path.Combine(localFilePath, graphicItem.Item + ".bmp")))
                 {
-                    graphicsPath.Add(Path.Combine(localFilePath, graphic.Value + ".bmp"));
+                    graphicsPath.Add(Path.Combine(localFilePath, graphicItem.Item + ".bmp"));
                 }
                 else
                 {
                     var ioddFolder = Path.Combine(localAppData, appConfig.Value.IODDFolder);
-
                 }
 
-                if (!graphicList.Descendants(ns + "GraphicItem").Any(e => e.Attribute("ID")!.Value ==  graphic.Key))
+                switch(graphicItem.State)
                 {
-                    graphicList.Add(new XElement(ns + "GraphicItem", new XAttribute("ID", graphic.Key), new XAttribute("GraphicFile", graphic.Value)));
+                    case Core.Models.ItemState.Created:
+                        graphicList.Add(new XElement(ns + "GraphicItem", new XAttribute("ID", graphic.Key), new XAttribute("GraphicFile", graphicItem.Item)));
+                        break;
+                    case Core.Models.ItemState.Modified:
+                        break;
+                    case Core.Models.ItemState.Deleted:
+                        break;
                 }
             }
         }
 
         if (device.ExternalTextList?.Count > 0)
         {
-            if(device.ExternalTextList.Count > primaryLanguage.Elements().Count())
+            //primaryLanguage.Add(new XComment($"GSDML linker - Add {DateTime.Today.ToShortDateString()}"));
+            foreach (var primaryText in device.ExternalTextList)
             {
-                primaryLanguage.Add(new XComment($"GSDML linker - Add {DateTime.Today.ToShortDateString()}"));
-                foreach (var primaryText in device.ExternalTextList)
+                var externalTextItem = primaryText.Value;
+                switch(externalTextItem.State)
                 {
-                    if (!primaryLanguage.Descendants(ns + "Text").Any(e => e.Attribute("TextId")!.Value == primaryText.Key))
-                    {
-                        primaryLanguage.Add(new XElement(ns + "Text", new XAttribute("TextId", primaryText.Key), new XAttribute("Value", primaryText.Value)));
-                    }
+                    case Core.Models.ItemState.Created:
+                        primaryLanguage.Add(new XElement(ns + "Text", new XAttribute("TextId", primaryText.Key), new XAttribute("Value", externalTextItem.Item)));
+                        break;
+                    case Core.Models.ItemState.Modified:
+                        break;
+                    case Core.Models.ItemState.Deleted:
+                        break;
                 }
-            }
-            else if (device.ExternalTextList.Count < primaryLanguage.Elements().Count())
-            {
-                primaryLanguage.Add(new XComment($"GSDML linker - remove {DateTime.Today.ToShortDateString()}"));
-
             }
         }
 
@@ -305,15 +349,12 @@ public class XDocumentService(IOptions<Core.Models.AppConfig> appConfig) : IXDoc
                 var xDeviceAccessPoint = deviceAccessPointList.Descendants(ns + "DeviceAccessPointItem").FirstOrDefault(arg => arg.Attribute("ID")!.Value == dap.Id);
                 var infoTextId = xDeviceAccessPoint?.Descendants(ns + "ModuleInfo").FirstOrDefault()?.Descendants(ns + "InfoText").Single().Attribute("TextId")?.Value;
 
-                if(infoTextId is not null)
+                if(infoTextId is not null && primaryLanguage.Descendants(ns + "Text").Any(e => e.Attribute("TextId")!.Value == infoTextId))
                 {
-                    if (primaryLanguage.Descendants(ns + "Text").Any(e => e.Attribute("TextId")!.Value == infoTextId))
+                    var element = primaryLanguage.Descendants(ns + "Text").Where(arg => arg.Attribute("TextId")!.Value == infoTextId).Single();
+                    if (element is not null)
                     {
-                        var element = primaryLanguage.Descendants(ns + "Text").Where(arg => arg.Attribute("TextId")!.Value == infoTextId).Single();
-                        if (element is not null)
-                        {
-                            element.Attribute("Value")!.Value = dap.Description ?? string.Empty;
-                        }
+                        element.Attribute("Value")!.Value = dap.Description ?? string.Empty;
                     }
                 }
             }
@@ -334,17 +375,13 @@ public class XDocumentService(IOptions<Core.Models.AppConfig> appConfig) : IXDoc
 
         if (xCommentElement is null)
         {
-            var comment = @$"VERSION HISTORY :
-GSDML linker - Add {DateTime.Today.ToShortDateString()}";
-
-            xDevice.AddFirst(new XComment(comment));
+            xDevice.AddFirst(new XComment(@$"VERSION HISTORY :{resumeActions}"));
         }
         else
         {
             if (xCommentElement is XComment comment)
             {
-                comment.Value += @$"
-GSDML linker - Add {DateTime.Today.ToShortDateString()}";
+                comment.Value += resumeActions;
             }
         }
 
@@ -354,11 +391,12 @@ GSDML linker - Add {DateTime.Today.ToShortDateString()}";
         return (localFilePath, fileName, graphicsPath);
     }
 
-    private string HisotryRelease()
+    private static string HistoryRelease(string action)
     {
-        var release = 
-$@"{DateTime.Today.ToShortDateString()}           Vx.xx:          - GSDML linker - IO-Link modules added :
-                                                                        ";
+        var release =
+$@"
+{DateTime.Today.ToShortDateString()}           Vx.xx:          - GSDML linker - IO-Link modules {action}";
+
         return release;
     }
 }

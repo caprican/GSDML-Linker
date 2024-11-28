@@ -6,25 +6,16 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
-    <ApplicationIcon>Dessin1.ico</ApplicationIcon>
+    <ApplicationIcon>GSDML Linker.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Assets\io-link.svg" />
-    <None Remove="Assets\profinet.svg" />
+    <None Remove="Assets\io-link.png" />
+    <None Remove="Assets\profinet.png" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Dessin1.ico" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Include="Assets\io-link.svg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Assets\profinet.svg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
+    <Content Include="GSDML Linker.ico" />
   </ItemGroup>
 
   <ItemGroup>
@@ -44,6 +35,15 @@
     <Reference Include="MahApps.Metro">
       <HintPath>..\..\MahApps.Metro\src\MahApps.Metro\bin\Debug\net8.0-windows\MahApps.Metro.dll</HintPath>
     </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\io-link.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Assets\profinet.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
   </ItemGroup>
 
   <ItemGroup>

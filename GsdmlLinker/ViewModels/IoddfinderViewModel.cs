@@ -134,7 +134,7 @@ public class IoddfinderViewModel(IOptions<Core.Models.AppConfig> appConfig, Core
     {
         if(iodd is null) return;
 
-        var zipStream = await ioddfinderService.GetIoddZipAsync(iodd.VendorId, (int)iodd.IoddId);
+        var zipStream = await ioddfinderService.GetIoddZipAsync(iodd.VendorId, iodd.IoddId);
         if (zipStream is null) return;
         using var zip = new ZipArchive(new MemoryStream(zipStream), ZipArchiveMode.Read);
 

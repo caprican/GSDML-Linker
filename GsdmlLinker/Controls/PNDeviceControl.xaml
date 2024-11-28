@@ -8,7 +8,8 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:GsdmlLinker.Controls"
              xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
-             xmlns:models="clr-namespace:GsdmlLinker.Core.Models;assembly=GsdmlLinker.Core"
+             xmlns:models="clr-namespace:GsdmlLinker.Models"
+             xmlns:coreModels="clr-namespace:GsdmlLinker.Core.Models;assembly=GsdmlLinker.Core"
              xmlns:system="clr-namespace:System;assembly=netstandard"
              mc:Ignorable="d">
     <UserControl.Resources>
@@ -85,7 +86,7 @@
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Visibility" Value="Visible"/>
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding State, UpdateSourceTrigger=PropertyChanged}" Value="{x:Static models:ItemState.None}">
+                                        <DataTrigger Binding="{Binding State, UpdateSourceTrigger=PropertyChanged}" Value="{x:Static coreModels:ItemState.None}">
                                             <Setter Property="Visibility" Value="Collapsed"/>
                                         </DataTrigger>
                                     </Style.Triggers>
@@ -97,7 +98,7 @@
                                 <Style TargetType="TextBlock">
                                     <Setter Property="TextDecorations" Value="None"/>
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding State, UpdateSourceTrigger=PropertyChanged}" Value="{x:Static models:ItemState.Deleted}">
+                                        <DataTrigger Binding="{Binding State, UpdateSourceTrigger=PropertyChanged}" Value="{x:Static coreModels:ItemState.Deleted}">
                                             <Setter Property="TextDecorations" Value="Strikethrough"/>
                                         </DataTrigger>
                                     </Style.Triggers>

@@ -2,9 +2,9 @@
 
 namespace GsdmlLinker.Models;
 
-public record DeviceItem(Core.Models.Device? device)
+public record DeviceItem
 {
-    private readonly Core.Models.Device? Device = device;
+    public readonly Core.Models.Device? Device;
 
     public string Name { get; set; } = string.Empty;
     public string VendorId {  get; init; } = string.Empty;
@@ -29,4 +29,8 @@ public record DeviceItem(Core.Models.Device? device)
 
     public ObservableCollection<DeviceItem>? Releases { get; set; }
 
+    public DeviceItem(Core.Models.Device? device)
+    {
+        Device = device;
+    }
 }

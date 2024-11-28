@@ -167,7 +167,7 @@ public class IoddfinderService : IIoddfinderService
         return response!;
     }
 
-    public async Task<byte[]?> GetIoddZipAsync(int vendorId, int ioddId)
+    public async Task<byte[]?> GetIoddZipAsync(uint vendorId, long ioddId)
     {
         var httpResponseMessage = await httpClient.GetAsync($"vendors/{vendorId}/iodds/{ioddId}/files/zip/rated");
         return await httpResponseMessage.Content.ReadAsByteArrayAsync();

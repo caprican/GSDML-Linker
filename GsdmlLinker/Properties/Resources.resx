@@ -177,4 +177,10 @@
   <data name="ShellSettingsPage" xml:space="preserve">
     <value>Settings</value>
   </data>
+  <data name="ShellProfinetDevicePage" xml:space="preserve">
+    <value>Profinet devices</value>
+  </data>
+  <data name="ShellIOLinkDevicesPage" xml:space="preserve">
+    <value>IO-Link devices</value>
+  </data>
 </root>

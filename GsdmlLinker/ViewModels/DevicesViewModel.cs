@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.IO;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Input;
@@ -6,9 +7,9 @@ using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
-using GsdmlLinker.Contracts.Services;
 using GsdmlLinker.Contracts.ViewModels;
 using GsdmlLinker.Core.Contracts.Services;
+using GsdmlLinker.Models;
 
 using MahApps.Metro.Controls.Dialogs;
 
@@ -16,12 +17,12 @@ using Microsoft.Win32;
 
 namespace GsdmlLinker.ViewModels;
 
-public class DevicesViewModel(ISettingsService settingsService,
+public class DevicesViewModel(Contracts.Services.ISettingsService settingsService,
                               Core.IOL.Contracts.Services.IDevicesService iolDevicesService, Core.PN.Contracts.Services.IDevicesService pnDevicesService,
                               Contracts.Builders.IModuleBuilder moduleBuilder, Contracts.Services.ICaretaker caretaker,
                               Core.PN.Contracts.Services.IXDocumentService xDocumentService, IZipperService zipperService) : ObservableObject, INavigationAware
 {
-    private readonly ISettingsService settingsService = settingsService;
+    private readonly Contracts.Services.ISettingsService settingsService = settingsService;
 
     private readonly Core.PN.Contracts.Services.IDevicesService pnDevicesService = pnDevicesService;
     private readonly Core.IOL.Contracts.Services.IDevicesService iolDevicesService = iolDevicesService;
@@ -39,11 +40,12 @@ public class DevicesViewModel(ISettingsService settingsService,
     private ICommand? saveMasterDeviceCommand;
     private ICommand? cancelMasterDeviceCommand;
     private ICommand? viewSubParametersCommand;
+    private ICommand? exportDeviceCommand;
 
-    private ObservableCollection<Core.Models.ModuleTreeItem>? masterModules;
+    private ObservableCollection<Models.ModuleTreeItem>? masterModules;
     private Models.DeviceItem? masterDeviceSelected;
     private Models.DeviceItem? slaveDeviceSelected;
-    private Core.Models.ModuleTreeItem? masterModuleSelected;
+    private Models.ModuleTreeItem? masterModuleSelected;
     private Visibility slaveListVisibility = Visibility.Collapsed;
     private double? firstColumnSize = null;
     private double? thirdColumnSize = 0;
@@ -57,7 +59,7 @@ public class DevicesViewModel(ISettingsService settingsService,
 
     public ObservableCollection<Models.VendorItem> MasterVendors { get; set; } = [];
     public ObservableCollection<Models.VendorItem> SlaveVendors { get; set; } = [];
-    public ObservableCollection<Core.Models.ModuleTreeItem>? MasterModules 
+    public ObservableCollection<Models.ModuleTreeItem>? MasterModules 
     {
         get => masterModules;
         set => SetProperty(ref masterModules, value);
@@ -112,7 +114,7 @@ public class DevicesViewModel(ISettingsService settingsService,
         }
     }
 
-    public Core.Models.ModuleTreeItem? MasterModuleSelected
+    public Models.ModuleTreeItem? MasterModuleSelected
     {
         get => masterModuleSelected;
         set
@@ -194,11 +196,12 @@ public class DevicesViewModel(ISettingsService settingsService,
     public ICommand AddSlaveDeviceCommand => addSlaveDeviceCommand ??= new RelayCommand(OnAddSlaveDevice);
     public ICommand CloseSlaveDeviceCommand => closeSlaveDeviceCommand ??= new RelayCommand(OnCloseSlaveDevice);
     public ICommand SaveSlaveDeviceCommand => saveSlaveDeviceCommand ??= new RelayCommand(OnSaveSlaveDevice);
-    public ICommand DeletSlaveDeviceCommand => deleteSlaveDeviceCommand ??= new AsyncRelayCommand<Core.Models.ModuleTreeItem>(OnDeletSlaveDevice);
+    public ICommand DeletSlaveDeviceCommand => deleteSlaveDeviceCommand ??= new AsyncRelayCommand<Models.ModuleTreeItem>(OnDeletSlaveDevice);
     public ICommand RenameDeviceCommand => renameDeviceCommand ??= new AsyncRelayCommand(OnRenameDevice);
     public ICommand SaveMasterDeviceCommand => saveMasterDeviceCommand ??= new RelayCommand(OnSaveMasterDevice);
     public ICommand CancelMasterDeviceCommand => cancelMasterDeviceCommand ??= new RelayCommand(OnCancelMasterDevice);
     public ICommand ViewSubParametersCommand => viewSubParametersCommand ??= new RelayCommand<Core.Models.DeviceParameter>(OnViewSubParameters);
+    public ICommand ExportDeviceCommand => exportDeviceCommand ??= new RelayCommand<DeviceItem>(OnExport);
 
     public void OnNavigatedTo(object parameter)
     {
@@ -375,7 +378,7 @@ public class DevicesViewModel(ISettingsService settingsService,
             {
                 foreach (var module in modules)
                 {
-                    var moduleTree = new Core.Models.ModuleTreeItem(module);
+                    var moduleTree = new Models.ModuleTreeItem(module);
 
                     if(module.Submodules is null)
                     {
@@ -389,26 +392,26 @@ public class DevicesViewModel(ISettingsService settingsService,
                             {
                                 if (!MasterModules.Any(a => a.Name == module.CategoryRef))
                                 {
-                                    MasterModules.Add(new Core.Models.ModuleTreeItem(module.CategoryRef)
+                                    MasterModules.Add(new Models.ModuleTreeItem(module.CategoryRef)
                                     {
-                                        SubmodulesCaterogies = [new Core.Models.ModuleTreeItem(module)]
+                                        SubmodulesCaterogies = [new Models.ModuleTreeItem(module)]
                                     });
                                 }
                                 else
                                 {
                                     MasterModules.First(f => f.Name == module.CategoryRef).SubmodulesCaterogies ??= [];
-                                    MasterModules.First(f => f.Name == module.CategoryRef).SubmodulesCaterogies?.Add(new Core.Models.ModuleTreeItem(module));
+                                    MasterModules.First(f => f.Name == module.CategoryRef).SubmodulesCaterogies?.Add(new Models.ModuleTreeItem(module));
                                 }
                             }
                             else
                             {
                                 if (!MasterModules.Any(a => a.Name == module.CategoryRef))
                                 {
-                                    MasterModules.Add(new Core.Models.ModuleTreeItem(module.CategoryRef)
+                                    MasterModules.Add(new Models.ModuleTreeItem(module.CategoryRef)
                                     {
-                                        SubmodulesCaterogies = [new Core.Models.ModuleTreeItem(module.SubCategoryRef)
+                                        SubmodulesCaterogies = [new Models.ModuleTreeItem(module.SubCategoryRef)
                                         {
-                                            SubmodulesCaterogies = [new Core.Models.ModuleTreeItem(module)]
+                                            SubmodulesCaterogies = [new Models.ModuleTreeItem(module)]
                                         }]
                                     });
                                 }
@@ -417,15 +420,15 @@ public class DevicesViewModel(ISettingsService settingsService,
                                     MasterModules.First(f => f.Name == module.CategoryRef).SubmodulesCaterogies ??= [];
                                     if (!MasterModules.First(f => f.Name == module.CategoryRef).SubmodulesCaterogies!.Any(a => a.Name == module.SubCategoryRef))
                                     {
-                                        MasterModules.First(f => f.Name == module.CategoryRef).SubmodulesCaterogies!.Add(new Core.Models.ModuleTreeItem(module.SubCategoryRef)
+                                        MasterModules.First(f => f.Name == module.CategoryRef).SubmodulesCaterogies!.Add(new Models.ModuleTreeItem(module.SubCategoryRef)
                                         {
-                                            SubmodulesCaterogies = [new Core.Models.ModuleTreeItem(module)]
+                                            SubmodulesCaterogies = [new Models.ModuleTreeItem(module)]
                                         });
                                     }
                                     else
                                     {
                                         MasterModules.First(f => f.Name == module.CategoryRef).SubmodulesCaterogies!.First(f => f.Name == module.SubCategoryRef).SubmodulesCaterogies ??= [];
-                                        MasterModules.First(f => f.Name == module.CategoryRef).SubmodulesCaterogies!.First(f => f.Name == module.SubCategoryRef).SubmodulesCaterogies!.Add(new Core.Models.ModuleTreeItem(module));
+                                        MasterModules.First(f => f.Name == module.CategoryRef).SubmodulesCaterogies!.First(f => f.Name == module.SubCategoryRef).SubmodulesCaterogies!.Add(new Models.ModuleTreeItem(module));
                                     }
                                 }
                             }
@@ -440,26 +443,26 @@ public class DevicesViewModel(ISettingsService settingsService,
                                 if (string.IsNullOrEmpty(submodule.CategoryRef))
                                 {
                                     moduleTree.SubmodulesCaterogies ??= [];
-                                    moduleTree.SubmodulesCaterogies.Add(new Core.Models.ModuleTreeItem(submodule));
+                                    moduleTree.SubmodulesCaterogies.Add(new Models.ModuleTreeItem(submodule));
                                 }
                                 else
                                 {
                                     if (string.IsNullOrEmpty(submodule.SubCategoryRef))
                                     {
                                         moduleTree.SubmodulesCaterogies ??= [];
-                                        moduleTree.SubmodulesCaterogies.Add(new Core.Models.ModuleTreeItem(submodule.CategoryRef)
+                                        moduleTree.SubmodulesCaterogies.Add(new Models.ModuleTreeItem(submodule.CategoryRef)
                                         {
-                                            SubmodulesCaterogies = [new Core.Models.ModuleTreeItem(submodule)]
+                                            SubmodulesCaterogies = [new Models.ModuleTreeItem(submodule)]
                                         });
                                     }
                                     else
                                     {
                                         moduleTree.SubmodulesCaterogies ??= [];
-                                        moduleTree.SubmodulesCaterogies.Add(new Core.Models.ModuleTreeItem(submodule.CategoryRef)
+                                        moduleTree.SubmodulesCaterogies.Add(new Models.ModuleTreeItem(submodule.CategoryRef)
                                         {
-                                            SubmodulesCaterogies = [new Core.Models.ModuleTreeItem(submodule.SubCategoryRef)
+                                            SubmodulesCaterogies = [new Models.ModuleTreeItem(submodule.SubCategoryRef)
                                             {
-                                                SubmodulesCaterogies = [new Core.Models.ModuleTreeItem(submodule)]
+                                                SubmodulesCaterogies = [new Models.ModuleTreeItem(submodule)]
                                             }]
                                         });
                                     }
@@ -471,30 +474,30 @@ public class DevicesViewModel(ISettingsService settingsService,
                                 moduleTreeItem.SubmodulesCaterogies ??= [];
                                 if (string.IsNullOrEmpty(submodule.SubCategoryRef))
                                 {
-                                    moduleTreeItem.SubmodulesCaterogies?.Add(new Core.Models.ModuleTreeItem(submodule));
+                                    moduleTreeItem.SubmodulesCaterogies?.Add(new Models.ModuleTreeItem(submodule));
                                 }
                                 else
                                 {
                                     if (!moduleTreeItem.SubmodulesCaterogies.Any(a => a.Name == submodule.SubCategoryRef))
                                     {
-                                        moduleTreeItem.SubmodulesCaterogies.Add(new Core.Models.ModuleTreeItem(submodule.SubCategoryRef)
+                                        moduleTreeItem.SubmodulesCaterogies.Add(new Models.ModuleTreeItem(submodule.SubCategoryRef)
                                         {
-                                            SubmodulesCaterogies = [new Core.Models.ModuleTreeItem(submodule)]
+                                            SubmodulesCaterogies = [new Models.ModuleTreeItem(submodule)]
                                         });
                                     }
                                     else
                                     {
                                         if (string.IsNullOrEmpty(submodule.SubCategoryRef))
                                         {
-                                            moduleTreeItem.SubmodulesCaterogies.Add(new Core.Models.ModuleTreeItem(submodule.SubCategoryRef)
+                                            moduleTreeItem.SubmodulesCaterogies.Add(new Models.ModuleTreeItem(submodule.SubCategoryRef)
                                             {
-                                                SubmodulesCaterogies = [new Core.Models.ModuleTreeItem(submodule)]
+                                                SubmodulesCaterogies = [new Models.ModuleTreeItem(submodule)]
                                             });
                                         }
                                         else
                                         {
                                             moduleTreeItem.SubmodulesCaterogies.First(f => f.Name == submodule.SubCategoryRef).SubmodulesCaterogies ??= [];
-                                            moduleTreeItem.SubmodulesCaterogies.First(f => f.Name == submodule.SubCategoryRef).SubmodulesCaterogies?.Add(new Core.Models.ModuleTreeItem(submodule));
+                                            moduleTreeItem.SubmodulesCaterogies.First(f => f.Name == submodule.SubCategoryRef).SubmodulesCaterogies?.Add(new Models.ModuleTreeItem(submodule));
                                         }
                                     }
                                 }
@@ -641,7 +644,7 @@ public class DevicesViewModel(ISettingsService settingsService,
         CanSaveMasterDevice = /*MasterDeviceSelected?.device?.Editing ==*/ true;
     }
 
-    private async Task OnDeletSlaveDevice(Core.Models.ModuleTreeItem? module)
+    private async Task OnDeletSlaveDevice(Models.ModuleTreeItem? module)
     {
         if (module is null) return;
 
@@ -650,6 +653,8 @@ public class DevicesViewModel(ISettingsService settingsService,
             case Core.Models.ItemState.None:
             case Core.Models.ItemState.Original:
                 module.State = Core.Models.ItemState.Deleted;
+
+                CanSaveMasterDevice = /*MasterDeviceSelected?.device?.Editing ==*/ true;
                 break;
             case Core.Models.ItemState.Created:
                 var diag = await DialogCoordinator.Instance.ShowMessageAsync(this, "Delet module", "Vraiment ?", MessageDialogStyle.AffirmativeAndNegative);
@@ -674,9 +679,6 @@ public class DevicesViewModel(ISettingsService settingsService,
                 module.State = module.OriginalState;
                 break;
         }
-
-
-        
     }
 
     private void OnSaveMasterDevice()
@@ -684,7 +686,7 @@ public class DevicesViewModel(ISettingsService settingsService,
         if(MasterDeviceSelected is not null)
         {
             //MasterDeviceSelected.device.EndEdit();
-            foreach (var dap in MasterDeviceSelected.device!.DeviceAccessPoints) 
+            foreach (var dap in MasterDeviceSelected.Device!.DeviceAccessPoints) 
             {
                 if(dap.Id == MasterDeviceSelected.DeviceAccessId)
                 {
@@ -692,14 +694,20 @@ public class DevicesViewModel(ISettingsService settingsService,
                 }
             }
             //MasterDeviceSelected.device!.Description = MasterDeviceSelected.Description;
-            (var localDirectory, var fileName, var graphicsPath) = xDocumentService.Create(MasterDeviceSelected.device as Core.PN.Models.Device, "");
+            (var localDirectory, var fileName, var graphicsPath) = xDocumentService.Create(MasterDeviceSelected.Device as Core.PN.Models.Device, "");
 
             if(!string.IsNullOrEmpty(localDirectory) && !string.IsNullOrEmpty(fileName))
             {
+                string directory;
+                if (Directory.Exists(settingsService.ExportFolder))
+                    directory = settingsService.ExportFolder;
+                else
+                    directory = settingsService.DefaultFolder; ;
+
                 var directoryFolder = new OpenFolderDialog
                 {
                     //Filter = "GSDML file (*.xml)|*.xml",
-                    InitialDirectory = settingsService.ExportFolder,
+                    InitialDirectory = directory,
                     Multiselect = false
                 };
 
@@ -735,5 +743,32 @@ public class DevicesViewModel(ISettingsService settingsService,
         {
             item.IsVisible = !item.IsVisible;
         }
+    }
+
+    private void OnExport(DeviceItem? item)
+    {
+
+        //if (!string.IsNullOrEmpty(localDirectory) && !string.IsNullOrEmpty(fileName))
+        //{
+        //    string directory;
+        //    if (Directory.Exists(settingsService.ExportFolder))
+        //        directory = settingsService.ExportFolder;
+        //    else
+        //        directory = settingsService.DefaultFolder; ;
+
+        //    var directoryFolder = new OpenFolderDialog
+        //    {
+        //        //Filter = "GSDML file (*.xml)|*.xml",
+        //        InitialDirectory = directory,
+        //        Multiselect = false
+        //    };
+
+        //    if (directoryFolder.ShowDialog() == true)
+        //    {
+        //        settingsService.SaveExportFolder(directoryFolder.FolderName);
+
+        //        zipperService.Zipper(localDirectory, fileName, directoryFolder.FolderName, graphicsPath);
+        //    }
+        //}
     }
 }

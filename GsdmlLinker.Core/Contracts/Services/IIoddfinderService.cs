@@ -12,7 +12,7 @@ public interface IIoddfinderService
 
     public Task<string> GetDeviceIcon(long productVariantId);
 
-    public Task<byte[]?> GetIoddZipAsync(int vendorId, int ioddId);
+    public Task<byte[]?> GetIoddZipAsync(uint vendorId, long ioddId);
 
 
 

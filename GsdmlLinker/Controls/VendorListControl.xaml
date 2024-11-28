@@ -18,17 +18,24 @@
                Style="{StaticResource MahApps.Styles.TreeView.Virtualized}">
         <TreeView.Resources>
             <DataTemplate DataType="{x:Type model:DeviceItem}" x:Key="ReleaseTemplate">
-                <Grid HorizontalAlignment="Stretch">
+                <Grid HorizontalAlignment="Stretch" Margin="{StaticResource SmallMargin}" ToolTip="{Binding Description}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <!--<TextBlock Text="{Binding Name}"/>-->
-                    <TextBlock Grid.Column="1" Text="{Binding Version, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}" ToolTip="{Binding Description}"
-                               Style="{StaticResource BaseTextBlockStyle}" Margin="{StaticResource XSmallMargin}" VerticalAlignment="Bottom"/>
-                    <!--<TextBlock Grid.Column="1" Text="{Binding ProfileVersion}" VerticalAlignment="Bottom"/>-->
-                    <TextBlock Text="{Binding ShortDescription}" TextWrapping="WrapWithOverflow"
-                               Style="{StaticResource SubtitleTextStyle}" Margin="{StaticResource SmallMargin}"/>
+                    <TextBlock Grid.Column="0" Text="{Binding ShortDescription}" TextWrapping="WrapWithOverflow"
+                               Style="{StaticResource ListTitleStyle}" Margin="{StaticResource XSmallLeftRightMargin}"/>
+                    <TextBlock Grid.Column="0" Grid.Row="1" Text="{Binding Version, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}" 
+                               Style="{StaticResource BodyTextStyle}" Margin="{StaticResource MediumLeftMargin}" VerticalAlignment="Bottom"/>
+                    <Button Grid.Column="1" Grid.RowSpan="2" 
+                            Command="{Binding DataContext.ExportDeviceCommand, RelativeSource={RelativeSource AncestorType=TreeView, Mode=FindAncestor}}" CommandParameter="{Binding}"
+                            Style="{StaticResource MahApps.Styles.Button.Flat.Accent}" ToolTip="Export">
+                        <TextBlock Text="&#xEDE1;" FontSize="16" FontFamily="Segoe MDL2 Assets"/>
+                    </Button>
                 </Grid>
             </DataTemplate>
             <HierarchicalDataTemplate DataType="{x:Type model:DeviceItem}" ItemsSource="{Binding Releases}" ItemTemplate="{StaticResource ReleaseTemplate}">
@@ -41,16 +48,15 @@
                     <StackPanel Grid.Column="1" Orientation="Vertical" Margin="{StaticResource SmallLeftMargin}">
                         <Grid>
                             <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="{Binding Name}" Style="{StaticResource ListSubTitleStyle}"/>
-                            <TextBlock Grid.Column="1" Text="{Binding ProfileVersion}" VerticalAlignment="Bottom"/>
+                            <TextBlock Grid.Column="0" Text="{Binding ProfileVersion}" VerticalAlignment="Bottom"/>
+                            <TextBlock Grid.Column="1" Text="{Binding Name}" Style="{StaticResource ListSubTitleStyle}"/>
                         </Grid>
-
                         <TextBlock Text="{Binding Description}" TextWrapping="WrapWithOverflow" 
-                                   Visibility="{Binding Description, Converter={StaticResource StringEmptyToVisibilityConverter}}"
-                                   />
+                                   Visibility="{Binding Description, Converter={StaticResource StringEmptyToVisibilityConverter}}" />
                     </StackPanel>
                 </Grid>
             </HierarchicalDataTemplate>

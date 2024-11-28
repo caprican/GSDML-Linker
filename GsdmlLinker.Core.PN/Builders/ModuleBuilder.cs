@@ -1,5 +1,7 @@
 ﻿using GsdmlLinker.Core.PN.Contracts.Builders;
 
+using Newtonsoft.Json.Linq;
+
 using GSDML = ISO15745.GSDML;
 
 namespace GsdmlLinker.Core.PN.Builders;
@@ -22,11 +24,11 @@ public abstract class ModuleBuilder(Core.Models.Device masterDevice) : IModuleBu
 
     public abstract void BuildModule(Core.Models.Device device, string indentNumber, string categoryRef, string categoryVendor, string deviceName);
 
-    public abstract GSDML.DeviceProfile.ParameterRecordDataT? BuildRecordParameter(string textId, uint index, ushort transfertSequence, IGrouping<ushort, Core.Models.DeviceParameter>? variable, Dictionary<string, string>? externalTextList);
+    public abstract GSDML.DeviceProfile.ParameterRecordDataT? BuildRecordParameter(string textId, uint index, ushort transfertSequence, IGrouping<ushort, Core.Models.DeviceParameter>? variable, Dictionary<string, Core.Models.ExternalTextItem>? externalTextList);
 
     public abstract void DeletModule(string moduleID);
 
-    internal protected (uint, GSDML.DeviceProfile.RecordDataRefT) BoolToRecordDataRef(string textId, uint byteOffset, Core.Models.DeviceParameter parameter, Dictionary<string, string>? IOLExternalText)
+    internal protected (uint, GSDML.DeviceProfile.RecordDataRefT) BoolToRecordDataRef(string textId, uint byteOffset, Core.Models.DeviceParameter parameter, Dictionary<string, Core.Models.ExternalTextItem>? IOLExternalText)
     {
         uint byteCount = 1;
 
@@ -67,13 +69,10 @@ public abstract class ModuleBuilder(Core.Models.Device masterDevice) : IModuleBu
                     TextId = txtId,
                     Content = $"{Convert.ToInt16(bool.Parse(value.Key))}"
                 });
-                masterDevice.ExternalTextList?.Add(txtId, value.Value);
+                ExternalTextSet(txtId, value.Value);
             }
 
-            if (((Models.Device)masterDevice).ValueList?.ContainsKey(vtTextId) != true)
-            {
-                ((Models.Device)masterDevice).ValueList?.Add(vtTextId, [.. values]);
-            }
+            ValueSet(vtTextId, values);
 
             boolDataRef.ValueItemTarget = vtTextId;
             //boolDataRef.AllowedValues = string.Join(" ", parameter.Values.Select(s => s.Key));
@@ -105,7 +104,7 @@ public abstract class ModuleBuilder(Core.Models.Device masterDevice) : IModuleBu
         return boolParameter;
     }
 
-    internal protected (uint, GSDML.DeviceProfile.RecordDataRefT) IntegerToRecordDataRef(string textId, uint byteOffset, Core.Models.DeviceParameter parameter, Dictionary<string, string>? IOLExternalText)
+    internal protected (uint, GSDML.DeviceProfile.RecordDataRefT) IntegerToRecordDataRef(string textId, uint byteOffset, Core.Models.DeviceParameter parameter, Dictionary<string, Core.Models.ExternalTextItem>? IOLExternalText)
     {
         uint byteCount = 0;
         var recordDataType = GSDML.Primitives.RecordDataRefTypeEnumT.Bit;
@@ -173,13 +172,11 @@ public abstract class ModuleBuilder(Core.Models.Device masterDevice) : IModuleBu
                     TextId = txtId,
                     Content = $"{value.Key}"
                 });
-                masterDevice.ExternalTextList?.Add(txtId, value.Value);
+
+                ExternalTextSet(txtId, value.Value);
             }
 
-            if (((Models.Device)masterDevice).ValueList?.ContainsKey(vtTextId) != true)
-            {
-                ((Models.Device)masterDevice).ValueList?.Add(vtTextId, [.. values]);
-            }
+            ValueSet(vtTextId, values);
 
             intDataRef.ValueItemTarget = vtTextId;
             intDataRef.AllowedValues = string.Join(" ", parameter.Values.Select(s => s.Key));
@@ -214,7 +211,7 @@ public abstract class ModuleBuilder(Core.Models.Device masterDevice) : IModuleBu
         };
     }
 
-    protected internal (uint, GSDML.DeviceProfile.RecordDataRefT) FloatToRecordDataRef(string textId, uint byteOffset, Core.Models.DeviceParameter parameter, Dictionary<string, string>? IOLExternalText)
+    protected internal (uint, GSDML.DeviceProfile.RecordDataRefT) FloatToRecordDataRef(string textId, uint byteOffset, Core.Models.DeviceParameter parameter, Dictionary<string, Core.Models.ExternalTextItem>? IOLExternalText)
     {
         uint byteCount;
         GSDML.Primitives.RecordDataRefTypeEnumT recordDataType;
@@ -241,7 +238,7 @@ public abstract class ModuleBuilder(Core.Models.Device masterDevice) : IModuleBu
         return (byteCount, floatDataRef);
     }
 
-    protected internal (uint, GSDML.DeviceProfile.RecordDataRefT) StringToRecordDataRef(string textId, uint byteOffset, Core.Models.DeviceParameter parameter, Dictionary<string, string>? IOLExternalText)
+    protected internal (uint, GSDML.DeviceProfile.RecordDataRefT) StringToRecordDataRef(string textId, uint byteOffset, Core.Models.DeviceParameter parameter, Dictionary<string, Core.Models.ExternalTextItem>? IOLExternalText)
     {
         uint byteCount = parameter.FixedLength;
         string defString = string.Empty;
@@ -282,8 +279,8 @@ public abstract class ModuleBuilder(Core.Models.Device masterDevice) : IModuleBu
 
     internal GSDML.DeviceProfile.ModuleInfoT ModuleInfo(string categoryRef, string subCategoryRef, string identNumber, string name)
     {
-        masterDevice.ExternalTextList?.TryAdd($"IOLD_ProductName_{identNumber}", name);
-
+        var txtId = $"IOLD_ProductName_{identNumber}";
+        ExternalTextSet(txtId, name);
         //ProductId = device.Description.Variants![0].ProductId;
         //DocumentVersion = device.DocumentVersion!;
 
@@ -291,8 +288,8 @@ public abstract class ModuleBuilder(Core.Models.Device masterDevice) : IModuleBu
         {
             CategoryRef = categoryRef,
             SubCategory1Ref = subCategoryRef,
-            Name = new GSDML.Primitives.ExternalTextRefT { TextId = $"IOLD_ProductName_{identNumber}" },
-            InfoText = new GSDML.Primitives.ExternalTextRefT { TextId = $"IOLD_ProductName_{identNumber}" },
+            Name = new GSDML.Primitives.ExternalTextRefT { TextId = txtId },
+            InfoText = new GSDML.Primitives.ExternalTextRefT { TextId = txtId },
             OrderNumber = new GSDML.Primitives.TokenParameterT { Value = name }
         };
         return moduleInfo;
@@ -315,4 +312,25 @@ public abstract class ModuleBuilder(Core.Models.Device masterDevice) : IModuleBu
 
             _ => throw new NotImplementedException()
         };
+
+    internal protected void ExternalTextSet(string id, string value)
+    {
+        if (masterDevice.ExternalTextList?.ContainsKey(id) != true)
+            masterDevice.ExternalTextList?.TryAdd(id, new(id, value) { State = Core.Models.ItemState.Created });
+        else
+            masterDevice.ExternalTextList[id] = new(id, value) { State = Core.Models.ItemState.Modified };
+    }
+
+    internal protected void ValueSet(string id, IEnumerable<GSDML.DeviceProfile.Assign> assigns)
+    {
+        var valueList = ((Models.Device)masterDevice).ValueList;
+        if (valueList?.ContainsKey(id) != true)
+        {
+            valueList?.TryAdd(id, new(id, [.. assigns]) { State = Core.Models.ItemState.Created });
+        }
+        else
+        {
+            valueList[id] = new(id, [.. assigns]) { State = Core.Models.ItemState.Modified };
+        }
+    }
 }

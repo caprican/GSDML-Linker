@@ -1,15 +1,14 @@
-﻿
-using System.ComponentModel;
+﻿using System.ComponentModel;
 
 using GsdmlLinker.Core.Contracts;
 
 namespace GsdmlLinker.Core.Models;
 
-public abstract record Device : IEditableObject, IMementoable
+public abstract record Device : /*IEditableObject,*/ IMementoable
 {
     private Device? Original;
 
-    public bool Editing { get; set; } = false;
+    //public bool Editing { get; set; } = false;
 
     public string VendorId { get; init; } = string.Empty;
     public string DeviceId { get; init; } = string.Empty;
@@ -33,8 +32,8 @@ public abstract record Device : IEditableObject, IMementoable
 
     public string? Description { get; set; }
 
-    public Dictionary<string, string>? GraphicsList { get; init; }
-    public Dictionary<string, string>? ExternalTextList { get; init; }
+    public Dictionary<string, GraphicItem>? GraphicsList { get; init; }
+    public Dictionary<string, ExternalTextItem>? ExternalTextList { get; init; }
 
     public List<Module> Modules { get; init; } = [];
 
@@ -43,20 +42,20 @@ public abstract record Device : IEditableObject, IMementoable
         FilePath = filePath;
     }
 
-    public void BeginEdit()
-    {
-        Original = this;
-        Editing = true;
-    }
+    //public void BeginEdit()
+    //{
+    //    Original = this;
+    //    Editing = true;
+    //}
 
-    public void CancelEdit()
-    {
-        Editing = false;
+    //public void CancelEdit()
+    //{
+    //    Editing = false;
 
-    }
+    //}
 
-    public void EndEdit()
-    {
-        Editing = false;
-    }
+    //public void EndEdit()
+    //{
+    //    Editing = false;
+    //}
 }

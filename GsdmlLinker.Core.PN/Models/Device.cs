@@ -18,16 +18,12 @@ public abstract record Device : Core.Models.Device
     public List<string> IdentNumberList { get; set; } = [];
     public List<ModuleItem>? ModuleList { get; set; }
     public List<SubmoduleItem>? SubmoduleList { get; set; }
-
-    public Dictionary<string, string>? CategoryList { get; init; }
-    public Dictionary<string, List<GSDML.DeviceProfile.Assign>>? ValueList { get; init; }
+    public Dictionary<string, CategoryItem>? CategoryList { get; init; }
+    public Dictionary<string, ValueItem>? ValueList { get; init; }
 
     public Device(string filePath, Match? match) : base (filePath)
     {
-        if (match is null)
-        {
-            return;
-        }
+        if (match is null) return;
 
         //GSDML-V<Version>-<NomFabricant>-<NomProduit>-<Date>(-<heure>)?(-<langue>)?(-<Commentaire>)?
         SchematicVersion = match.Groups[1].Value;
@@ -43,15 +39,6 @@ public abstract record Device : Core.Models.Device
 
         var serializer = new XmlSerializer(typeof(GSDML.DeviceProfile.ISO15745Profile));
 
-        //if (string.IsNullOrEmpty(filePath))
-        //{
-        //    if (xDocument is not null)
-        //    {
-        //        device = serializer.Deserialize(xDocument.CreateReader()) as GSDML.DeviceProfile.ISO15745Profile;
-        //    }
-        //}
-        //else
-        //{
         using var reader = XmlReader.Create(filePath);
         var device = serializer.Deserialize(reader) as GSDML.DeviceProfile.ISO15745Profile;
 
@@ -64,7 +51,10 @@ public abstract record Device : Core.Models.Device
             ExternalTextList = [];
             foreach (var extText in extTexts)
             {
-                ExternalTextList.Add(extText.TextId!, extText.Value ?? string.Empty);
+                if(!string.IsNullOrEmpty(extText?.TextId) && extText?.Value is not null)
+                {
+                    ExternalTextList.Add(extText.TextId, new(extText.TextId, extText.Value));
+                }
             }
         }
         VendorName = device?.ProfileBody?.DeviceIdentity?.VendorName?.Value ?? string.Empty;
@@ -76,7 +66,7 @@ public abstract record Device : Core.Models.Device
             {
                 if (!string.IsNullOrEmpty(item.ID) && !string.IsNullOrEmpty(item.TextId))
                 {
-                    CategoryList.Add(item.ID, item.TextId);
+                    CategoryList.Add(item.ID, new(item.ID, item.TextId));
                 }
             }
         }
@@ -88,7 +78,7 @@ public abstract record Device : Core.Models.Device
             {
                 if (item.GraphicFile is string gFile && !string.IsNullOrEmpty(item.ID))
                 {
-                    GraphicsList.Add(item.ID, gFile);
+                    GraphicsList.Add(item.ID, new Core.Models.GraphicItem(item.ID, gFile));
                 }
             }
         }
@@ -100,7 +90,7 @@ public abstract record Device : Core.Models.Device
             {
                 if(value.Assignments is GSDML.DeviceProfile.Assign[] assigments && !string.IsNullOrEmpty(value.ID))
                 {
-                    ValueList.Add(value.ID, assigments.ToList());
+                    ValueList.Add(value.ID, new(value.ID, assigments));
                 }
             }
         }
@@ -127,7 +117,7 @@ public abstract record Device : Core.Models.Device
         {
             if(!string.IsNullOrEmpty(deviceIdentity.InfoText?.TextId) && ExternalTextList is not null)
             {
-                Description = ExternalTextList?[deviceIdentity.InfoText.TextId];
+                Description = ExternalTextList?[deviceIdentity.InfoText.TextId].Item;
             }
 
             if (device?.ProfileBody?.ApplicationProcess?.DeviceAccessPointList is GSDML.DeviceProfile.DeviceAccessPointItemT[] deviceAccessPoints)
@@ -146,13 +136,13 @@ public abstract record Device : Core.Models.Device
                                 case GSDML.Primitives.GraphicsTypeEnumT.DeviceSymbol:
                                     if (!string.IsNullOrEmpty(graphic.GraphicItemTarget) && GraphicsList is not null)
                                     {
-                                        symbolPath = Path.Combine(folderPath, GraphicsList[graphic.GraphicItemTarget]) + ".bmp";
+                                        symbolPath = Path.Combine(folderPath, GraphicsList[graphic.GraphicItemTarget].Item) + ".bmp";
                                     }
                                     break;
                                 case GSDML.Primitives.GraphicsTypeEnumT.DeviceIcon:
                                     if (!string.IsNullOrEmpty(graphic.GraphicItemTarget) && GraphicsList is not null)
                                     {
-                                        iconPath = Path.Combine(folderPath, GraphicsList[graphic.GraphicItemTarget]) + ".bmp";
+                                        iconPath = Path.Combine(folderPath, GraphicsList[graphic.GraphicItemTarget].Item) + ".bmp";
                                     }
                                     break;
                             }
@@ -182,8 +172,8 @@ public abstract record Device : Core.Models.Device
                                     var vendorRecord = (GSDML.DeviceProfile.RecordDataRefT?)ProfileParameter?.Items?.FirstOrDefault(param => param is GSDML.DeviceProfile.RecordDataRefT recordData && recordData.ByteOffset == VendorIdSubIndex);
                                     var deviceRecord = (GSDML.DeviceProfile.RecordDataRefT?)ProfileParameter?.Items?.FirstOrDefault(param => param is GSDML.DeviceProfile.RecordDataRefT recordData && recordData.ByteOffset == DeviceIdSubIndex);
 
-                                    submodule.Name = (!string.IsNullOrEmpty(submodule.ModuleInfo?.Name?.TextId) ? ExternalTextList?[submodule.ModuleInfo.Name.TextId] : string.Empty) ?? string.Empty;
-                                    submodule.Description = !string.IsNullOrEmpty(submodule.ModuleInfo?.InfoText?.TextId) ? ExternalTextList?[submodule.ModuleInfo.InfoText.TextId] : string.Empty;
+                                    submodule.Name = (!string.IsNullOrEmpty(submodule.ModuleInfo?.Name?.TextId) ? ExternalTextList?[submodule.ModuleInfo.Name.TextId].Item : string.Empty) ?? string.Empty;
+                                    submodule.Description = !string.IsNullOrEmpty(submodule.ModuleInfo?.InfoText?.TextId) ? ExternalTextList?[submodule.ModuleInfo.InfoText.TextId].Item : string.Empty;
                                     submodule.CategoryRef = GetCategoryText(submodule.ModuleInfo?.CategoryRef);
                                     submodule.SubCategoryRef = GetCategoryText(submodule.ModuleInfo?.SubCategory1Ref);
                                     submodule.VendorId = GetModuleVendorId(submodule.RecordDataList?.ParameterRecordDataItem);
@@ -192,8 +182,8 @@ public abstract record Device : Core.Models.Device
                                 }
                             }
 
-                            module!.Name = (!string.IsNullOrEmpty(module!.ModuleInfo?.Name?.TextId) ? ExternalTextList?[module.ModuleInfo.Name.TextId] : string.Empty) ?? string.Empty;
-                            module.Description = !string.IsNullOrEmpty(module.ModuleInfo?.InfoText?.TextId) ? ExternalTextList?[module.ModuleInfo.InfoText.TextId] : string.Empty;
+                            module!.Name = (!string.IsNullOrEmpty(module!.ModuleInfo?.Name?.TextId) ? ExternalTextList?[module.ModuleInfo.Name.TextId].Item : string.Empty) ?? string.Empty;
+                            module.Description = !string.IsNullOrEmpty(module.ModuleInfo?.InfoText?.TextId) ? ExternalTextList?[module.ModuleInfo.InfoText.TextId].Item : string.Empty;
                             module.CategoryRef = GetCategoryText(module.ModuleInfo?.CategoryRef);
                             module.SubCategoryRef = GetCategoryText(module.ModuleInfo?.SubCategory1Ref);
                             module.VendorId = GetModuleVendorId(module.VirtualSubmoduleList?.First().RecordDataList?.ParameterRecordDataItem);
@@ -206,8 +196,8 @@ public abstract record Device : Core.Models.Device
                     DeviceAccessPoints.Add(new Core.Models.DeviceAccessPoint
                     {
                         Id = dap.ID!,
-                        Name = !string.IsNullOrEmpty(dap.ModuleInfo?.Name?.TextId) && ExternalTextList is not null ? ExternalTextList[dap.ModuleInfo.Name.TextId] : string.Empty,
-                        Description = !string.IsNullOrEmpty(dap.ModuleInfo?.InfoText?.TextId) && ExternalTextList is not null ? ExternalTextList[dap.ModuleInfo.InfoText.TextId] : string.Empty,
+                        Name = !string.IsNullOrEmpty(dap.ModuleInfo?.Name?.TextId) && ExternalTextList is not null ? ExternalTextList[dap.ModuleInfo.Name.TextId].Item : string.Empty,
+                        Description = !string.IsNullOrEmpty(dap.ModuleInfo?.InfoText?.TextId) && ExternalTextList is not null ? ExternalTextList[dap.ModuleInfo.InfoText.TextId].Item : string.Empty,
                         ProductId = dap.ModuleInfo?.OrderNumber?.Value,
                         DNS = dap.DNS_CompatibleName,
                         PhysicalSlots = dap.PhysicalSlots,
@@ -224,70 +214,6 @@ public abstract record Device : Core.Models.Device
                 }
             }
         }
-
-        //if (device?.ProfileBody?.ApplicationProcess?.ModuleList is not null) 
-        //{
-        //    foreach (var module in device.ProfileBody.ApplicationProcess.ModuleList)
-        //    {
-        //        ModuleList.Add(module);
-        //        //var ProfileParameter = module.RecordDataList?.ParameterRecordDataItem?.FirstOrDefault(param => param.Index == ProfileParameterIndex);
-        //        //var vendorRecord = (GSDML.DeviceProfile.RecordDataRefT?)ProfileParameter?.Items?.FirstOrDefault(param => param is GSDML.DeviceProfile.RecordDataRefT recordData && recordData.ByteOffset == VendorIdSubIndex);
-        //        //var deviceRecord = (GSDML.DeviceProfile.RecordDataRefT?)ProfileParameter?.Items?.FirstOrDefault(param => param is GSDML.DeviceProfile.RecordDataRefT recordData && recordData.ByteOffset == DeviceIdSubIndex);
-
-        //        Modules.Add(new Core.Models.Module
-        //        {
-        //            Name = (!string.IsNullOrEmpty(module.ModuleInfo?.Name?.TextId) ? ExternalTextList?[module.ModuleInfo.Name.TextId] : string.Empty) ?? string.Empty,
-        //            Description = !string.IsNullOrEmpty(module.ModuleInfo?.InfoText?.TextId) ? ExternalTextList?[module.ModuleInfo.InfoText.TextId] : string.Empty,
-        //            VendorName = module.ModuleInfo?.VendorName?.Value ?? string.Empty,
-        //            OrderNumber = module.ModuleInfo?.OrderNumber?.Value ?? string.Empty,
-        //            HardwareRelease = module.ModuleInfo?.HardwareRelease?.Value ?? string.Empty,
-        //            SoftwareRelease = module.ModuleInfo?.SoftwareRelease?.Value ?? string.Empty,
-        //            CategoryRef = module.ModuleInfo?.CategoryRef ?? string.Empty,
-        //            SubCategoryRef = module.ModuleInfo?.SubCategory1Ref ?? string.Empty,
-
-        //            //VendorId = Convert.ToUInt16(vendorRecord?.DefaultValue),
-        //            //DeviceId = Convert.ToUInt32(deviceRecord?.DefaultValue),
-        //            ProfinetDeviceId = module.ID
-        //        });
-
-
-        //        if (module.UseableSubmodules is not null && device?.ProfileBody?.ApplicationProcess?.SubmoduleList is not null)
-        //        {
-        //            foreach (var submodule in module.UseableSubmodules)
-        //            {
-        //                UseableSubmodules.Add(submodule);
-
-        //                var subItem = device.ProfileBody.ApplicationProcess.SubmoduleList.FirstOrDefault(f => f.ID == submodule.SubmoduleItemTarget) as GSDML.DeviceProfile.SubmoduleItemT;
-        //                if (subItem is not null)
-        //                {
-        //                    SubmoduleList.Add(subItem);
-
-        //                    var ProfileParameter = subItem.RecordDataList?.ParameterRecordDataItem?.FirstOrDefault(param => param.Index == ProfileParameterIndex);
-        //                    //var vendorRecord = (GSDML.DeviceProfile.RecordDataRefT?)ProfileParameter?.Items?.FirstOrDefault(param => param is GSDML.DeviceProfile.RecordDataRefT recordData && recordData.ByteOffset == VendorIdSubIndex);
-        //                    //var deviceRecord = (GSDML.DeviceProfile.RecordDataRefT?)ProfileParameter?.Items?.FirstOrDefault(param => param is GSDML.DeviceProfile.RecordDataRefT recordData && recordData.ByteOffset == DeviceIdSubIndex);
-
-        //                    Modules.Add(new Core.Models.Module
-        //                    {
-        //                        Name = (!string.IsNullOrEmpty(subItem.ModuleInfo?.Name?.TextId) ? ExternalTextList?[subItem.ModuleInfo.Name.TextId] : string.Empty) ?? string.Empty,
-        //                        Description = !string.IsNullOrEmpty(subItem.ModuleInfo?.InfoText?.TextId) ? ExternalTextList?[subItem.ModuleInfo.InfoText.TextId] : string.Empty,
-        //                        VendorName = subItem.ModuleInfo?.VendorName?.Value ?? string.Empty,
-        //                        OrderNumber = subItem.ModuleInfo?.OrderNumber?.Value ?? string.Empty,
-        //                        HardwareRelease = subItem.ModuleInfo?.HardwareRelease?.Value ?? string.Empty,
-        //                        SoftwareRelease = subItem.ModuleInfo?.SoftwareRelease?.Value ?? string.Empty,
-        //                        CategoryRef = subItem.ModuleInfo?.CategoryRef ?? string.Empty,
-        //                        SubCategoryRef = subItem.ModuleInfo?.SubCategory1Ref ?? string.Empty,
-
-        //                        //VendorId = Convert.ToUInt16(vendorRecord?.DefaultValue),
-        //                        //DeviceId = Convert.ToUInt32(deviceRecord?.DefaultValue),
-        //                        ProfinetDeviceId = subItem.ID
-        //                    });
-        //                }
-        //            }
-        //        }
-        //    }
-        //}
-
-        //}
 
         if (device?.ProfileBody?.ApplicationProcess?.ModuleList is not null)
         {
@@ -329,8 +255,8 @@ public abstract record Device : Core.Models.Device
         if (string.IsNullOrEmpty(categoryId)) return string.Empty;
 
         var category = CategoryList?[categoryId];
-        if(string.IsNullOrEmpty(category)) return string.Empty;
+        if(string.IsNullOrEmpty(category?.Item)) return string.Empty;
 
-        return ExternalTextList?[category] ?? string.Empty;
+        return ExternalTextList?[category.Item].Item ?? string.Empty;
     }
 }

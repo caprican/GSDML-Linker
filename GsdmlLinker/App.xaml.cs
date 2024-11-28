@@ -89,6 +89,12 @@ public partial class App : Application
         services.AddTransient<IoddfinderViewModel>();
         services.AddTransient<IoddfinderPage>();
 
+        services.AddTransient<IOLinkDeviceViewModel>();
+        services.AddTransient<IOLinkDevicePage>();
+
+        services.AddTransient<ProfinetDeviceViewModel>();
+        services.AddTransient<ProfinetDevicePage>();
+
         services.AddTransient<SettingsViewModel>();
         services.AddTransient<SettingsPage>();
 

@@ -26,38 +26,36 @@ public class ShellViewModel(INavigationService navigationService,
     private readonly Core.Models.AppConfig appConfig = appConfig.Value;
     private readonly string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
 
-    private HamburgerMenuItem? _selectedMenuItem;
-    private HamburgerMenuItem? _selectedOptionsMenuItem;
+    private HamburgerMenuItem? selectedMenuItem;
+    private HamburgerMenuItem? selectedOptionsMenuItem;
     private RelayCommand? goBackCommand;
     private RelayCommand? saveCommand;
     private RelayCommand? loadCommand;
-    private ICommand? _menuItemInvokedCommand;
-    private ICommand? _optionsMenuItemInvokedCommand;
-    private ICommand? _loadedCommand;
-    private ICommand? _unloadedCommand;
+    private ICommand? menuItemInvokedCommand;
+    private ICommand? optionsMenuItemInvokedCommand;
+    private ICommand? loadedCommand;
+    private ICommand? unloadedCommand;
 
     private ICommand? addDeviceCommand;
 
-
     public HamburgerMenuItem? SelectedMenuItem
     {
-        get { return _selectedMenuItem; }
-        set { SetProperty(ref _selectedMenuItem, value); }
+        get { return selectedMenuItem; }
+        set { SetProperty(ref selectedMenuItem, value); }
     }
 
     public HamburgerMenuItem? SelectedOptionsMenuItem
     {
-        get { return _selectedOptionsMenuItem; }
-        set { SetProperty(ref _selectedOptionsMenuItem, value); }
+        get { return selectedOptionsMenuItem; }
+        set { SetProperty(ref selectedOptionsMenuItem, value); }
     }
 
     public ObservableCollection<HamburgerMenuItem> MenuItems { get; } =
     [
-        new HamburgerMenuGlyphItem() { Label = Resources.ShellDevicesPage, Glyph = "\uE7F7", TargetPageType = typeof(DevicesViewModel) },
-        //new HamburgerMenuIconItem() {Label = Resources.ShellDevicesPage, Icon = "/Assets/iolink.png" , TargetPageType = typeof(DevicesViewModel)},
+        new HamburgerMenuGlyphItem() { Label = Resources.ShellDevicesPage, Glyph = "\uE968", TargetPageType = typeof(DevicesViewModel) },
         new HamburgerMenuGlyphItem() { Label = Resources.ShellDevicesPage, Glyph = "\uE721", TargetPageType = typeof(IoddfinderViewModel) },
-        //new HamburgerMenuGlyphItem() { Label = Resources.ShellProfinetDevicePage, Glyph = "\uE7F7", TargetPageType = typeof(ProfinetDeviceViewModel) },
-        //new HamburgerMenuGlyphItem() { Label = Resources.ShellIOLinkDevicePage, Glyph = "\uED10", TargetPageType = typeof(IOLinkDeviceViewModel) },
+        new HamburgerMenuIconItem() { Label = Resources.ShellProfinetDevicePage, Icon = "/Assets/profinet.png", TargetPageType = typeof(ProfinetDeviceViewModel) },
+        new HamburgerMenuIconItem() { Label = Resources.ShellIOLinkDevicesPage, Icon = "/Assets/io-link.png" , TargetPageType = typeof(IOLinkDeviceViewModel) },
     ];
 
     public ObservableCollection<HamburgerMenuItem> OptionMenuItems { get; } =
@@ -67,10 +65,10 @@ public class ShellViewModel(INavigationService navigationService,
 
     public RelayCommand GoBackCommand => goBackCommand ??= new RelayCommand(OnGoBack, CanGoBack);
 
-    public ICommand MenuItemInvokedCommand => _menuItemInvokedCommand ??= new RelayCommand(OnMenuItemInvoked);
-    public ICommand OptionsMenuItemInvokedCommand => _optionsMenuItemInvokedCommand ??= new RelayCommand(OnOptionsMenuItemInvoked);
-    public ICommand LoadedCommand => _loadedCommand ??= new RelayCommand(OnLoaded);
-    public ICommand UnloadedCommand => _unloadedCommand ??= new RelayCommand(OnUnloaded);
+    public ICommand MenuItemInvokedCommand => menuItemInvokedCommand ??= new RelayCommand(OnMenuItemInvoked);
+    public ICommand OptionsMenuItemInvokedCommand => optionsMenuItemInvokedCommand ??= new RelayCommand(OnOptionsMenuItemInvoked);
+    public ICommand LoadedCommand => loadedCommand ??= new RelayCommand(OnLoaded);
+    public ICommand UnloadedCommand => unloadedCommand ??= new RelayCommand(OnUnloaded);
 
     public ICommand AddDeviceCommand => addDeviceCommand ??= new RelayCommand(OnAddDevice);
 
