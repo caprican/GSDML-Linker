@@ -40,7 +40,8 @@ public class DevicesViewModel(Contracts.Services.ISettingsService settingsServic
     private ICommand? saveMasterDeviceCommand;
     private ICommand? cancelMasterDeviceCommand;
     private ICommand? viewSubParametersCommand;
-    private ICommand? exportDeviceCommand;
+    private ICommand? exportMasterDeviceCommand;
+    private ICommand? saveExportMasterDeviceCommand;
 
     private ObservableCollection<Models.ModuleTreeItem>? masterModules;
     private Models.DeviceItem? masterDeviceSelected;
@@ -201,7 +202,8 @@ public class DevicesViewModel(Contracts.Services.ISettingsService settingsServic
     public ICommand SaveMasterDeviceCommand => saveMasterDeviceCommand ??= new RelayCommand(OnSaveMasterDevice);
     public ICommand CancelMasterDeviceCommand => cancelMasterDeviceCommand ??= new RelayCommand(OnCancelMasterDevice);
     public ICommand ViewSubParametersCommand => viewSubParametersCommand ??= new RelayCommand<Core.Models.DeviceParameter>(OnViewSubParameters);
-    public ICommand ExportDeviceCommand => exportDeviceCommand ??= new RelayCommand<DeviceItem>(OnExport);
+    public ICommand ExportMasterDeviceCommand => exportMasterDeviceCommand ??= new RelayCommand<DeviceItem>(OnExportMasterDevice);
+    public ICommand SaveExportMasterDeviceCommand => saveExportMasterDeviceCommand ??= new RelayCommand(OnSaveExportMasterDevice);
 
     public void OnNavigatedTo(object parameter)
     {
@@ -555,6 +557,9 @@ public class DevicesViewModel(Contracts.Services.ISettingsService settingsServic
         else if (MasterModuleSelected is not null)
         {
             SlaveDeviceSelected = SlaveVendors.FirstOrDefault(f => f.Id == MasterModuleSelected.VendorId.ToString())?.Devices?.FirstOrDefault(f => f.DeviceId == MasterModuleSelected.DeviceId.ToString());
+
+
+            /// TODO Request
         }
     }
 
@@ -623,7 +628,14 @@ public class DevicesViewModel(Contracts.Services.ISettingsService settingsServic
         if (MasterDeviceSelected is not null && SlaveDeviceSelected is not null)
         {
             var moduleParameters = SlaveParameters.OrderBy(param => param.Index).OrderBy(param => param.Subindex).GroupBy(group => group.Index);
-            moduleBuilder.CreateModule(MasterDeviceSelected, SlaveDeviceSelected, moduleParameters.Where(w => w.First().IsSelected), MasterModuleSelected?.ProfinetDeviceId);
+            if(string.IsNullOrEmpty(MasterModuleSelected?.ProfinetDeviceId))
+            {
+                moduleBuilder.CreateModule(MasterDeviceSelected, SlaveDeviceSelected, moduleParameters.Where(w => w.First().IsSelected));
+            }
+            else
+            {
+                moduleBuilder.ModifiedModule(MasterDeviceSelected, SlaveDeviceSelected, moduleParameters.Where(w => w.First().IsSelected), MasterModuleSelected.ProfinetDeviceId);
+            }
             //caretaker.Backup(MasterDeviceSelected.device);
         }
 
@@ -695,29 +707,6 @@ public class DevicesViewModel(Contracts.Services.ISettingsService settingsServic
             }
             //MasterDeviceSelected.device!.Description = MasterDeviceSelected.Description;
             (var localDirectory, var fileName, var graphicsPath) = xDocumentService.Create(MasterDeviceSelected.Device as Core.PN.Models.Device, "");
-
-            if(!string.IsNullOrEmpty(localDirectory) && !string.IsNullOrEmpty(fileName))
-            {
-                string directory;
-                if (Directory.Exists(settingsService.ExportFolder))
-                    directory = settingsService.ExportFolder;
-                else
-                    directory = settingsService.DefaultFolder; ;
-
-                var directoryFolder = new OpenFolderDialog
-                {
-                    //Filter = "GSDML file (*.xml)|*.xml",
-                    InitialDirectory = directory,
-                    Multiselect = false
-                };
-
-                if (directoryFolder.ShowDialog() == true)
-                {
-                    settingsService.SaveExportFolder(directoryFolder.FolderName);
-
-                    zipperService.Zipper(localDirectory, fileName, directoryFolder.FolderName, graphicsPath);
-                }
-            }
         }
 
         MasterDeviceSelected = null;
@@ -745,30 +734,74 @@ public class DevicesViewModel(Contracts.Services.ISettingsService settingsServic
         }
     }
 
-    private void OnExport(DeviceItem? item)
+    private void OnExportMasterDevice(DeviceItem? item)
     {
+        if(item is null) return;
 
-        //if (!string.IsNullOrEmpty(localDirectory) && !string.IsNullOrEmpty(fileName))
-        //{
-        //    string directory;
-        //    if (Directory.Exists(settingsService.ExportFolder))
-        //        directory = settingsService.ExportFolder;
-        //    else
-        //        directory = settingsService.DefaultFolder; ;
+        (var localDirectory, var fileName, var graphicsPath) = xDocumentService.GetDevicePaths(item.Device as Core.PN.Models.Device, "");
+        if (!string.IsNullOrEmpty(localDirectory) && !string.IsNullOrEmpty(fileName))
+        {
+            string directory;
+            if (Directory.Exists(settingsService.ExportFolder))
+                directory = settingsService.ExportFolder;
+            else
+                directory = settingsService.DefaultFolder;
 
-        //    var directoryFolder = new OpenFolderDialog
-        //    {
-        //        //Filter = "GSDML file (*.xml)|*.xml",
-        //        InitialDirectory = directory,
-        //        Multiselect = false
-        //    };
+            var directoryFolder = new OpenFolderDialog
+            {
+                //Filter = "GSDML file (*.xml)|*.xml",
+                InitialDirectory = directory,
+                Multiselect = false
+            };
 
-        //    if (directoryFolder.ShowDialog() == true)
-        //    {
-        //        settingsService.SaveExportFolder(directoryFolder.FolderName);
+            if (directoryFolder.ShowDialog() == true)
+            {
+                settingsService.SaveExportFolder(directoryFolder.FolderName);
 
-        //        zipperService.Zipper(localDirectory, fileName, directoryFolder.FolderName, graphicsPath);
-        //    }
-        //}
+                zipperService.Zipper(localDirectory, fileName, directoryFolder.FolderName, graphicsPath);
+            }
+        }
+    }
+
+    private void OnSaveExportMasterDevice()
+    {
+        if (MasterDeviceSelected is not null)
+        {
+            //MasterDeviceSelected.device.EndEdit();
+            foreach (var dap in MasterDeviceSelected.Device!.DeviceAccessPoints)
+            {
+                if (dap.Id == MasterDeviceSelected.DeviceAccessId)
+                {
+                    dap.Description = MasterDeviceSelected.Description;
+                }
+            }
+            //MasterDeviceSelected.device!.Description = MasterDeviceSelected.Description;
+            (var localDirectory, var fileName, var graphicsPath) = xDocumentService.Create(MasterDeviceSelected.Device as Core.PN.Models.Device, "");
+
+            if (!string.IsNullOrEmpty(localDirectory) && !string.IsNullOrEmpty(fileName))
+            {
+                string directory;
+                if (Directory.Exists(settingsService.ExportFolder))
+                    directory = settingsService.ExportFolder;
+                else
+                    directory = settingsService.DefaultFolder;
+
+                var directoryFolder = new OpenFolderDialog
+                {
+                    //Filter = "GSDML file (*.xml)|*.xml",
+                    InitialDirectory = directory,
+                    Multiselect = false
+                };
+
+                if (directoryFolder.ShowDialog() == true)
+                {
+                    settingsService.SaveExportFolder(directoryFolder.FolderName);
+
+                    zipperService.Zipper(localDirectory, fileName, directoryFolder.FolderName, graphicsPath);
+                }
+            }
+        }
+
+        MasterDeviceSelected = null;
     }
 }

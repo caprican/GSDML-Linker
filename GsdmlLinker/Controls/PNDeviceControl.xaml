@@ -34,8 +34,6 @@
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="{Binding MasterDeviceSelected.Name}" VerticalAlignment="Center"
                                Style="{DynamicResource SubtitleTextStyle}"/>
-                    <!--<StackPanel Orientation="Vertical">
-                    </StackPanel>-->
                 </StackPanel>
                 <TextBlock Style="{StaticResource BodyTextStyle}">
                     <Run Text="Vendor : "/>

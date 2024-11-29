@@ -104,7 +104,15 @@ namespace GsdmlLinker.Properties {
                 return ResourceManager.GetString("DevicesPageSaveText", resourceCulture);
             }
         }
-        
+
+        public static string DevicesPageSaveExportText
+        {
+            get
+            {
+                return ResourceManager.GetString("DevicesPageSaveExportText", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Recherche une chaîne localisée semblable à Empty.
         /// </summary>

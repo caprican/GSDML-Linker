@@ -1,7 +1,5 @@
 ﻿using GsdmlLinker.Core.PN.Contracts.Builders;
 
-using Newtonsoft.Json.Linq;
-
 using GSDML = ISO15745.GSDML;
 
 namespace GsdmlLinker.Core.PN.Builders;
@@ -14,7 +12,6 @@ public abstract class ModuleBuilder(Core.Models.Device masterDevice) : IModuleBu
     internal List<GSDML.DeviceProfile.ParameterRecordDataT>? RecordDataList;
 
     internal Core.Models.Device masterDevice = masterDevice;
-    //internal Core.Models.Device? device = device;
 
     public abstract void CreateRecordParameters(Core.Models.Device? device, Core.Models.DeviceDataStorage dataStorage, bool supportBlockParameter, string indentNumber, IEnumerable<IGrouping<ushort, Core.Models.DeviceParameter>> parameters);
 
@@ -25,6 +22,8 @@ public abstract class ModuleBuilder(Core.Models.Device masterDevice) : IModuleBu
     public abstract void BuildModule(Core.Models.Device device, string indentNumber, string categoryRef, string categoryVendor, string deviceName);
 
     public abstract GSDML.DeviceProfile.ParameterRecordDataT? BuildRecordParameter(string textId, uint index, ushort transfertSequence, IGrouping<ushort, Core.Models.DeviceParameter>? variable, Dictionary<string, Core.Models.ExternalTextItem>? externalTextList);
+
+    public abstract void UpdateModule(Core.Models.Device? device, string indentNumber, string categoryRef, string categoryVendor, string deviceName);
 
     public abstract void DeletModule(string moduleID);
 
@@ -319,6 +318,14 @@ public abstract class ModuleBuilder(Core.Models.Device masterDevice) : IModuleBu
             masterDevice.ExternalTextList?.TryAdd(id, new(id, value) { State = Core.Models.ItemState.Created });
         else
             masterDevice.ExternalTextList[id] = new(id, value) { State = Core.Models.ItemState.Modified };
+    }
+
+    internal protected string? ExternalTextGet(string? id)
+    {
+        if (!string.IsNullOrEmpty(id) && masterDevice.ExternalTextList?.ContainsKey(id) == true)
+            return masterDevice.ExternalTextList?[id].Item;
+        else
+            return null;
     }
 
     internal protected void ValueSet(string id, IEnumerable<GSDML.DeviceProfile.Assign> assigns)

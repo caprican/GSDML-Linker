@@ -14,5 +14,7 @@ public interface IModuleBuilder
 
     public List<Core.Models.DeviceParameter> ReadRecordParameter(string deviceId);
 
+    public void UpdateModule(Core.Models.Device device, string indentNumber, string categoryRef, string categoryVendor, string deviceName);
+
     public void DeletModule(string moduleId);
 }

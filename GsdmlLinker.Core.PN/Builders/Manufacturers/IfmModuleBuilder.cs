@@ -63,8 +63,8 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice) : ModuleBuilder(m
                     module.Submodules ??= [];
                     module.Submodules.Add(new Core.Models.Module
                     {
-                        Name = (!string.IsNullOrEmpty(submodule.ModuleInfo?.Name?.TextId) ? masterDevice.ExternalTextList?[submodule.ModuleInfo.Name.TextId].Item : string.Empty) ?? string.Empty,
-                        Description = !string.IsNullOrEmpty(submodule.ModuleInfo?.InfoText?.TextId) ? masterDevice.ExternalTextList?[submodule.ModuleInfo.InfoText.TextId].Item : string.Empty,
+                        Name = ExternalTextGet(submodule.ModuleInfo?.Name?.TextId) ?? string.Empty,
+                        Description = ExternalTextGet(submodule.ModuleInfo?.InfoText?.TextId) ?? string.Empty,
                         VendorName = submodule.ModuleInfo?.VendorName?.Value ?? string.Empty,
                         OrderNumber = submodule.ModuleInfo?.OrderNumber?.Value ?? string.Empty,
                         HardwareRelease = submodule.ModuleInfo?.HardwareRelease?.Value ?? string.Empty,
@@ -79,6 +79,11 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice) : ModuleBuilder(m
                 }
             }
         }
+    }
+
+    public override void UpdateModule(Core.Models.Device? device, string indentNumber, string categoryRef, string categoryVendor, string deviceName)
+    {
+
     }
 
     public override GSDML.DeviceProfile.ParameterRecordDataT? BuildRecordParameter(string textId, uint index, ushort transfertSequence, 
@@ -177,7 +182,7 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice) : ModuleBuilder(m
 
                                 if (!string.IsNullOrEmpty(record.Name) && !string.IsNullOrEmpty(boolRecord.TextId))
                                 {
-                                    masterDevice.ExternalTextList?.Add(boolRecord.TextId, new(boolRecord.TextId, record.Name) { State = Core.Models.ItemState.Created });
+                                    ExternalTextSet(boolRecord.TextId, record.Name);
                                 }
                                 break;
                             case Core.Models.DeviceDatatypes.UIntegerT :
@@ -194,7 +199,7 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice) : ModuleBuilder(m
 
                                 if (!string.IsNullOrEmpty(record.Name) && !string.IsNullOrEmpty(intRecord.TextId))
                                 {
-                                    masterDevice.ExternalTextList?.Add(intRecord.TextId, new(intRecord.TextId, record.Name) { State = Core.Models.ItemState.Created });
+                                    ExternalTextSet(intRecord.TextId, record.Name);
                                 }
                                 break;
                             case Core.Models.DeviceDatatypes.Float32T :
@@ -209,7 +214,7 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice) : ModuleBuilder(m
 
                                 if (!string.IsNullOrEmpty(record.Name) && !string.IsNullOrEmpty(floatRecord.TextId))
                                 {
-                                    masterDevice.ExternalTextList?.Add(floatRecord.TextId, new(floatRecord.TextId, record.Name) { State = Core.Models.ItemState.Created });
+                                    ExternalTextSet(floatRecord.TextId, record.Name);
                                 }
                                 break;
 
@@ -253,7 +258,7 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice) : ModuleBuilder(m
         if (!string.IsNullOrEmpty(parameter.Name))
         {
             parameterRecord.Name = new GSDML.Primitives.ExternalTextRefT { TextId = $"{textId}_Text" };
-            masterDevice.ExternalTextList?.Add(parameterRecord.Name.TextId, new(parameterRecord.Name.TextId, parameter.Name) { State = Core.Models.ItemState.Created });
+            ExternalTextSet(parameterRecord.Name.TextId, parameter.Name);
         }
 
         return parameterRecord;
@@ -279,7 +284,7 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice) : ModuleBuilder(m
                     LengthSpecified = true,
                     TextId = id
                 });
-                masterDevice.ExternalTextList?.Add(id, new(id, $"Input data {inputLength} bits") { State = Core.Models.ItemState.Created });
+                ExternalTextSet(id, $"Input data {inputLength} bits");
             }
 
             if (outputLength is not null)
@@ -293,7 +298,7 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice) : ModuleBuilder(m
                     LengthSpecified = true,
                     TextId = id
                 });
-                masterDevice.ExternalTextList?.Add(id, new(id, $"Output data {outputLength} bits") { State = Core.Models.ItemState.Created });
+                ExternalTextSet(id, $"Output data {outputLength} bits");
             }
             processDataIndex++;
         }
@@ -553,7 +558,8 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice) : ModuleBuilder(m
 
     internal GSDML.DeviceProfile.ParameterRecordDataT BuildStartRecord(uint index, ushort transfertSequence)
     {
-        var Textadded = masterDevice.ExternalTextList?.TryAdd($"T_ParamDownloadStart", new($"T_ParamDownloadStart", "Blockparameterization ParamDownloadStart") { State = Core.Models.ItemState.Created });
+        var txtId = "T_ParamDownloadStart";
+        var Textadded = masterDevice.ExternalTextList?.TryAdd(txtId, new(txtId, "Blockparameterization ParamDownloadStart") { State = Core.Models.ItemState.Created });
 
         return new GSDML.DeviceProfile.ParameterRecordDataT
         {
@@ -567,14 +573,15 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice) : ModuleBuilder(m
 
     internal GSDML.DeviceProfile.ParameterRecordDataT BuildEndRecord(uint index, ushort transfertSequence)
     {
-        var Textadded = masterDevice.ExternalTextList?.TryAdd($"T_ParamDownloadEnd", new($"T_ParamDownloadEnd", "Blockparameterization ParamDownloadEnd") { State = Core.Models.ItemState.Created });
+        var txtId = "T_ParamDownloadEnd";
+        var Textadded = masterDevice.ExternalTextList?.TryAdd(txtId, new(txtId, "Blockparameterization ParamDownloadEnd") { State = Core.Models.ItemState.Created });
 
         return new GSDML.DeviceProfile.ParameterRecordDataT
         {
             Index = $"{index}",
             Length = 5,
             TransferSequence = transfertSequence,
-            Name = Textadded != false ? new GSDML.Primitives.ExternalTextRefT { TextId = "T_ParamDownloadEnd" } : null,
+            Name = Textadded != false ? new GSDML.Primitives.ExternalTextRefT { TextId = txtId } : null,
             Items = [new GSDML.DeviceProfile.RecordDataConstT { Data = "0x00,0x02,0x00,0x01,0x04" }]
         };
     }

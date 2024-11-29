@@ -13,7 +13,7 @@ public class ModuleBuilder(Core.PN.Contracts.Services.IDevicesService gsdDevices
     private Core.PN.Models.Device? MasterDevice { get; set; }
     private Core.IOL.Models.Device? Device { get; set; }
 
-    public void CreateModule(Models.DeviceItem masterDevice, Models.DeviceItem slaveDevice, IEnumerable<IGrouping<ushort, Core.Models.DeviceParameter>> parameters, string? moduleID = null)
+    public void CreateModule(Models.DeviceItem masterDevice, Models.DeviceItem slaveDevice, IEnumerable<IGrouping<ushort, Core.Models.DeviceParameter>> parameters)
     {
         MasterDevice = masterDevice.Device as Core.PN.Models.Device;
         Device = slaveDevice.Device as Core.IOL.Models.Device;
@@ -33,16 +33,7 @@ public class ModuleBuilder(Core.PN.Contracts.Services.IDevicesService gsdDevices
         }
 
         categoryVendor = AddCategoryVendor(MasterDevice.ExternalTextList!, MasterDevice.CategoryList!, Device.VendorId, Device.VendorName);
-
-        if(string.IsNullOrEmpty(moduleID))
-        {
-            indentNumber = MasterDevice.GetLastIndentNumber(MasterDevice.IdentNumberList);
-        }
-        else
-        {
-            indentNumber = MasterDevice.IdentNumberList.Find(f => moduleID.EndsWith(f)) ?? string.Empty;
-        }
-
+        indentNumber = MasterDevice.GetLastIndentNumber(MasterDevice.IdentNumberList);
 
         Builder.CreateRecordParameters(Device, Device.DataStorage, Device.SupportBlockParameter, indentNumber, parameters);
 
@@ -85,11 +76,40 @@ public class ModuleBuilder(Core.PN.Contracts.Services.IDevicesService gsdDevices
         //        });
         //    }
         //}
-
+        
         Builder.BuildModule(Device, indentNumber, cateroryRef, categoryVendor, Device.Name ?? "");
+        MasterDevice.IdentNumberList.Add(indentNumber);
+    }
 
-        if(!string.IsNullOrEmpty(moduleID))
-            MasterDevice.IdentNumberList.Add(indentNumber);
+    public void ModifiedModule(Models.DeviceItem masterDevice, Models.DeviceItem slaveDevice, IEnumerable<IGrouping<ushort, Core.Models.DeviceParameter>> parameters, string moduleID)
+    {
+        MasterDevice = masterDevice.Device as Core.PN.Models.Device;
+        Device = slaveDevice.Device as Core.IOL.Models.Device;
+
+        string cateroryRef = string.Empty;
+        string indentNumber = string.Empty;
+        string categoryVendor = string.Empty;
+        if (MasterDevice is null || Device is null) return;
+
+        Builder = devicesFactory.CreateModule(MasterDevice);
+        if (Builder is null) return;
+
+        if (MasterDevice.ExternalTextList is not null && MasterDevice.CategoryList is not null)
+        {
+            cateroryRef = AddCategoryRef(MasterDevice.ExternalTextList, MasterDevice.CategoryList);
+        }
+
+        categoryVendor = AddCategoryVendor(MasterDevice.ExternalTextList!, MasterDevice.CategoryList!, Device.VendorId, Device.VendorName);
+        indentNumber = MasterDevice.IdentNumberList.Find(f => moduleID.EndsWith(f)) ?? string.Empty;
+        
+        Builder.CreateRecordParameters(Device, Device.DataStorage, Device.SupportBlockParameter, indentNumber, parameters);
+
+        if (Device.ProcessDatas is not null)
+        {
+            Builder.CreateDataProcess(indentNumber, Device.ProcessDatas);
+        }
+
+        Builder.UpdateModule(Device, indentNumber, cateroryRef, categoryVendor, Device.Name ?? "");
     }
 
     public void DeletedModule(Models.DeviceItem masterDevice, string moduleId)
@@ -101,7 +121,6 @@ public class ModuleBuilder(Core.PN.Contracts.Services.IDevicesService gsdDevices
 
         if (Builder is null) return;
         Builder.DeletModule(moduleId);
-
     }
 
     internal string AddCategoryRef(Dictionary<string, Core.Models.ExternalTextItem> externalText, Dictionary<string, Core.PN.Models.CategoryItem> categories)

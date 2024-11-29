@@ -183,4 +183,7 @@
   <data name="ShellIOLinkDevicesPage" xml:space="preserve">
     <value>IO-Link devices</value>
   </data>
+  <data name="DevicesPageSaveExportText" xml:space="preserve">
+    <value>Save and export</value>
+  </data>
 </root>

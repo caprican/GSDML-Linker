@@ -42,8 +42,8 @@ public class IfmModuleBuilderV2(Core.Models.Device masterDevice) : IfmModuleBuil
         {
             State = Core.Models.ItemState.Created,
         };
-        submodule.Name = (!string.IsNullOrEmpty(submodule.ModuleInfo?.Name?.TextId) ? masterDevice.ExternalTextList?[submodule.ModuleInfo.Name.TextId].Item : string.Empty) ?? string.Empty;
-        submodule.Description = !string.IsNullOrEmpty(submodule.ModuleInfo?.InfoText?.TextId) ? masterDevice.ExternalTextList?[submodule.ModuleInfo.InfoText.TextId].Item : string.Empty;
+        submodule.Name = ExternalTextGet(submodule.ModuleInfo?.Name?.TextId) ?? string.Empty;
+        submodule.Description = ExternalTextGet(submodule.ModuleInfo?.InfoText?.TextId) ?? string.Empty;
         submodule.CategoryRef = ((Models.Device)masterDevice).GetCategoryText(submodule.ModuleInfo?.CategoryRef);
         submodule.SubCategoryRef = ((Models.Device)masterDevice).GetCategoryText(submodule.ModuleInfo?.SubCategory1Ref);
         submodule.VendorId = Convert.ToUInt16(device.VendorId);
@@ -60,10 +60,83 @@ public class IfmModuleBuilderV2(Core.Models.Device masterDevice) : IfmModuleBuil
         {
             if (dap.Modules is not null)
             {
-                foreach (var module in dap.Modules.Where(module => module.Submodules?.Contains(submodule) != true))
+                foreach (var module in dap.Modules/*.Where(module => module.Submodules?.Contains(submodule) != true)*/)
                 {
                     module.Submodules ??= [];
                     module.Submodules.Add(submodule);
+                }
+            }
+        }
+    }
+
+    public override void UpdateModule(Core.Models.Device? device, string indentNumber, string categoryRef, string categoryVendor, string deviceName)
+    {
+        if (device is null) return;
+
+        var ioData = new GSDML.DeviceProfile.SubmoduleItemBaseTIOData
+        {
+            Input = new GSDML.DeviceProfile.IODataT
+            {
+                Consistency = GSDML.Primitives.IODataConsistencyEnumT.AllItemsConsistency,
+                DataItem = [.. inputDatas]
+            }
+        };
+        if (outputDatas?.Count > 0)
+        {
+            ioData.Output = new GSDML.DeviceProfile.IODataT
+            {
+                Consistency = GSDML.Primitives.IODataConsistencyEnumT.AllItemsConsistency,
+                DataItem = [.. outputDatas]
+            };
+        }
+
+        var submodule = new Models.SubmoduleItem(new GSDML.DeviceProfile.SubmoduleItemT
+        {
+            ID = $"IDS {deviceName} {indentNumber}",
+            SubmoduleIdentNumber = indentNumber,
+            API = 19969,
+            MayIssueProcessAlarm = false,
+            ModuleInfo = ModuleInfo(categoryRef, categoryVendor, indentNumber, deviceName),
+            IOData = ioData,
+            RecordDataList = new GSDML.DeviceProfile.SubmoduleItemBaseTRecordDataList
+            {
+                ParameterRecordDataItem = [.. RecordDataList]
+            },
+            //Graphics = graphics is not null ? [.. graphics] : null
+        })
+        {
+            State = Core.Models.ItemState.Modified,
+        };
+        submodule.Name = ExternalTextGet(submodule.ModuleInfo?.Name?.TextId) ?? string.Empty;
+        submodule.Description = ExternalTextGet(submodule.ModuleInfo?.InfoText?.TextId) ?? string.Empty;
+        submodule.CategoryRef = ((Models.Device)masterDevice).GetCategoryText(submodule.ModuleInfo?.CategoryRef);
+        submodule.SubCategoryRef = ((Models.Device)masterDevice).GetCategoryText(submodule.ModuleInfo?.SubCategory1Ref);
+        submodule.VendorId = Convert.ToUInt16(device.VendorId);
+        submodule.DeviceId = Convert.ToUInt32(device.DeviceId);
+        //((Models.Device)masterDevice).UseableSubmodules?.Add(new GSDML.DeviceProfile.UseableSubmodulesTSubmoduleItemRef
+        //{
+        //    AllowedInSubslots="2..9",
+        //    SubmoduleItemTarget = submodule.ID
+
+        //});
+
+        var index = ((Models.Device)masterDevice).SubmoduleList?.FindIndex(s => s.ProfinetDeviceId == submodule.ID);
+        if(index is not null && index >= 0)
+        {
+            ((Models.Device)masterDevice).SubmoduleList[(int)index] = submodule;
+        }
+
+        foreach (var dap in ((Models.Device)masterDevice).DeviceAccessPoints)
+        {
+            if (dap.Modules is not null)
+            {
+                foreach (var module in dap.Modules/*.Where(module => module.Submodules?.Contains(submodule) != true)*/)
+                {
+                    module.Submodules ??= [];
+
+                    var source = module.Submodules.SingleOrDefault(s => s.ProfinetDeviceId == submodule.ProfinetDeviceId);
+                    module.Submodules.Insert(module.Submodules.IndexOf(source), submodule);
+                    module.Submodules.Remove(source);
                 }
             }
         }
@@ -373,28 +446,30 @@ public class IfmModuleBuilderV2(Core.Models.Device masterDevice) : IfmModuleBuil
 
     internal new GSDML.DeviceProfile.ParameterRecordDataT BuildStartRecord(uint index, ushort transfertSequence)
     {
-        var Textadded = masterDevice.ExternalTextList?.TryAdd($"T_ParamDownloadStart", new($"T_ParamDownloadStart", "Blockparameterization ParamDownloadStart") { State = Core.Models.ItemState.Created });
+        var txtId = "T_ParamDownloadStart";
+        var Textadded = masterDevice.ExternalTextList?.TryAdd(txtId, new(txtId, "Blockparameterization ParamDownloadStart") { State = Core.Models.ItemState.Created });
 
         return new GSDML.DeviceProfile.ParameterRecordDataT
         {
             Index = $"{index}",
             Length = 5,
             TransferSequence = transfertSequence,
-            Name = Textadded != false ? new GSDML.Primitives.ExternalTextRefT { TextId = "T_ParamDownloadStart" } : null,
+            Name = new GSDML.Primitives.ExternalTextRefT { TextId = txtId },
             Items = [new GSDML.DeviceProfile.RecordDataConstT { Data = "0x00,0x02,0x00,0x01,0x03" }]
         };
     }
 
     internal new GSDML.DeviceProfile.ParameterRecordDataT BuildEndRecord(uint index, ushort transfertSequence)
     {
-        var Textadded = masterDevice.ExternalTextList?.TryAdd($"T_ParamDownloadEnd", new($"T_ParamDownloadEnd", "Blockparameterization ParamDownloadEnd") { State = Core.Models.ItemState.Created });
+        var txtId = "T_ParamDownloadEnd";
+        var Textadded = masterDevice.ExternalTextList?.TryAdd(txtId, new(txtId, "Blockparameterization ParamDownloadEnd") { State = Core.Models.ItemState.Created });
 
         return new GSDML.DeviceProfile.ParameterRecordDataT
         {
             Index = $"{index}",
             Length = 5,
             TransferSequence = transfertSequence,
-            Name = Textadded != false ? new GSDML.Primitives.ExternalTextRefT { TextId = "T_ParamDownloadEnd" } : null,
+            Name = new GSDML.Primitives.ExternalTextRefT { TextId = txtId },
             Items = [new GSDML.DeviceProfile.RecordDataConstT { Data = "0x00,0x02,0x00,0x01,0x04" }]
         };
     }

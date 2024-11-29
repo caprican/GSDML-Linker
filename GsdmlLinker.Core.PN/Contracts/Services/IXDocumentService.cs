@@ -6,5 +6,7 @@ public interface IXDocumentService
 
     public (string?, string?, List<string>?) Create(Models.Device? device, string path);
 
+    public (string?, string?, List<string>?) GetDevicePaths(Models.Device? device, string path);
+    
     //public bool SaveAs(string path);
 }

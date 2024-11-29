@@ -1,4 +1,6 @@
-﻿using GSDML = ISO15745.GSDML;
+﻿using GsdmlLinker.Core.Models;
+
+using GSDML = ISO15745.GSDML;
 
 namespace GsdmlLinker.Core.PN.Builders.Manufacturers;
 
@@ -378,6 +380,11 @@ public class BalluffModuleBuilder(Core.Models.Device masterDevice) : ModuleBuild
         return parameters;
     }
 
+    public override void UpdateModule(Device? device, string indentNumber, string categoryRef, string categoryVendor, string deviceName)
+    {
+
+    }
+
     public override void DeletModule(string moduleId)
     {
 
@@ -531,4 +538,5 @@ public class BalluffModuleBuilder(Core.Models.Device masterDevice) : ModuleBuild
                 }
             ]
         };
+
 }

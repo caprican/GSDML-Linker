@@ -146,7 +146,7 @@ public class XDocumentService(IOptions<Core.Models.AppConfig> appConfig) : IXDoc
                             xmlSerializer.Serialize(streamWriter, subList.ToArray());
                             var xelement = XElement.Parse(encoding.GetString(memoryStream.ToArray()));
 
-                            moduleList.Descendants(ns + "ModuleItem").SingleOrDefault(e => e.Attribute("ID")!.Value == module.ID)?.ReplaceWith(xelement);
+                            moduleList.Descendants(ns + "ModuleItem").SingleOrDefault(e => e.Attribute("ID")!.Value == module.ID)?.ReplaceWith(xelement.Elements().First());
 
                             resumeActions += HistoryRelease($"update {module.Name}");
                         }
@@ -225,7 +225,7 @@ public class XDocumentService(IOptions<Core.Models.AppConfig> appConfig) : IXDoc
                             xmlSerializer.Serialize(streamWriter, subList.ToArray());
                             var xelement = XElement.Parse(encoding.GetString(memoryStream.ToArray()));
 
-                            submoduleList.Descendants(ns + "SubmoduleItem").SingleOrDefault(e => e.Attribute("ID")!.Value == submodule.ID)?.ReplaceWith(xelement);
+                            submoduleList.Descendants(ns + "SubmoduleItem").SingleOrDefault(e => e.Attribute("ID")!.Value == submodule.ID)?.ReplaceWith(xelement.Elements().First());
 
                             resumeActions += HistoryRelease($"update {submodule.Name}");
                         }
@@ -387,6 +387,34 @@ public class XDocumentService(IOptions<Core.Models.AppConfig> appConfig) : IXDoc
 
         
         SaveAs(Path.Combine(localFilePath, $"{fileName}.xml"));
+
+        return (localFilePath, fileName, graphicsPath);
+    }
+
+    public (string?, string?, List<string>?) GetDevicePaths(Models.Device? device, string path)
+    {
+        if(device is null) return (null, null, null);
+
+        List<string>? graphicsPath = null;
+        var localFilePath = Path.GetDirectoryName(device.FilePath);
+        var fileName = Path.GetFileNameWithoutExtension(device.FilePath);
+
+        if (!string.IsNullOrEmpty(localFilePath) && device.GraphicsList?.Count > 0)
+        {
+            foreach (var graphic in device.GraphicsList)
+            {
+                graphicsPath ??= [];
+                var graphicItem = graphic.Value;
+                if (File.Exists(Path.Combine(localFilePath, graphicItem.Item + ".bmp")))
+                {
+                    graphicsPath.Add(Path.Combine(localFilePath, graphicItem.Item + ".bmp"));
+                }
+                else
+                {
+                    var ioddFolder = Path.Combine(localAppData, appConfig.Value.IODDFolder);
+                }
+            }
+        }
 
         return (localFilePath, fileName, graphicsPath);
     }

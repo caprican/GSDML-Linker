@@ -373,4 +373,7 @@ public class MurrElectronicModuleBuilder(Core.Models.Device masterDevice) : Modu
         ]
     };
 
+    public override void UpdateModule(Core.Models.Device? device, string indentNumber, string categoryRef, string categoryVendor, string deviceName)
+    {
+    }
 }
