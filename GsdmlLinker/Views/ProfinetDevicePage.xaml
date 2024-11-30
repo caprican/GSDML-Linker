@@ -1,19 +1,155 @@
 ﻿<Page x:Class="GsdmlLinker.Views.ProfinetDevicePage"
+      Style="{DynamicResource MahApps.Styles.Page}"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls"
+      xmlns:converters="clr-namespace:GsdmlLinker.Converters"
+      xmlns:coreModels="clr-namespace:GsdmlLinker.Core.Models;assembly=GsdmlLinker.Core"
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:Dialog="clr-namespace:MahApps.Metro.Controls.Dialogs;assembly=MahApps.Metro"
       xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
       xmlns:local="clr-namespace:GsdmlLinker.Views"
-      mc:Ignorable="d"
-      xmlns:converters="clr-namespace:GsdmlLinker.Converters"
+      xmlns:localControl="clr-namespace:GsdmlLinker.Controls"
+      xmlns:models="clr-namespace:GsdmlLinker.Models"
       xmlns:properties="clr-namespace:GsdmlLinker.Properties"
       xmlns:viewModel="clr-namespace:GsdmlLinker.ViewModels"
+      mc:Ignorable="d"
+            xmlns:system="clr-namespace:System;assembly=netstandard"
+
       d:DataContext="{d:DesignInstance Type=viewModel:ProfinetDeviceViewModel}"
       Dialog:DialogParticipation.Register="{Binding}">
+    <Page.Resources>
+        <converters:ItemStateToTextIconConverter x:Key="ItemStateToTextIconConverter"/>
+    </Page.Resources>
+    <controls:MetroHeader Header="{x:Static properties:Resources.ShellProfinetDevicePage}" Style="{StaticResource MahApps.Styles.MetroHeader}" Margin="{StaticResource XSmallMargin}">
+        <controls:MetroHeader.HeaderTemplate>
+            <DataTemplate>
+                <StackPanel Orientation="Vertical" UseLayoutRounding="True">
+                    <TextBlock Margin="{StaticResource XXSmallTopBottomMargin}" HorizontalAlignment="Left" VerticalAlignment="Bottom" Text="{Binding}" />
+                    <Separator />
+                </StackPanel>
+            </DataTemplate>
+        </controls:MetroHeader.HeaderTemplate>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition>
+                    <ColumnDefinition.Style>
+                        <Style TargetType="ColumnDefinition">
+                            <Setter Property="Width" Value="*"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedItem}" Value="{x:Null}">
+                                    <Setter Property="Width" Value="0"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ColumnDefinition.Style>
+                </ColumnDefinition>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
 
-    <Grid>
-        
-    </Grid>
+            <localControl:VendorListControl Grid.RowSpan="2" ItemsSource="{Binding MasterVendors}"  SelectedItem="{Binding MasterDeviceSelected, Mode=TwoWay}"/>
+
+            <GroupBox Header="{Binding MasterDeviceSelected.Name}" Grid.Column="1" Grid.Row="0" Margin="{StaticResource XSmallTopMargin}">
+                <!--<localControl:PNDeviceControl  SelectedItem="{Binding MasterModuleSelected, Mode=TwoWay}" SelectedSubitem="{Binding MasterSubmoduleSelected, Mode=TwoWay}"/>-->
+                <StackPanel Orientation="Vertical" VerticalAlignment="Stretch" Margin="{StaticResource SmallLeftRightMargin}">
+                    <Grid Margin="{StaticResource SmallLeftMargin}" Background="{DynamicResource MahApps.Brushes.Control.Background}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+                        <Image Grid.Column="0" Source="{Binding MasterDeviceSelected.Icon}" Stretch="UniformToFill" VerticalAlignment="Center"/>
+                        <StackPanel Grid.Column="1" Orientation="Vertical" Margin="{StaticResource MediumMargin}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding MasterDeviceSelected.Name}" VerticalAlignment="Center"
+                               Style="{DynamicResource SubtitleTextStyle}"/>
+                            </StackPanel>
+                            <TextBlock Style="{StaticResource BodyTextStyle}">
+                                <Run Text="Vendor : "/>
+                                <Run Text="{Binding MasterDeviceSelected.VendorName}"/>
+                            </TextBlock>
+                            <TextBlock Style="{StaticResource BaseTextBlockStyle}">
+                                <Run Text="Family : "/>
+                                <Run Text="{Binding MasterDeviceSelected.DeviceFamily}"/>
+                            </TextBlock>
+                        </StackPanel>
+                    </Grid>
+
+                    <TextBlock Margin="{StaticResource XSmallLeftMargin}">
+                        <Run Text="Version : "/>
+                        <Run Text="{Binding MasterDeviceSelected.Version, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}"/>
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource BaseTextBlockStyle}">
+                                <Setter Property="Visibility" Value="Visible"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding MasterDeviceSelected.Version}" Value="{x:Null}">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+
+                    <!--<TextBlock Grid.Row="2" Text="{Binding MasterDeviceSelected.SoftwareRelease, StringFormat='{}Soft Release: {0}'}" Margin="{StaticResource XSmallLeftMargin}"/>-->
+                    <TextBox Text="{Binding MasterDeviceSelected.Description, UpdateSourceTrigger=PropertyChanged}" Margin="{StaticResource XSmallMargin}"
+                             TextWrapping="Wrap" AcceptsReturn="True" SpellCheck.IsEnabled="True"
+                             controls:TextBoxHelper.ClearTextButton="True" controls:TextBoxHelper.UseFloatingWatermark="True"
+                             controls:TextBoxHelper.Watermark="Description" controls:TextBoxHelper.WatermarkAlignment="Left"
+                             HorizontalContentAlignment="Stretch" VerticalScrollBarVisibility="Auto"/>
+                </StackPanel>
+            </GroupBox>
+
+            <GroupBox Header="Modules" Grid.Column="1" Grid.Row="1" Margin="{StaticResource SmallTopBottomMargin}">
+                <TreeView ItemsSource="{Binding MasterModules, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                    <TreeView.Resources>
+                        <DataTemplate DataType="{x:Type models:ModuleTreeItem}" x:Key="Submodule3Template">
+                            <DockPanel LastChildFill="True" VerticalAlignment="Center" Margin="0">
+                                <TextBlock DockPanel.Dock="Left" FontSize="16" FontFamily="Segoe MDL2 Assets" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0 0 4 0"
+                                           Text="{Binding State, Converter={StaticResource ItemStateToTextIconConverter}}">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding State, UpdateSourceTrigger=PropertyChanged}" Value="{x:Static coreModels:ItemState.None}">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <TextBlock Text="{Binding Name}" VerticalAlignment="Center" HorizontalAlignment="Stretch">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="TextDecorations" Value="None"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding State, UpdateSourceTrigger=PropertyChanged}" Value="{x:Static coreModels:ItemState.Deleted}">
+                                                    <Setter Property="TextDecorations" Value="Strikethrough"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </DockPanel>
+                        </DataTemplate>
+                        <HierarchicalDataTemplate DataType="{x:Type models:ModuleTreeItem}" ItemsSource="{Binding SubmodulesCaterogies}" x:Key="Submodule2Template"
+                                                  ItemTemplate="{StaticResource Submodule3Template}">
+                            <TextBlock Text="{Binding Name}" />
+                        </HierarchicalDataTemplate>
+                        <HierarchicalDataTemplate DataType="{x:Type models:ModuleTreeItem}" ItemsSource="{Binding SubmodulesCaterogies}" x:Key="SubmoduleTemplate"
+                                                  ItemTemplate="{StaticResource Submodule2Template}">
+                            <TextBlock Text="{Binding Name}" />
+                        </HierarchicalDataTemplate>
+                        <HierarchicalDataTemplate DataType="{x:Type models:ModuleTreeItem}" ItemsSource="{Binding SubmodulesCaterogies}" 
+                                                  ItemTemplate="{StaticResource SubmoduleTemplate}">
+                            <TextBlock Text="{Binding Name}" />
+                        </HierarchicalDataTemplate>
+                    </TreeView.Resources>
+                </TreeView>
+            </GroupBox>
+        </Grid>
+    </controls:MetroHeader>
 </Page>

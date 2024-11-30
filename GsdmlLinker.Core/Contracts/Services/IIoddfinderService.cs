@@ -14,7 +14,7 @@ public interface IIoddfinderService
 
     public Task<byte[]?> GetIoddZipAsync(uint vendorId, long ioddId);
 
-
+    public Task<ProductVariant> GetProductVariantMenusAsync(string vendorId, string deviceId);
 
     public Task<List<Iodd>> GetDriversAsync(string vendorName);
 

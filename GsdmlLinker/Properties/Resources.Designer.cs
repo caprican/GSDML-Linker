@@ -230,6 +230,14 @@ namespace GsdmlLinker.Properties {
             }
         }
         
+        public static string ShellIoddfinderPage
+        {
+            get
+            {
+                return ResourceManager.GetString("ShellIoddfinderPage", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Recherche une chaîne localisée semblable à Open or close navigation.
         /// </summary>

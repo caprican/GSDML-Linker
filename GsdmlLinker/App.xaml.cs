@@ -13,6 +13,8 @@ using GsdmlLinker.Services;
 using GsdmlLinker.ViewModels;
 using GsdmlLinker.Views;
 
+using MahApps.Metro.Controls.Dialogs;
+
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -48,6 +50,8 @@ public partial class App : Application
     {
         // App Host
         services.AddHostedService<ApplicationHostService>();
+
+        services.AddSingleton<IDialogCoordinator, DialogCoordinator>();
 
         // Core Services
         services.AddSingleton<IFileService, FileService>();

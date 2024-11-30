@@ -13,6 +13,8 @@ public class NavigationService(IPageService pageService) : INavigationService
     private object? lastParameterUsed;
 
     public event EventHandler<string?>? Navigated;
+    public event EventHandler<string?>? LoadCompleted;
+    public event EventHandler<string?>? PageInitialized;
 
     public bool CanGoBack => frame!.CanGoBack;
 

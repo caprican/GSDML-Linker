@@ -5,6 +5,7 @@ namespace GsdmlLinker.Contracts.Services;
 public interface INavigationService
 {
     event EventHandler<string?>? Navigated;
+    event EventHandler<string?>? PageInitialized;
 
     bool CanGoBack { get; }
 

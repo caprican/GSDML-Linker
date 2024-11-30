@@ -186,4 +186,7 @@
   <data name="DevicesPageSaveExportText" xml:space="preserve">
     <value>Save and export</value>
   </data>
+  <data name="ShellIoddfinderPage" xml:space="preserve">
+    <value>IODD Finder</value>
+  </data>
 </root>

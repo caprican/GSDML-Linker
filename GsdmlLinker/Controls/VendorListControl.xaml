@@ -48,12 +48,15 @@
                     <StackPanel Grid.Column="1" Orientation="Vertical" Margin="{StaticResource SmallLeftMargin}">
                         <Grid>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
+                                <!--<ColumnDefinition Width="Auto"/>-->
                                 <ColumnDefinition/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{Binding ProfileVersion}" VerticalAlignment="Bottom"/>
-                            <TextBlock Grid.Column="1" Text="{Binding Name}" Style="{StaticResource ListSubTitleStyle}"/>
+                            <TextBlock Grid.Column="0" Text="{Binding Name}" Style="{StaticResource ListSubTitleStyle}"/>
+                            <TextBlock Grid.Column="1" VerticalAlignment="Bottom">
+                                <Run Text="V"/>
+                                <Run Text="{Binding ProfileVersion}"/>
+                            </TextBlock>
                         </Grid>
                         <TextBlock Text="{Binding Description}" TextWrapping="WrapWithOverflow" 
                                    Visibility="{Binding Description, Converter={StaticResource StringEmptyToVisibilityConverter}}" />

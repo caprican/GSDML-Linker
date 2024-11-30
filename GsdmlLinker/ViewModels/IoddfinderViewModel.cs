@@ -7,19 +7,24 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 using GsdmlLinker.Contracts.ViewModels;
+using GsdmlLinker.Contracts.Views;
 using GsdmlLinker.Core.Contracts.Services;
-using GsdmlLinker.Core.Models.IoddFinder;
+
+using MahApps.Metro.Controls.Dialogs;
 
 using Microsoft.Extensions.Options;
 
 namespace GsdmlLinker.ViewModels;
 
-public class IoddfinderViewModel(IOptions<Core.Models.AppConfig> appConfig, Core.IOL.Contracts.Services.IDevicesService devicesService,
+public class IoddfinderViewModel(IOptions<Core.Models.AppConfig> appConfig, IDialogCoordinator dialogCoordinator,
+    Core.IOL.Contracts.Services.IDevicesService devicesService,
     IIoddfinderService ioddfinderService) : ObservableObject, INavigationAware
 {
-    private readonly IIoddfinderService ioddfinderService = ioddfinderService;
+    private readonly IDialogCoordinator dialogCoordinator = dialogCoordinator;
     private readonly Core.IOL.Contracts.Services.IDevicesService devicesService = devicesService;
     private readonly Core.Models.AppConfig appConfig = appConfig.Value;
+    private readonly IIoddfinderService ioddfinderService = ioddfinderService;
+
     private readonly string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
 
     private string? vendorSelected;
@@ -79,24 +84,30 @@ public class IoddfinderViewModel(IOptions<Core.Models.AppConfig> appConfig, Core
 
     public async void OnNavigatedTo(object parameter)
     {
-        await Initialize();
-    }
-
-    private async Task Initialize()
-    {
         await OnGetVendorList();
-
     }
 
     private async Task OnGetVendorList()
     {
-        var vendorList = await ioddfinderService.GetVendorsNameAsync();
-        if(vendorList is not null)
+        ProgressDialogController controller = await dialogCoordinator.ShowProgressAsync(App.Current.MainWindow.DataContext, "", "", true);
+        controller.SetIndeterminate();
+        try
         {
-            foreach(var vendor in vendorList.Order())
+            var vendorList = await ioddfinderService.GetVendorsNameAsync();
+            if (vendorList is not null)
             {
-                VendorsName.Add(vendor);
+                foreach (var vendor in vendorList.Order())
+                {
+                    VendorsName.Add(vendor);
+                }
             }
+        
+            await controller.CloseAsync();
+        }
+        catch (Exception ex) 
+        {
+            await controller.CloseAsync();
+            await dialogCoordinator.ShowMessageAsync(App.Current.MainWindow.DataContext, "IODD Finder", "no response", MessageDialogStyle.Affirmative);
         }
     }
 
@@ -130,7 +141,7 @@ public class IoddfinderViewModel(IOptions<Core.Models.AppConfig> appConfig, Core
 
 
 
-    private async Task OnLoadDevice(Iodd? iodd)
+    private async Task OnLoadDevice(Core.Models.IoddFinder.Iodd? iodd)
     {
         if(iodd is null) return;
 

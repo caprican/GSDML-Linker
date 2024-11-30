@@ -9,7 +9,6 @@ using CommunityToolkit.Mvvm.Input;
 
 using GsdmlLinker.Contracts.ViewModels;
 using GsdmlLinker.Core.Contracts.Services;
-using GsdmlLinker.Models;
 
 using MahApps.Metro.Controls.Dialogs;
 
@@ -17,13 +16,14 @@ using Microsoft.Win32;
 
 namespace GsdmlLinker.ViewModels;
 
-public class DevicesViewModel(Contracts.Services.ISettingsService settingsService,
+public class DevicesViewModel(Contracts.Services.ISettingsService settingsService, IDialogCoordinator dialogCoordinator,
                               Core.IOL.Contracts.Services.IDevicesService iolDevicesService, Core.PN.Contracts.Services.IDevicesService pnDevicesService,
                               Contracts.Builders.IModuleBuilder moduleBuilder, Contracts.Services.ICaretaker caretaker,
-                              Core.PN.Contracts.Services.IXDocumentService xDocumentService, IZipperService zipperService) : ObservableObject, INavigationAware
+                              Core.PN.Contracts.Services.IXDocumentService xDocumentService, IZipperService zipperService,
+                              IIoddfinderService ioddfinderService) : ObservableObject, INavigationAware
 {
     private readonly Contracts.Services.ISettingsService settingsService = settingsService;
-
+    private readonly IDialogCoordinator dialogCoordinator = dialogCoordinator;
     private readonly Core.PN.Contracts.Services.IDevicesService pnDevicesService = pnDevicesService;
     private readonly Core.IOL.Contracts.Services.IDevicesService iolDevicesService = iolDevicesService;
     
@@ -31,6 +31,7 @@ public class DevicesViewModel(Contracts.Services.ISettingsService settingsServic
     private readonly Contracts.Services.ICaretaker caretaker = caretaker;
     private readonly Core.PN.Contracts.Services.IXDocumentService xDocumentService = xDocumentService;
     private readonly IZipperService zipperService = zipperService;
+    private readonly IIoddfinderService ioddfinderService = ioddfinderService;
 
     private ICommand? addSlaveDeviceCommand;
     private ICommand? closeSlaveDeviceCommand;
@@ -43,6 +44,8 @@ public class DevicesViewModel(Contracts.Services.ISettingsService settingsServic
     private ICommand? exportMasterDeviceCommand;
     private ICommand? saveExportMasterDeviceCommand;
 
+    private ObservableCollection<Models.VendorItem>? masterVendors;
+    private ObservableCollection<Models.VendorItem>? slaveVendors;
     private ObservableCollection<Models.ModuleTreeItem>? masterModules;
     private Models.DeviceItem? masterDeviceSelected;
     private Models.DeviceItem? slaveDeviceSelected;
@@ -58,8 +61,21 @@ public class DevicesViewModel(Contracts.Services.ISettingsService settingsServic
 
     private string deviceRename = string.Empty;
 
-    public ObservableCollection<Models.VendorItem> MasterVendors { get; set; } = [];
-    public ObservableCollection<Models.VendorItem> SlaveVendors { get; set; } = [];
+    public event EventHandler<string?>? PageInitialized;
+
+
+    public ObservableCollection<Models.VendorItem>? MasterVendors
+    {
+        get => masterVendors;
+        set => SetProperty(ref masterVendors, value);
+    }
+
+    public ObservableCollection<Models.VendorItem>? SlaveVendors
+    {
+        get => slaveVendors;
+        set => SetProperty(ref slaveVendors, value);
+    }
+
     public ObservableCollection<Models.ModuleTreeItem>? MasterModules 
     {
         get => masterModules;
@@ -202,10 +218,10 @@ public class DevicesViewModel(Contracts.Services.ISettingsService settingsServic
     public ICommand SaveMasterDeviceCommand => saveMasterDeviceCommand ??= new RelayCommand(OnSaveMasterDevice);
     public ICommand CancelMasterDeviceCommand => cancelMasterDeviceCommand ??= new RelayCommand(OnCancelMasterDevice);
     public ICommand ViewSubParametersCommand => viewSubParametersCommand ??= new RelayCommand<Core.Models.DeviceParameter>(OnViewSubParameters);
-    public ICommand ExportMasterDeviceCommand => exportMasterDeviceCommand ??= new RelayCommand<DeviceItem>(OnExportMasterDevice);
+    public ICommand ExportMasterDeviceCommand => exportMasterDeviceCommand ??= new RelayCommand<Models.DeviceItem>(OnExportMasterDevice);
     public ICommand SaveExportMasterDeviceCommand => saveExportMasterDeviceCommand ??= new RelayCommand(OnSaveExportMasterDevice);
 
-    public void OnNavigatedTo(object parameter)
+    public async void OnNavigatedTo(object parameter)
     {
         pnDevicesService.DeviceAdded += PnDevicesService_DeviceAdded;
         iolDevicesService.DeviceAdded += IolDevicesService_DeviceAdded;
@@ -235,7 +251,7 @@ public class DevicesViewModel(Contracts.Services.ISettingsService settingsServic
 
     private void GetMasterDevices()
     {
-        MasterVendors.Clear();
+        MasterVendors = [];
 
         foreach (var group in pnDevicesService.Devices.GroupBy(g => g.DeviceId))
         {
@@ -294,7 +310,7 @@ public class DevicesViewModel(Contracts.Services.ISettingsService settingsServic
 
     private void GetSlaveDevices()
     {
-        SlaveVendors.Clear();
+        SlaveVendors = [];
         foreach (var device in iolDevicesService.Devices)
         {
             if (SlaveVendors.Any(a => a.Id == device.VendorId))
@@ -558,7 +574,18 @@ public class DevicesViewModel(Contracts.Services.ISettingsService settingsServic
         {
             SlaveDeviceSelected = SlaveVendors.FirstOrDefault(f => f.Id == MasterModuleSelected.VendorId.ToString())?.Devices?.FirstOrDefault(f => f.DeviceId == MasterModuleSelected.DeviceId.ToString());
 
+            if(SlaveDeviceSelected is null)
+            {
+                try
+                {
+                //ioddfinderService.
 
+                }
+                catch
+                {
+
+                }
+            }
             /// TODO Request
         }
     }
@@ -734,7 +761,7 @@ public class DevicesViewModel(Contracts.Services.ISettingsService settingsServic
         }
     }
 
-    private void OnExportMasterDevice(DeviceItem? item)
+    private void OnExportMasterDevice(Models.DeviceItem? item)
     {
         if(item is null) return;
 
@@ -803,5 +830,10 @@ public class DevicesViewModel(Contracts.Services.ISettingsService settingsServic
         }
 
         MasterDeviceSelected = null;
+    }
+
+    public void OnLoadCompleted()
+    {
+        
     }
 }

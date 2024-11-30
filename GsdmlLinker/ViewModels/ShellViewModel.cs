@@ -10,16 +10,18 @@ using GsdmlLinker.Contracts.Services;
 using GsdmlLinker.Properties;
 
 using MahApps.Metro.Controls;
+using MahApps.Metro.Controls.Dialogs;
 
 using Microsoft.Extensions.Options;
 using Microsoft.Win32;
 
 namespace GsdmlLinker.ViewModels;
-public class ShellViewModel(INavigationService navigationService,
+public class ShellViewModel(INavigationService navigationService, IDialogCoordinator dialogCoordinator,
                             IOptions<Core.Models.AppConfig> appConfig, ISettingsService settingsService,
     Core.PN.Contracts.Services.IDevicesService gsdDevicesService, Core.IOL.Contracts.Services.IDevicesService iodDevicesService) : ObservableObject
 {
-    private readonly INavigationService _navigationService = navigationService;
+    private readonly INavigationService navigationService = navigationService;
+    private readonly IDialogCoordinator dialogCoordinator = dialogCoordinator;
     private readonly ISettingsService settingsService = settingsService;
     private readonly Core.PN.Contracts.Services.IDevicesService gsdDevicesService = gsdDevicesService;
     private readonly Core.IOL.Contracts.Services.IDevicesService iodDevicesService = iodDevicesService;
@@ -28,6 +30,7 @@ public class ShellViewModel(INavigationService navigationService,
 
     private HamburgerMenuItem? selectedMenuItem;
     private HamburgerMenuItem? selectedOptionsMenuItem;
+    private ProgressDialogController? progressController;
     private RelayCommand? goBackCommand;
     private RelayCommand? saveCommand;
     private RelayCommand? loadCommand;
@@ -53,7 +56,7 @@ public class ShellViewModel(INavigationService navigationService,
     public ObservableCollection<HamburgerMenuItem> MenuItems { get; } =
     [
         new HamburgerMenuGlyphItem() { Label = Resources.ShellDevicesPage, Glyph = "\uE968", TargetPageType = typeof(DevicesViewModel) },
-        new HamburgerMenuGlyphItem() { Label = Resources.ShellDevicesPage, Glyph = "\uE721", TargetPageType = typeof(IoddfinderViewModel) },
+        new HamburgerMenuGlyphItem() { Label = Resources.ShellIoddfinderPage, Glyph = "\uE721", TargetPageType = typeof(IoddfinderViewModel) },
         new HamburgerMenuIconItem() { Label = Resources.ShellProfinetDevicePage, Icon = "/Assets/profinet.png", TargetPageType = typeof(ProfinetDeviceViewModel) },
         new HamburgerMenuIconItem() { Label = Resources.ShellIOLinkDevicesPage, Icon = "/Assets/io-link.png" , TargetPageType = typeof(IOLinkDeviceViewModel) },
     ];
@@ -74,17 +77,17 @@ public class ShellViewModel(INavigationService navigationService,
 
     private void OnLoaded()
     {
-        _navigationService.Navigated += OnNavigated;
+        navigationService.Navigated += OnNavigated;
     }
 
     private void OnUnloaded()
     {
-        _navigationService.Navigated -= OnNavigated;
+        navigationService.Navigated -= OnNavigated;
     }
 
-    private bool CanGoBack() => _navigationService.CanGoBack;
+    private bool CanGoBack() => navigationService.CanGoBack;
 
-    private void OnGoBack() => _navigationService.GoBack();
+    private void OnGoBack() => navigationService.GoBack();
 
     private void OnMenuItemInvoked() => NavigateTo(SelectedMenuItem!.TargetPageType!);
 
@@ -92,9 +95,9 @@ public class ShellViewModel(INavigationService navigationService,
 
     private void NavigateTo(Type targetViewModel)
     {
-        if (targetViewModel != null)
+        if (targetViewModel is not null)
         {
-            _navigationService.NavigateTo(targetViewModel.FullName!);
+            navigationService.NavigateTo(targetViewModel.FullName!);
         }
     }
 

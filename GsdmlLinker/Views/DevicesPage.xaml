@@ -1,10 +1,11 @@
 ﻿<Page x:Class="GsdmlLinker.Views.DevicesPage"
+      Style="{DynamicResource MahApps.Styles.Page}"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:control="clr-namespace:GsdmlLinker.Controls"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-      xmlns:Dialog="clr-namespace:MahApps.Metro.Controls.Dialogs;assembly=MahApps.Metro"
+      
       xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
       xmlns:local="clr-namespace:GsdmlLinker.Views"
       xmlns:converters="clr-namespace:GsdmlLinker.Converters"
@@ -12,8 +13,7 @@
       xmlns:viewModel="clr-namespace:GsdmlLinker.ViewModels"
       xmlns:model="clr-namespace:GsdmlLinker.Models" 
       d:DataContext="{d:DesignInstance Type=viewModel:DevicesViewModel}"
-      mc:Ignorable="d" 
-      Dialog:DialogParticipation.Register="{Binding}">
+      mc:Ignorable="d" >
     <Page.Resources>
         <converters:StringEmptyToVisibilityConverter x:Key="StringEmptyToVisibilityConverter"/>
         <converters:StringEmptyToCollapsedConverter x:Key="StringEmptyToCollapsedConverter"/>
