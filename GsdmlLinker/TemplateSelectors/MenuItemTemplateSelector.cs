@@ -8,7 +8,6 @@ namespace GsdmlLinker.TemplateSelectors;
 public class MenuItemTemplateSelector : DataTemplateSelector
 {
     public DataTemplate GlyphDataTemplate { get; set; } = new DataTemplate();
-
     public DataTemplate ImageDataTemplate { get; set; } = new DataTemplate();
     public DataTemplate IconDataTemplate { get; set; } = new DataTemplate();
 

@@ -94,6 +94,7 @@ public class ProfinetDeviceViewModel(Contracts.Services.ISettingsService setting
                 {
                     Name = device.ManufacturerName ?? string.Empty,
                     Id = device.VendorId ?? string.Empty,
+                    CanEdit = true,
                 };
 
                 foreach (var item in group)
@@ -158,6 +159,7 @@ public class ProfinetDeviceViewModel(Contracts.Services.ISettingsService setting
                 Version = deviceAccessPoint?.Version,
                 VendorName = device.VendorName ?? string.Empty,
                 DeviceFamily = device.DeviceFamily ?? string.Empty,
+                CanEdit = true,
             });
         }
         return result;
@@ -175,7 +177,7 @@ public class ProfinetDeviceViewModel(Contracts.Services.ISettingsService setting
                 {
                     var moduleTree = new Models.ModuleTreeItem(module);
 
-                    if (module.Submodules is null)
+                    if (module.Submodules is null || module.Submodules.Count == 0)
                     {
                         if (string.IsNullOrEmpty(module.CategoryRef))
                         {

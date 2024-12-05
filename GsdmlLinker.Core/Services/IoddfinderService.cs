@@ -154,17 +154,36 @@ public class IoddfinderService : IIoddfinderService
         return result;
     }
 
-
-
-
-
-    public async Task<ProductVariant> GetProductVariantMenusAsync(string vendorId, string deviceId)
+    public async Task<List<Iodd>> GetProductVariantMenusAsync(ushort vendorId, uint deviceId)
     {
-        var httpResponseMessage = await httpClient.GetAsync($"productvariants/{vendorId}/{deviceId}/viewer?version=1.1");
+        var httpResponseMessage = await httpClient.GetAsync($"productvariants?size=2000&vendorId={vendorId}&deviceId={deviceId}");
         var json = await httpResponseMessage.Content.ReadAsStringAsync();
-        var response = JsonSerializer.Deserialize<ProductVariant>(json, serializerOptions);
+        var response = JsonSerializer.Deserialize<ApiResponse<Iodd>>(json, serializerOptions);
 
-        return response!;
+        var result = new List<Iodd>();
+        if (response is not null)
+        {
+            if (response.Content is not null)
+            {
+                result.AddRange(response.Content);
+            }
+            if (response.TotalElements > response.NumberOfElements)
+            {
+                var pages = response!.TotalPages;
+                for (int page = 1; page < pages; page++)
+                {
+                    httpResponseMessage = await httpClient.GetAsync($"productvariants?page={page}&size=2000&vendorId={vendorId}&deviceId={deviceId}");
+                    json = await httpResponseMessage.Content.ReadAsStringAsync();
+                    response = JsonSerializer.Deserialize<ApiResponse<Iodd>>(json, serializerOptions);
+
+                    if (response?.Content is not null)
+                    {
+                        result.AddRange(response.Content);
+                    }
+                }
+            }
+        }
+        return result;
     }
 
     public async Task<byte[]?> GetIoddZipAsync(uint vendorId, long ioddId)

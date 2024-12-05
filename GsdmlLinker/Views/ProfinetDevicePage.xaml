@@ -7,18 +7,15 @@
       xmlns:converters="clr-namespace:GsdmlLinker.Converters"
       xmlns:coreModels="clr-namespace:GsdmlLinker.Core.Models;assembly=GsdmlLinker.Core"
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-      xmlns:Dialog="clr-namespace:MahApps.Metro.Controls.Dialogs;assembly=MahApps.Metro"
       xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
       xmlns:local="clr-namespace:GsdmlLinker.Views"
       xmlns:localControl="clr-namespace:GsdmlLinker.Controls"
       xmlns:models="clr-namespace:GsdmlLinker.Models"
       xmlns:properties="clr-namespace:GsdmlLinker.Properties"
       xmlns:viewModel="clr-namespace:GsdmlLinker.ViewModels"
+      xmlns:system="clr-namespace:System;assembly=netstandard"
       mc:Ignorable="d"
-            xmlns:system="clr-namespace:System;assembly=netstandard"
-
-      d:DataContext="{d:DesignInstance Type=viewModel:ProfinetDeviceViewModel}"
-      Dialog:DialogParticipation.Register="{Binding}">
+      d:DataContext="{d:DesignInstance Type=viewModel:ProfinetDeviceViewModel}">
     <Page.Resources>
         <converters:ItemStateToTextIconConverter x:Key="ItemStateToTextIconConverter"/>
     </Page.Resources>
@@ -39,7 +36,7 @@
                         <Style TargetType="ColumnDefinition">
                             <Setter Property="Width" Value="*"/>
                             <Style.Triggers>
-                                <DataTrigger Binding="{Binding SelectedItem}" Value="{x:Null}">
+                                <DataTrigger Binding="{Binding MasterDeviceSelected}" Value="{x:Null}">
                                     <Setter Property="Width" Value="0"/>
                                 </DataTrigger>
                             </Style.Triggers>

@@ -61,11 +61,74 @@ namespace GsdmlLinker.Properties {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Close.
+        /// </summary>
+        public static string AppDialogCloseText {
+            get {
+                return ResourceManager.GetString("AppDialogCloseText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à GSDML Linker.
         /// </summary>
         public static string AppDisplayName {
             get {
                 return ResourceManager.GetString("AppDisplayName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à New GSDML description added.
+        /// </summary>
+        public static string AppMessageNewGsdMessage {
+            get {
+                return ResourceManager.GetString("AppMessageNewGsdMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à GSDML Added.
+        /// </summary>
+        public static string AppMessageNewGsdTitle {
+            get {
+                return ResourceManager.GetString("AppMessageNewGsdTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à New IODD description added.
+        /// </summary>
+        public static string AppMessageNewIoddMessage {
+            get {
+                return ResourceManager.GetString("AppMessageNewIoddMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à IODD description added.
+        /// </summary>
+        public static string AppMessageNewIoddTitle {
+            get {
+                return ResourceManager.GetString("AppMessageNewIoddTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Build new description in.
+        /// </summary>
+        public static string AppMessageSaveGsdMessage {
+            get {
+                return ResourceManager.GetString("AppMessageSaveGsdMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Save description.
+        /// </summary>
+        public static string AppMessageSaveGsdTitle {
+            get {
+                return ResourceManager.GetString("AppMessageSaveGsdTitle", resourceCulture);
             }
         }
         
@@ -97,6 +160,15 @@ namespace GsdmlLinker.Properties {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Save and export.
+        /// </summary>
+        public static string DevicesPageSaveExportText {
+            get {
+                return ResourceManager.GetString("DevicesPageSaveExportText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Save.
         /// </summary>
         public static string DevicesPageSaveText {
@@ -104,15 +176,52 @@ namespace GsdmlLinker.Properties {
                 return ResourceManager.GetString("DevicesPageSaveText", resourceCulture);
             }
         }
-
-        public static string DevicesPageSaveExportText
-        {
-            get
-            {
-                return ResourceManager.GetString("DevicesPageSaveExportText", resourceCulture);
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à IO mapping.
+        /// </summary>
+        public static string IOLinkDeviceMappingTitle {
+            get {
+                return ResourceManager.GetString("IOLinkDeviceMappingTitle", resourceCulture);
             }
         }
-
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Confirme delet ?.
+        /// </summary>
+        public static string MessageDeleteItemText {
+            get {
+                return ResourceManager.GetString("MessageDeleteItemText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Delete device.
+        /// </summary>
+        public static string MessageDeleteItemTitle {
+            get {
+                return ResourceManager.GetString("MessageDeleteItemTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à New device name.
+        /// </summary>
+        public static string MessageRenameItemText {
+            get {
+                return ResourceManager.GetString("MessageRenameItemText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Rename device.
+        /// </summary>
+        public static string MessageRenameItemTitle {
+            get {
+                return ResourceManager.GetString("MessageRenameItemTitle", resourceCulture);
+            }
+        }
+        
         /// <summary>
         ///   Recherche une chaîne localisée semblable à Empty.
         /// </summary>
@@ -132,7 +241,16 @@ namespace GsdmlLinker.Properties {
         }
         
         /// <summary>
-        ///   Recherche une chaîne localisée semblable à Choose Theme.
+        ///   Recherche une chaîne localisée semblable à Choose language.
+        /// </summary>
+        public static string SettingsPageChooseLanguageText {
+            get {
+                return ResourceManager.GetString("SettingsPageChooseLanguageText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Choose theme.
         /// </summary>
         public static string SettingsPageChooseThemeText {
             get {
@@ -230,20 +348,21 @@ namespace GsdmlLinker.Properties {
             }
         }
         
-        public static string ShellIoddfinderPage
-        {
-            get
-            {
-                return ResourceManager.GetString("ShellIoddfinderPage", resourceCulture);
-            }
-        }
-
         /// <summary>
         ///   Recherche une chaîne localisée semblable à Open or close navigation.
         /// </summary>
         public static string ShellHamburgerButtonName {
             get {
                 return ResourceManager.GetString("ShellHamburgerButtonName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à IODD Finder.
+        /// </summary>
+        public static string ShellIoddfinderPage {
+            get {
+                return ResourceManager.GetString("ShellIoddfinderPage", resourceCulture);
             }
         }
         
@@ -271,6 +390,24 @@ namespace GsdmlLinker.Properties {
         public static string ShellSettingsPage {
             get {
                 return ResourceManager.GetString("ShellSettingsPage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Remove existant folder and content ?.
+        /// </summary>
+        public static string ShellUnzipDialogMessage {
+            get {
+                return ResourceManager.GetString("ShellUnzipDialogMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Folder exist.
+        /// </summary>
+        public static string ShellUnzipDialogTitle {
+            get {
+                return ResourceManager.GetString("ShellUnzipDialogTitle", resourceCulture);
             }
         }
     }

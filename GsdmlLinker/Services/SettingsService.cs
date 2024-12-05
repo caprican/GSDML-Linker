@@ -5,6 +5,9 @@ namespace GsdmlLinker.Services;
 public class SettingsService : ISettingsService
 {
     public string? Theme => App.Current.Properties[nameof(Theme)]?.ToString();
+
+    public string? CurrentCulture => App.Current.Properties[nameof(CurrentCulture)]?.ToString();
+
     public string? NavigationFolder => App.Current.Properties[nameof(NavigationFolder)]?.ToString();
     public string? ExportFolder => App.Current.Properties[nameof(ExportFolder)]?.ToString();
     public string DefaultFolder => Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);

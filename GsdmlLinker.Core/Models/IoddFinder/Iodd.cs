@@ -41,7 +41,7 @@ public class Iodd
     [JsonPropertyName("ioLinkRev")]
     public string IoLinkRev { get; set; } = string.Empty;
     [JsonPropertyName("version")]
-    public string Version { get; set; } = string.Empty;
+    public string Version{ get; set; } = string.Empty;
     [JsonPropertyName("versionString")]
     private string VersionString { set { Version = value; } }
 

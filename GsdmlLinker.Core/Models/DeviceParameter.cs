@@ -7,6 +7,7 @@ public record DeviceParameter : INotifyPropertyChanged
 {
     private bool isVisible = true;
     private bool isSelected = true;
+    private bool isLocked = false;
     private string defaultValue = string.Empty;
 
     public string Name { get; init; } = string.Empty;
@@ -25,6 +26,16 @@ public record DeviceParameter : INotifyPropertyChanged
         set
         {
             isSelected = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public bool IsLocked
+    {
+        get => isLocked;
+        set
+        {
+            isLocked = value;
             OnPropertyChanged();
         }
     }

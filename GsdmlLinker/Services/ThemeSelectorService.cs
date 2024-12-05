@@ -9,14 +9,12 @@ using MahApps.Metro.Theming;
 
 namespace GsdmlLinker.Services;
 
-public class ThemeSelectorService : IThemeSelectorService
+public class ThemeSelectorService(ISettingsService settingsService) : IThemeSelectorService
 {
+    private readonly ISettingsService settingsService = settingsService;
+
     private const string HcDarkTheme = "pack://application:,,,/Styles/Themes/HC.Dark.Blue.xaml";
     private const string HcLightTheme = "pack://application:,,,/Styles/Themes/HC.Light.Blue.xaml";
-
-    public ThemeSelectorService()
-    {
-    }
 
     public void InitializeTheme()
     {
@@ -44,15 +42,15 @@ public class ThemeSelectorService : IThemeSelectorService
             ThemeManager.Current.ChangeTheme(Application.Current, $"{theme}.Blue", SystemParameters.HighContrast);
         }
 
-        App.Current.Properties["Theme"] = theme.ToString();
+        App.Current.Properties[nameof(settingsService.Theme)] = theme.ToString();
     }
 
     public AppTheme GetCurrentTheme()
     {
-        if (App.Current.Properties.Contains("Theme"))
+        if (App.Current.Properties.Contains(nameof(settingsService.Theme)))
         {
-            var themeName = App.Current.Properties["Theme"]?.ToString();
-            Enum.TryParse(themeName, out AppTheme theme);
+            var themeName = App.Current.Properties[nameof(settingsService.Theme)]?.ToString();
+            _ = Enum.TryParse(themeName, out AppTheme theme);
             return theme;
         }
 

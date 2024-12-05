@@ -1,5 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using System.IO;
+using System.IO.Compression;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Input;
@@ -9,6 +10,9 @@ using CommunityToolkit.Mvvm.Input;
 
 using GsdmlLinker.Contracts.ViewModels;
 using GsdmlLinker.Core.Contracts.Services;
+using GsdmlLinker.Core.Models;
+using GsdmlLinker.Core.Models.IoddFinder;
+using GsdmlLinker.Models;
 
 using MahApps.Metro.Controls.Dialogs;
 
@@ -43,6 +47,7 @@ public class DevicesViewModel(Contracts.Services.ISettingsService settingsServic
     private ICommand? viewSubParametersCommand;
     private ICommand? exportMasterDeviceCommand;
     private ICommand? saveExportMasterDeviceCommand;
+    private ICommand? processDataViewCommand;
 
     private ObservableCollection<Models.VendorItem>? masterVendors;
     private ObservableCollection<Models.VendorItem>? slaveVendors;
@@ -111,6 +116,11 @@ public class DevicesViewModel(Contracts.Services.ISettingsService settingsServic
         get => slaveDeviceSelected;
         set
         {
+            if(MasterDeviceSelected?.CanEdit != true)
+            {
+                slaveDeviceSelected = null;
+            }
+
             SetProperty(ref slaveDeviceSelected, value);
             if (SlaveDeviceSelected is not null)
             {
@@ -119,7 +129,6 @@ public class DevicesViewModel(Contracts.Services.ISettingsService settingsServic
                 SaveMasterDeviceVisibility = Visibility.Collapsed;
                 UpdateSlaveDeviceVisibility = Visibility.Visible;
                 SlaveListVisibility = Visibility.Collapsed;
-
             }
             else
             {
@@ -127,6 +136,11 @@ public class DevicesViewModel(Contracts.Services.ISettingsService settingsServic
                 UpdateSlaveDeviceVisibility = Visibility.Collapsed;
                 SlaveListVisibility = Visibility.Visible;
                 SaveMasterDeviceVisibility = Visibility.Visible;
+            }
+
+            if (MasterDeviceSelected?.CanEdit != true)
+            {
+                SlaveListVisibility = Visibility.Collapsed;
             }
         }
     }
@@ -142,7 +156,8 @@ public class DevicesViewModel(Contracts.Services.ISettingsService settingsServic
             {
                 SlaveDeviceSelected = null;
                 ThirdColumnSize = null;
-                GetSlaveParameters();
+                if (MasterDeviceSelected?.CanEdit == true)
+                    GetSlaveParameters();
             }
             else
             {
@@ -220,8 +235,9 @@ public class DevicesViewModel(Contracts.Services.ISettingsService settingsServic
     public ICommand ViewSubParametersCommand => viewSubParametersCommand ??= new RelayCommand<Core.Models.DeviceParameter>(OnViewSubParameters);
     public ICommand ExportMasterDeviceCommand => exportMasterDeviceCommand ??= new RelayCommand<Models.DeviceItem>(OnExportMasterDevice);
     public ICommand SaveExportMasterDeviceCommand => saveExportMasterDeviceCommand ??= new RelayCommand(OnSaveExportMasterDevice);
+    public ICommand ProcessDataViewCommand => processDataViewCommand ??= new RelayCommand(OnProcessDataView);
 
-    public async void OnNavigatedTo(object parameter)
+    public void OnNavigatedTo(object parameter)
     {
         pnDevicesService.DeviceAdded += PnDevicesService_DeviceAdded;
         iolDevicesService.DeviceAdded += IolDevicesService_DeviceAdded;
@@ -239,13 +255,13 @@ public class DevicesViewModel(Contracts.Services.ISettingsService settingsServic
 
     private void PnDevicesService_DeviceAdded(object? sender, Core.Models.DeviceEventArgs e)
     {
-        DialogCoordinator.Instance.ShowMessageAsync(this, "GSDML added", $"New GSDML added {e.Device?.Name}", MessageDialogStyle.Affirmative);
+        dialogCoordinator.ShowMessageAsync(App.Current.MainWindow.DataContext, Properties.Resources.AppMessageNewGsdTitle, $"{Properties.Resources.AppMessageNewGsdMessage} ({e.Device?.Name})", MessageDialogStyle.Affirmative);
         GetMasterDevices();
     }
 
     private void IolDevicesService_DeviceAdded(object? sender, Core.Models.DeviceEventArgs e)
     {
-        DialogCoordinator.Instance.ShowMessageAsync(this, "IODD added", $"New IODD added {e.Device?.Name}", MessageDialogStyle.Affirmative);
+        dialogCoordinator.ShowMessageAsync(App.Current.MainWindow.DataContext, Properties.Resources.AppMessageNewIoddTitle, $"{Properties.Resources.AppMessageNewIoddMessage} {e.Device?.Name}", MessageDialogStyle.Affirmative);
         GetSlaveDevices();
     }
 
@@ -262,6 +278,7 @@ public class DevicesViewModel(Contracts.Services.ISettingsService settingsServic
                 {
                     Name = device.ManufacturerName ?? string.Empty,
                     Id = device.VendorId ?? string.Empty,
+                    CanEdit = device.GetType() != typeof(Core.PN.Models.Manufacturers.UnknowDevice),
                 };
 
                 foreach (var item in group)
@@ -327,6 +344,7 @@ public class DevicesViewModel(Contracts.Services.ISettingsService settingsServic
                     Name = device.ManufacturerName ?? string.Empty,
                     Id = device.VendorId ?? string.Empty,
                     Icon = device.VendorLogo ?? string.Empty,
+                    CanEdit = true,
                 };
 
                 foreach (var item in AddDevice(device))
@@ -358,6 +376,8 @@ public class DevicesViewModel(Contracts.Services.ISettingsService settingsServic
                 Version = deviceAccessPoint?.Version,
                 VendorName = device.VendorName ?? string.Empty,
                 DeviceFamily = device.DeviceFamily ?? string.Empty,
+
+                CanEdit = device.GetType() != typeof(Core.PN.Models.Manufacturers.UnknowDevice),
             });
         }
         return result;
@@ -380,6 +400,7 @@ public class DevicesViewModel(Contracts.Services.ISettingsService settingsServic
                     Icon = variant?.Icon ?? string.Empty,
                     ProfileVersion = device.SchematicVersion ?? string.Empty,
                     //Version = variant?.Version
+                    CanEdit = true,
                 });
             }
         }
@@ -398,7 +419,7 @@ public class DevicesViewModel(Contracts.Services.ISettingsService settingsServic
                 {
                     var moduleTree = new Models.ModuleTreeItem(module);
 
-                    if(module.Submodules is null)
+                    if(module.Submodules is null || module.Submodules.Count == 0)
                     {
                         if (string.IsNullOrEmpty(module.CategoryRef))
                         {
@@ -530,7 +551,7 @@ public class DevicesViewModel(Contracts.Services.ISettingsService settingsServic
         CollectionViewSource.GetDefaultView(MasterModules).Refresh();
     }
 
-    private void GetSlaveParameters()
+    private async void GetSlaveParameters()
     {
         SlaveParameters.Clear();
         SelectAll = true;
@@ -567,10 +588,10 @@ public class DevicesViewModel(Contracts.Services.ISettingsService settingsServic
                     }
                 }
 
-                CollectionViewSource.GetDefaultView(SlaveParameters).Refresh();
+                //CollectionViewSource.GetDefaultView(SlaveParameters).Refresh();
             }
         }
-        else if (MasterModuleSelected is not null)
+        else if (MasterModuleSelected is not null && SlaveVendors is not null)
         {
             SlaveDeviceSelected = SlaveVendors.FirstOrDefault(f => f.Id == MasterModuleSelected.VendorId.ToString())?.Devices?.FirstOrDefault(f => f.DeviceId == MasterModuleSelected.DeviceId.ToString());
 
@@ -578,16 +599,54 @@ public class DevicesViewModel(Contracts.Services.ISettingsService settingsServic
             {
                 try
                 {
-                //ioddfinderService.
+                    var productionVariant = await ioddfinderService.GetProductVariantMenusAsync(MasterModuleSelected.VendorId, MasterModuleSelected.DeviceId);
 
+                    switch (productionVariant?.Count)
+                    {
+                        case 0:
+                        case null:
+                            await dialogCoordinator.ShowMessageAsync(App.Current.MainWindow.DataContext, "", "");
+                            break;
+                        case 1:
+                            await LoaadIodd(productionVariant[0]);
+
+                            SlaveDeviceSelected = SlaveVendors.FirstOrDefault(f => f.Id == MasterModuleSelected.VendorId.ToString())?.Devices?.FirstOrDefault(f => f.DeviceId == MasterModuleSelected.DeviceId.ToString());
+                            break;
+                        default:
+                            var customDialog = new CustomDialog { Title = Properties.Resources.IOLinkDeviceMappingTitle };
+
+                            var dataContext = new Dialogs.IoddfinderSelectDeviceViewModel(async instance =>
+                            {
+                                await dialogCoordinator.HideMetroDialogAsync(App.Current.MainWindow.DataContext, customDialog);
+
+                                if(instance.SelectedItem is not null)
+                                {
+                                    await LoaadIodd(instance.SelectedItem);
+                                    SlaveDeviceSelected = SlaveVendors.FirstOrDefault(f => f.Id == MasterModuleSelected.VendorId.ToString())?.Devices?.FirstOrDefault(f => f.DeviceId == MasterModuleSelected.DeviceId.ToString());
+                                }
+                            }, productionVariant);
+                            customDialog.Content = new Views.Dialogs.IoddfinderSelectDeviceDialog { DataContext = dataContext };
+
+                            await dialogCoordinator.ShowMetroDialogAsync(App.Current.MainWindow.DataContext, customDialog);
+
+
+                            break;
+                    }
                 }
                 catch
                 {
 
                 }
             }
-            /// TODO Request
         }
+    }
+
+    private async Task LoaadIodd(Iodd productVariant)
+    {
+        var zipStream = await ioddfinderService.GetIoddZipAsync(productVariant.VendorId, productVariant.IoddId);
+        if (zipStream is null) return;
+        using var zip = new ZipArchive(new MemoryStream(zipStream), ZipArchiveMode.Read);
+        iolDevicesService.AddDevice(zip);
     }
 
     private void Item_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -620,7 +679,7 @@ public class DevicesViewModel(Contracts.Services.ISettingsService settingsServic
 
     private async Task OnRenameDevice()
     {
-        var diag = await DialogCoordinator.Instance.ShowInputAsync(this, "Change name", "rename device", new MetroDialogSettings { DefaultText = DeviceRename });
+        var diag = await dialogCoordinator.ShowInputAsync(App.Current.MainWindow.DataContext, Properties.Resources.MessageRenameItemTitle, Properties.Resources.MessageRenameItemText, new MetroDialogSettings { DefaultText = DeviceRename });
         if (!string.IsNullOrEmpty(diag))
         {
             DeviceRename = diag;
@@ -691,13 +750,15 @@ public class DevicesViewModel(Contracts.Services.ISettingsService settingsServic
         {
             case Core.Models.ItemState.None:
             case Core.Models.ItemState.Original:
-                module.State = Core.Models.ItemState.Deleted;
+                if (await dialogCoordinator.ShowMessageAsync(App.Current.MainWindow.DataContext, Properties.Resources.MessageDeleteItemTitle, Properties.Resources.MessageDeleteItemText, MessageDialogStyle.AffirmativeAndNegative) == MessageDialogResult.Affirmative)
+                {
+                    module.State = Core.Models.ItemState.Deleted;
 
-                CanSaveMasterDevice = /*MasterDeviceSelected?.device?.Editing ==*/ true;
+                    CanSaveMasterDevice = /*MasterDeviceSelected?.device?.Editing ==*/ true;
+                }
                 break;
             case Core.Models.ItemState.Created:
-                var diag = await DialogCoordinator.Instance.ShowMessageAsync(this, "Delet module", "Vraiment ?", MessageDialogStyle.AffirmativeAndNegative);
-                if (diag == MessageDialogResult.Affirmative)
+                if (await dialogCoordinator.ShowMessageAsync(App.Current.MainWindow.DataContext, Properties.Resources.MessageDeleteItemTitle, Properties.Resources.MessageDeleteItemText, MessageDialogStyle.AffirmativeAndNegative) == MessageDialogResult.Affirmative)
                 {
                     if (MasterDeviceSelected is not null)
                     {
@@ -825,6 +886,8 @@ public class DevicesViewModel(Contracts.Services.ISettingsService settingsServic
                     settingsService.SaveExportFolder(directoryFolder.FolderName);
 
                     zipperService.Zipper(localDirectory, fileName, directoryFolder.FolderName, graphicsPath);
+
+                    dialogCoordinator.ShowMessageAsync(App.Current.MainWindow.DataContext, Properties.Resources.AppMessageSaveGsdTitle, $"{Properties.Resources.AppMessageSaveGsdMessage} {directoryFolder.FolderName}", MessageDialogStyle.Affirmative);
                 }
             }
         }
@@ -832,8 +895,116 @@ public class DevicesViewModel(Contracts.Services.ISettingsService settingsServic
         MasterDeviceSelected = null;
     }
 
-    public void OnLoadCompleted()
+    private void OnProcessDataView()
     {
-        
+        if (SlaveDeviceSelected is null) return;
+        var processData = iolDevicesService.GetProcessData(SlaveDeviceSelected.VendorId, SlaveDeviceSelected.DeviceId);
+
+        List<ProcessDataBase>? processDataIn = null;
+        List<ProcessDataBase>? processDataOut = null;
+
+        if (processData?.Where(data => data.Any(a => a.Condition is null)) is IEnumerable<IGrouping<string?, Core.Models.DeviceProcessData>> processDatasIO)
+        {
+            foreach (var processDataIO in processDatasIO)
+            {
+                foreach (var item in processDataIO)
+                {
+                    if (item.ProcessDataIn?.ProcessData is not null)
+                    {
+                        processDataIn ??= [];
+
+                        processDataIn.Add(new ProcessDataColumn { Header = "1.7" });
+                        processDataIn.Add(new ProcessDataColumn { Header = "1.6" });
+                        processDataIn.Add(new ProcessDataColumn { Header = "1.5" });
+                        processDataIn.Add(new ProcessDataColumn { Header = "1.4" });
+                        processDataIn.Add(new ProcessDataColumn { Header = "1.3" });
+                        processDataIn.Add(new ProcessDataColumn { Header = "1.2" });
+                        processDataIn.Add(new ProcessDataColumn { Header = "1.1" });
+                        processDataIn.Add(new ProcessDataColumn { Header = "1.0" });
+                        processDataIn.Add(new ProcessDataColumn { Header = "0.7" });
+                        processDataIn.Add(new ProcessDataColumn { Header = "0.6" });
+                        processDataIn.Add(new ProcessDataColumn { Header = "0.5" });
+                        processDataIn.Add(new ProcessDataColumn { Header = "0.4" });
+                        processDataIn.Add(new ProcessDataColumn { Header = "0.3" });
+                        processDataIn.Add(new ProcessDataColumn { Header = "0.2" });
+                        processDataIn.Add(new ProcessDataColumn { Header = "0.1" });
+                        processDataIn.Add(new ProcessDataColumn { Header = "0.0" });
+
+                        foreach (var dtIn in item.ProcessDataIn.ProcessData.Where(w => w.DataType != DeviceDatatypes.RecordT).GroupBy(g => g.Index))
+                        {
+                            for (int i = 0; i < dtIn.Count(); i++)
+                            {
+                                var processDataItem = dtIn.ToArray()[i];
+                                for (var j = 0; j < processDataItem.BitLength; j++)
+                                {
+                                    processDataIn.Add(new ProcessDataItem
+                                    {
+                                        Name = processDataItem.Name,
+                                        Datatype = processDataItem.DataType,
+                                        //Color = $"#{(128 + i * 8):X2}8{(255 - (int)processDataItem.BitOffset! * 8):X2}8"
+                                        Color = $"#{(128 + (processDataItem.BitOffset ?? 0) * 8):X3}{(255 - (i + 1) * 8):X2}8"
+                                    });
+                                }
+                            }
+                        }
+                    }
+
+                    if (item.ProcessDataOut?.ProcessData is not null)
+                    {
+                        processDataOut ??= [];
+
+                        processDataOut.Add(new ProcessDataColumn { Header = "1.7" });
+                        processDataOut.Add(new ProcessDataColumn { Header = "1.6" });
+                        processDataOut.Add(new ProcessDataColumn { Header = "1.5" });
+                        processDataOut.Add(new ProcessDataColumn { Header = "1.4" });
+                        processDataOut.Add(new ProcessDataColumn { Header = "1.3" });
+                        processDataOut.Add(new ProcessDataColumn { Header = "1.2" });
+                        processDataOut.Add(new ProcessDataColumn { Header = "1.1" });
+                        processDataOut.Add(new ProcessDataColumn { Header = "1.0" });
+                        processDataOut.Add(new ProcessDataColumn { Header = "0.7" });
+                        processDataOut.Add(new ProcessDataColumn { Header = "0.6" });
+                        processDataOut.Add(new ProcessDataColumn { Header = "0.5" });
+                        processDataOut.Add(new ProcessDataColumn { Header = "0.4" });
+                        processDataOut.Add(new ProcessDataColumn { Header = "0.3" });
+                        processDataOut.Add(new ProcessDataColumn { Header = "0.2" });
+                        processDataOut.Add(new ProcessDataColumn { Header = "0.1" });
+                        processDataOut.Add(new ProcessDataColumn { Header = "0.0" });
+
+                        foreach (var dtOut in item.ProcessDataOut.ProcessData.Where(w => w.DataType != DeviceDatatypes.RecordT).GroupBy(g => g.Index))
+                        {
+                            for (int i = 0; i < dtOut.Count(); i++)
+                            {
+                                var processDataItem = dtOut.ToArray()[i];
+                                for (var j = 0; j < processDataItem.BitLength; j++)
+                                {
+                                    processDataOut.Add(new ProcessDataItem
+                                    {
+                                        Name = processDataItem.Name,
+                                        Datatype = processDataItem.DataType,
+                                        //Color = $"#{(128 + i * 8):X2}8{(255 - (int)processDataItem.BitOffset! * 8):X2}8"
+                                        Color = $"#{(128 + (processDataItem.BitOffset ?? 0) * 8):X3}{(255 - (i + 1) * 8):X2}8"
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+
+        var a = processData?.FirstOrDefault(f => f.Key == null);
+        var b = a?.Where(w => w.Condition is null);
+
+        var customDialog = new CustomDialog { Title = Properties.Resources.IOLinkDeviceMappingTitle };
+
+        var dataContext = new Dialogs.IOLinkDeviceMappingViewModel(instance =>
+        {
+            dialogCoordinator.HideMetroDialogAsync(App.Current.MainWindow.DataContext, customDialog);
+
+        }, processDataIn?.ToArray(), processDataOut?.ToArray());
+        customDialog.Content = new Views.Dialogs.IOLinkDeviceMappingDialog { DataContext = dataContext };
+
+        dialogCoordinator.ShowMetroDialogAsync(App.Current.MainWindow.DataContext, customDialog);
     }
 }

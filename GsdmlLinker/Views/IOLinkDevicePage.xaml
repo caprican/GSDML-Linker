@@ -6,7 +6,6 @@
       xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls"
       xmlns:localControls="clr-namespace:GsdmlLinker.Controls"
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-      xmlns:Dialog="clr-namespace:MahApps.Metro.Controls.Dialogs;assembly=MahApps.Metro"
       xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
       xmlns:local="clr-namespace:GsdmlLinker.Views"
       xmlns:converters="clr-namespace:GsdmlLinker.Converters"
@@ -14,8 +13,7 @@
       xmlns:selector="clr-namespace:GsdmlLinker.TemplateSelectors"
       xmlns:viewModel="clr-namespace:GsdmlLinker.ViewModels"
       d:DataContext="{d:DesignInstance Type=viewModel:IOLinkDeviceViewModel}"
-      mc:Ignorable="d"
-      Dialog:DialogParticipation.Register="{Binding}">
+      mc:Ignorable="d">
     <Page.Resources>
         <converters:InvertBoolConverter x:Key="InvertBoolConverter"/>
         <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
@@ -117,8 +115,8 @@
                         </ColumnDefinition.Style>
                     </ColumnDefinition>
                 </Grid.ColumnDefinitions>
+                
                 <localControls:VendorListControl ItemsSource="{Binding SlaveVendors}" SelectedItem="{Binding SlaveDeviceSelected, Mode=TwoWay}"/>
-
 
                 <Grid Grid.Column="1" Margin="{StaticResource SmallMargin}">
                     <Grid.RowDefinitions>
@@ -140,47 +138,55 @@
                                 <TextBlock Text="{Binding SlaveDeviceSelected.Name, UpdateSourceTrigger=PropertyChanged}"
                                            Style="{StaticResource SubtitleTextStyle}" VerticalAlignment="Center" />
                             </StackPanel>
-
-                            <StackPanel Orientation="Horizontal">
-                                <ToggleButton IsChecked="{Binding SlaveDeviceSelected.UnlockId}" Margin="{StaticResource SmallMargin}">
-                                    <ToggleButton.Style>
-                                        <Style TargetType="ToggleButton">
-                                            <Setter Property="Template">
-                                                <Setter.Value>
-                                                    <ControlTemplate TargetType="{x:Type ToggleButton}">
-                                                        <Grid>
-                                                            <Grid.RowDefinitions>
-                                                                <RowDefinition Height="Auto" />
-                                                                <RowDefinition />
-                                                            </Grid.RowDefinitions>
-                                                            <TextBlock Name="Text" FontSize="24" FontFamily="Segoe MDL2 Assets"/>
-                                                        </Grid>
-                                                        <ControlTemplate.Triggers>
-                                                            <Trigger Property="IsChecked" Value="True">
-                                                                <Setter TargetName="Text" Property="Text" Value="&#xE785;" />
-                                                            </Trigger>
-                                                            <Trigger Property="IsChecked" Value="False">
-                                                                <Setter TargetName="Text" Property="Text" Value="&#xE72E;" />
-                                                            </Trigger>
-                                                        </ControlTemplate.Triggers>
-                                                    </ControlTemplate>
-                                                </Setter.Value>
-                                            </Setter>
-                                        </Style>
-                                    </ToggleButton.Style>
-                                </ToggleButton>
-                                <StackPanel Orientation="Vertical" VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding SlaveDeviceSelected.VendorId, StringFormat='{}Vendor ID: {0}'}" Margin="{StaticResource XSmallLeftMargin}" />
-                                    <TextBlock Text="{Binding SlaveDeviceSelected.DeviceId, StringFormat='{}Device ID: {0}'}" Margin="{StaticResource XSmallLeftMargin}" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Orientation="Horizontal">
+                                    <ToggleButton IsChecked="{Binding SlaveDeviceSelected.UnlockId}" Margin="{StaticResource SmallMargin}">
+                                        <ToggleButton.Style>
+                                            <Style TargetType="ToggleButton">
+                                                <Setter Property="Template">
+                                                    <Setter.Value>
+                                                        <ControlTemplate TargetType="{x:Type ToggleButton}">
+                                                            <Grid>
+                                                                <Grid.RowDefinitions>
+                                                                    <RowDefinition Height="Auto" />
+                                                                    <RowDefinition />
+                                                                </Grid.RowDefinitions>
+                                                                <TextBlock Name="Text" FontSize="24" FontFamily="Segoe MDL2 Assets"/>
+                                                            </Grid>
+                                                            <ControlTemplate.Triggers>
+                                                                <Trigger Property="IsChecked" Value="True">
+                                                                    <Setter TargetName="Text" Property="Text" Value="&#xE785;" />
+                                                                </Trigger>
+                                                                <Trigger Property="IsChecked" Value="False">
+                                                                    <Setter TargetName="Text" Property="Text" Value="&#xE72E;" />
+                                                                </Trigger>
+                                                            </ControlTemplate.Triggers>
+                                                        </ControlTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </Style>
+                                        </ToggleButton.Style>
+                                    </ToggleButton>
+                                    <StackPanel Orientation="Vertical" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding SlaveDeviceSelected.VendorId, StringFormat='{}Vendor ID: {0}'}" Margin="{StaticResource XSmallLeftMargin}" />
+                                        <TextBlock Text="{Binding SlaveDeviceSelected.DeviceId, StringFormat='{}Device ID: {0}'}" Margin="{StaticResource XSmallLeftMargin}" />
+                                    </StackPanel>
                                 </StackPanel>
-
-                            </StackPanel>
+                                <Button Grid.Column="1" Command="{Binding ProcessDataViewCommand}" 
+                                        Style="{StaticResource MahApps.Styles.Button.Square.Accent}">
+                                    <TextBlock Text="IO" FontSize="16" Margin="{StaticResource SmallMargin}"/>
+                                </Button>
+                            </Grid>
                         </StackPanel>
                     </Grid>
                     <TextBox Grid.Row="1" Text="{Binding SlaveDeviceSelected.Description, UpdateSourceTrigger=PropertyChanged}" TextWrapping="Wrap"
-                 Margin="{StaticResource SmallMargin}" Background="{DynamicResource MahApps.Brushes.Gray10}"
-                 controls:TextBoxHelper.ClearTextButton="True" controls:TextBoxHelper.UseFloatingWatermark="True"
-                 controls:TextBoxHelper.Watermark="Description" controls:TextBoxHelper.WatermarkAlignment="Left"/>
+                             Margin="{StaticResource SmallMargin}" Background="{DynamicResource MahApps.Brushes.Gray10}"
+                             controls:TextBoxHelper.ClearTextButton="True" controls:TextBoxHelper.UseFloatingWatermark="True"
+                             controls:TextBoxHelper.Watermark="Description" controls:TextBoxHelper.WatermarkAlignment="Left"/>
 
                     <GridSplitter Grid.Row="2"/>
 

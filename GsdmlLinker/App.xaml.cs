@@ -1,5 +1,6 @@
 ﻿using System.Configuration;
 using System.Data;
+using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Windows;
@@ -34,6 +35,8 @@ public partial class App : Application
     {
         var appLocation = Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location);
 
+        //System.Threading.Thread.CurrentThread.CurrentUICulture = new System.Globalization.CultureInfo("none");
+
         // For more information about .NET generic host see  https://docs.microsoft.com/aspnet/core/fundamentals/host/generic-host?view=aspnetcore-3.0
         host = Host.CreateDefaultBuilder(e.Args)
                 .ConfigureAppConfiguration(c =>
@@ -65,12 +68,13 @@ public partial class App : Application
         services.AddSingleton<Core.IOL.Contracts.Services.IDevicesService, Core.IOL.Services.DevicesService>();
 
         // Services
+        services.AddSingleton<ISettingsService, SettingsService>();
         services.AddSingleton<IApplicationInfoService, ApplicationInfoService>();
         services.AddSingleton<ISystemService, SystemService>();
         services.AddSingleton<IPersistAndRestoreService, PersistAndRestoreService>();
         services.AddSingleton<IThemeSelectorService, ThemeSelectorService>();
+        services.AddSingleton<ICultureSelectorService, CultureSelectorService>();
         services.AddSingleton<IPageService, PageService>();
-        services.AddSingleton<ISettingsService, SettingsService>();
         services.AddSingleton<INavigationService, NavigationService>();
 
         services.AddSingleton<ICaretaker, Caretaker>();

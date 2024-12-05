@@ -77,6 +77,11 @@ public abstract class ModuleBuilder(Core.Models.Device masterDevice) : IModuleBu
             //boolDataRef.AllowedValues = string.Join(" ", parameter.Values.Select(s => s.Key));
         }
 
+        if(parameter.IsLocked)
+        {
+            boolDataRef.AllowedValues = boolDataRef.DefaultValue;
+        }
+
         return (byteCount, boolDataRef);
     }
 
@@ -185,6 +190,11 @@ public abstract class ModuleBuilder(Core.Models.Device masterDevice) : IModuleBu
             intDataRef.AllowedValues = $"{parameter.Minimum}..{parameter.Maximum}";
         }
 
+        if (parameter.IsLocked)
+        {
+            intDataRef.AllowedValues = intDataRef.DefaultValue;
+        }
+
         return (byteCount, intDataRef);
     }
 
@@ -234,6 +244,11 @@ public abstract class ModuleBuilder(Core.Models.Device masterDevice) : IModuleBu
             DefaultValue = parameter.DefaultValue
         };
 
+        if (parameter.IsLocked)
+        {
+            floatDataRef.AllowedValues = floatDataRef.DefaultValue;
+        }
+
         return (byteCount, floatDataRef);
     }
 
@@ -273,6 +288,11 @@ public abstract class ModuleBuilder(Core.Models.Device masterDevice) : IModuleBu
             DefaultValue = defString
         };
 
+        if (parameter.IsLocked)
+        {
+            stringDataRef.AllowedValues = stringDataRef.DefaultValue;
+        }
+
         return (byteCount, stringDataRef);
     }
 
@@ -280,8 +300,6 @@ public abstract class ModuleBuilder(Core.Models.Device masterDevice) : IModuleBu
     {
         var txtId = $"IOLD_ProductName_{identNumber}";
         ExternalTextSet(txtId, name);
-        //ProductId = device.Description.Variants![0].ProductId;
-        //DocumentVersion = device.DocumentVersion!;
 
         var moduleInfo = new GSDML.DeviceProfile.ModuleInfoT
         {

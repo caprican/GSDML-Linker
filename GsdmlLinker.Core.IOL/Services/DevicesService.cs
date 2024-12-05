@@ -122,13 +122,16 @@ public class DevicesService(IOptions<Core.Models.AppConfig> appConfig) : IDevice
     public IEnumerable<Core.Models.DeviceParameter>? GetParameters(string vendorId, string deviceId)
     {
         var device = devices.FirstOrDefault(f => f.VendorId == vendorId && f.DeviceId == deviceId);
-        if (device is not null)
-        {
-            return device.Parameters;
-        }
-        else
-        {
-            return null;
-        }
+        if (device is null) return null;
+        
+        return device.Parameters;
+    }
+
+    public IEnumerable<IGrouping<string?, Core.Models.DeviceProcessData>>? GetProcessData(string vendorId, string deviceId)
+    {
+        var device = devices.FirstOrDefault(f => f.VendorId == vendorId && f.DeviceId == deviceId);
+        if (device is null) return null;
+
+        return device.ProcessDatas;
     }
 }

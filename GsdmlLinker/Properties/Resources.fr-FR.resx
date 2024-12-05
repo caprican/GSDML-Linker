@@ -118,120 +118,120 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="AppDisplayName" xml:space="preserve">
-    <value>GSDML Linker</value>
+    <value>GDSML Linker</value>
   </data>
   <data name="DevicesPageAddDevicesText" xml:space="preserve">
-    <value>Add devices</value>
+    <value>Ajouter appareils</value>
   </data>
   <data name="DevicesPageCancelText" xml:space="preserve">
-    <value>Cancel</value>
+    <value>Annuler</value>
   </data>
   <data name="DevicesPageCreateSlaveText" xml:space="preserve">
-    <value>Create</value>
+    <value>Nouveau</value>
   </data>
   <data name="DevicesPageSaveText" xml:space="preserve">
-    <value>Save</value>
+    <value>Enregistrer</value>
   </data>
   <data name="SettingsPageAboutText" xml:space="preserve">
-    <value>Empty</value>
+    <value>Vide</value>
   </data>
   <data name="SettingsPageAboutTitle" xml:space="preserve">
-    <value>About this application</value>
+    <value>A propos de l'application</value>
   </data>
   <data name="SettingsPageIoddFolder" xml:space="preserve">
-    <value>IODD data base</value>
+    <value>Base de données IODD</value>
   </data>
   <data name="SettingsPagePersonalizationTitle" xml:space="preserve">
-    <value>Personalization</value>
+    <value>Personnalisation</value>
   </data>
   <data name="SettingsPagePrivacyStatementText" xml:space="preserve">
-    <value>Privacy Statement</value>
+    <value>Privacy statement</value>
   </data>
   <data name="SettingsPageRadioButtonDarkTheme" xml:space="preserve">
-    <value>Dark</value>
+    <value>Sombre</value>
   </data>
   <data name="SettingsPageRadioButtonLightTheme" xml:space="preserve">
-    <value>Light</value>
+    <value>Clair</value>
   </data>
   <data name="SettingsPageRadioButtonWindowsDefaultTheme" xml:space="preserve">
-    <value>Default</value>
+    <value>Défaut</value>
   </data>
   <data name="SettingsPageTitle" xml:space="preserve">
-    <value>Settings</value>
+    <value>Options</value>
   </data>
   <data name="ShellDevicesPage" xml:space="preserve">
-    <value>Devices</value>
+    <value>Appareils</value>
   </data>
   <data name="ShellGoBackButton" xml:space="preserve">
-    <value>Go back</value>
+    <value>Retour</value>
   </data>
   <data name="ShellHamburgerButtonName" xml:space="preserve">
-    <value>Open or close navigation</value>
+    <value>Ouvrir ou fermer la navigation</value>
   </data>
   <data name="ShellSettingsPage" xml:space="preserve">
-    <value>Settings</value>
+    <value>Options</value>
   </data>
   <data name="ShellProfinetDevicePage" xml:space="preserve">
-    <value>Profinet devices</value>
+    <value>Appreils Profinet</value>
   </data>
   <data name="ShellIOLinkDevicesPage" xml:space="preserve">
-    <value>IO-Link devices</value>
+    <value>Appareils IO-Link</value>
   </data>
   <data name="DevicesPageSaveExportText" xml:space="preserve">
-    <value>Save and export</value>
+    <value>Enregistrer et exporter</value>
   </data>
   <data name="ShellIoddfinderPage" xml:space="preserve">
     <value>IODD Finder</value>
   </data>
   <data name="AppMessageNewGsdTitle" xml:space="preserve">
-    <value>GSDML Added</value>
+    <value>GSDML ajouter</value>
   </data>
   <data name="AppMessageNewGsdMessage" xml:space="preserve">
-    <value>New GSDML description added</value>
+    <value>Nouveau GSDML ajouté</value>
   </data>
   <data name="AppMessageNewIoddTitle" xml:space="preserve">
-    <value>IODD description added</value>
+    <value>IODD ajouter</value>
   </data>
   <data name="AppMessageNewIoddMessage" xml:space="preserve">
-    <value>New IODD description added</value>
+    <value>Nouveau IODD ajouté</value>
   </data>
   <data name="AppMessageSaveGsdTitle" xml:space="preserve">
-    <value>Save description</value>
+    <value>Enregistrer description</value>
   </data>
   <data name="IOLinkDeviceMappingTitle" xml:space="preserve">
-    <value>IO mapping</value>
+    <value>Structure IO</value>
   </data>
   <data name="ShellUnzipDialogTitle" xml:space="preserve">
-    <value>Folder exist</value>
+    <value>Dossier existant</value>
   </data>
   <data name="ShellUnzipDialogMessage" xml:space="preserve">
-    <value>Remove existant folder and content ?</value>
+    <value>Supprimer le dossier existant ainsi que son contenu</value>
   </data>
   <data name="SettingsPageChooseThemeText" xml:space="preserve">
-    <value>Choose theme</value>
+    <value>Changer thème</value>
   </data>
   <data name="SettingsPageGsdmlFolder" xml:space="preserve">
-    <value>GSD data base</value>
+    <value>Base de données GSD</value>
   </data>
   <data name="AppMessageSaveGsdMessage" xml:space="preserve">
-    <value>Build new description in</value>
+    <value>Créer nouvelle description dans</value>
   </data>
   <data name="SettingsPageChooseLanguageText" xml:space="preserve">
-    <value>Choose language</value>
+    <value>Changer de langue</value>
   </data>
   <data name="MessageRenameItemTitle" xml:space="preserve">
-    <value>Rename device</value>
+    <value>Renommer</value>
   </data>
   <data name="MessageRenameItemText" xml:space="preserve">
-    <value>New device name</value>
+    <value>Nouveau nom de l'appareil</value>
   </data>
   <data name="MessageDeleteItemTitle" xml:space="preserve">
-    <value>Delete device</value>
+    <value>Supprimer</value>
   </data>
   <data name="MessageDeleteItemText" xml:space="preserve">
-    <value>Confirme delet ?</value>
+    <value>Confirmez-vous la suppression ?</value>
   </data>
   <data name="AppDialogCloseText" xml:space="preserve">
-    <value>Close</value>
+    <value>Fermer</value>
   </data>
 </root>

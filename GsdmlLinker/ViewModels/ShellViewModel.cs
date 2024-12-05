@@ -163,15 +163,16 @@ public class ShellViewModel(INavigationService navigationService, IDialogCoordin
         }
     }
 
-
-
-    private string Unzip(string filePath, string directory)
+    private async Task<string> Unzip(string filePath, string directory)
     {
         var fileName = Path.GetFileNameWithoutExtension(filePath);
         if (Directory.Exists(Path.Combine(localAppData, directory, fileName)))
         {
-            /// TODO: Message Dossier existant
-            Directory.Delete(Path.Combine(localAppData, directory, fileName), true);
+            var dialog = await dialogCoordinator.ShowMessageAsync(this, Resources.ShellUnzipDialogTitle, Resources.ShellUnzipDialogMessage, MessageDialogStyle.AffirmativeAndNegative);
+            if(dialog == MessageDialogResult.Affirmative)
+            {
+                Directory.Delete(Path.Combine(localAppData, directory, fileName), true);
+            }
         }
 
         var zip = ZipFile.Open(filePath, ZipArchiveMode.Read);

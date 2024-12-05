@@ -33,10 +33,7 @@ public record Device : Core.Models.Device
 
     public Device(string filePath, Match? match) : base(filePath)
     {
-        if (match is null)
-        {
-            return;
-        }
+        if (match is null) return;
 
         //<vendor>-<code_produit>-<date>-IODD<version>(-<langue>)?(-<Commentaire>)?
         SchematicVersion = match.Groups[4].Value;
@@ -117,21 +114,23 @@ public record Device : Core.Models.Device
                 {
                     var processDataItem = new Core.Models.DeviceProcessData
                     {
-                        Condition = processData.Condition is not null ? new Core.Models.Condition
+                        Condition = processData?.Condition is not null ? new Core.Models.Condition
                         {
                             VariableId = processData.Condition.VariableId,
                             Subindex = processData.Condition.Subindex,
                             Value = processData.Condition.Value
                         } : null,
-                        ProcessDataIn = processData.ProcessDataIn is not null ? new Core.Models.DeviceProcessDataIn
+                        ProcessDataIn = processData?.ProcessDataIn is not null ? new Core.Models.DeviceProcessDataIn
                         {
                             BitLength = processData.ProcessDataIn.BitLength,
-                            Name = ExternalTextList?[processData.ProcessDataIn.Name?.TextId!].Item ?? string.Empty
+                            Name = ExternalTextList?[processData.ProcessDataIn.Name?.TextId!].Item ?? string.Empty,
+                            ProcessData = processData?.ProcessDataIn?.Item is not null ? DeviceParameterBuild(processData.ProcessDataIn.Item) : null,
                         } : null,
-                        ProcessDataOut = processData.ProcessDataOut is not null ? new Core.Models.DeviceProcessDataOut
+                        ProcessDataOut = processData?.ProcessDataOut is not null ? new Core.Models.DeviceProcessDataOut
                         {
                             BitLength = processData.ProcessDataOut.BitLength,
-                            Name = ExternalTextList?[processData.ProcessDataOut.Name?.TextId!].Item ?? string.Empty
+                            Name = ExternalTextList?[processData.ProcessDataOut.Name?.TextId!].Item ?? string.Empty,
+                            ProcessData = processData?.ProcessDataOut?.Item is not null ? DeviceParameterBuild(processData.ProcessDataOut.Item) : null,
                         } : null
                     };
                     processDatas.Add(processDataItem);
@@ -149,7 +148,6 @@ public record Device : Core.Models.Device
                         Parameters ??= [];
                         Parameters.AddRange(parameter);
                     }
-
                 }
             }
 
@@ -210,7 +208,6 @@ public record Device : Core.Models.Device
                     }
                 }
             }
-
         }
         else
         {
@@ -331,7 +328,6 @@ public record Device : Core.Models.Device
                         }
                     }
                 }
-
                 break;
             case IODD.Datatypes.ArrayT arrvar:
             case IODD.Datatypes.ComplexDatatypeT complexvar:
@@ -443,7 +439,6 @@ public record Device : Core.Models.Device
 
         return parameters;
     }
-
 
     private (bool, Dictionary<string, string>?, bool) ValueDatatypeBoolean(IODD.Datatypes.BooleanT boolType)
     {

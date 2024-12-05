@@ -53,9 +53,22 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="{Binding Name}" Style="{StaticResource ListSubTitleStyle}"/>
-                            <TextBlock Grid.Column="1" VerticalAlignment="Bottom">
-                                <Run Text="V"/>
-                                <Run Text="{Binding ProfileVersion}"/>
+                            <TextBlock Grid.Column="1" VerticalAlignment="Bottom" Text="{Binding ProfileVersion, StringFormat='{}V{0}'}">
+                                <!--<Run Text="V"/>
+                                <Run Text="{Binding ProfileVersion}"/>-->
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                        <Style.Triggers>
+                                            <!--<DataTrigger Binding="{Binding ProfileVersion}" Value="{x:Null}">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>-->
+                                            <DataTrigger Binding="{Binding ProfileVersion}" Value="">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
                             </TextBlock>
                         </Grid>
                         <TextBlock Text="{Binding Description}" TextWrapping="WrapWithOverflow" 
@@ -70,12 +83,22 @@
                         <ColumnDefinition/>
                     </Grid.ColumnDefinitions>
                     <Image Grid.Column="0" Source="{Binding Icon}" Stretch="UniformToFill" MaxHeight="32" VerticalAlignment="Center"/>
-                    <StackPanel Grid.Column="1" Orientation="Vertical" Margin="{StaticResource SmallLeftMargin}">
-                        <TextBlock Text="{Binding Name}" Style="{StaticResource ListTitleStyle}"/>
+                    <StackPanel Grid.Column="1" Orientation="Vertical" Margin="{StaticResource SmallLeftMargin}" IsEnabled="{Binding CanEdit}">
+                        <TextBlock Text="{Binding Name}" IsEnabled="{Binding CanEdit}" Style="{StaticResource ListTitleStyle}"/>
                     </StackPanel>
                 </Grid>
             </HierarchicalDataTemplate>
             
         </TreeView.Resources>
+        <TreeView.ItemContainerStyle>
+            <Style TargetType="TreeViewItem" BasedOn="{StaticResource MahApps.Styles.TreeViewItem}">
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding CanEdit}" Value="False">
+                        <Setter Property="Background" Value="{StaticResource MahApps.Brushes.Badged.Background.Disabled}"/>
+                        <Setter Property="Opacity" Value="0.6"/>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </TreeView.ItemContainerStyle>
     </TreeView>
 </UserControl>

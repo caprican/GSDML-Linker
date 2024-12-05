@@ -7,16 +7,17 @@ using Microsoft.Extensions.Hosting;
 namespace GsdmlLinker.Services;
 
 public class ApplicationHostService(IServiceProvider serviceProvider, INavigationService navigationService,
-                                    IThemeSelectorService themeSelectorService, IPersistAndRestoreService persistAndRestoreService,
-                                    ISettingsService settingsService,
+                                    ISettingsService settingsService, IPersistAndRestoreService persistAndRestoreService,
+                                    IThemeSelectorService themeSelectorService, ICultureSelectorService cultureSelectorService,
                                     Core.PN.Contracts.Services.IDevicesService gsdDevicesService, Core.IOL.Contracts.Services.IDevicesService IoddDevicesService
                                     ) : IHostedService
 {
     private readonly IServiceProvider serviceProvider = serviceProvider;
     private readonly INavigationService navigationService = navigationService;
     private readonly IPersistAndRestoreService persistAndRestoreService = persistAndRestoreService;
-    private readonly IThemeSelectorService themeSelectorService = themeSelectorService;
     private readonly ISettingsService settingsService = settingsService;
+    private readonly IThemeSelectorService themeSelectorService = themeSelectorService;
+    private readonly ICultureSelectorService cultureSelectorService = cultureSelectorService;
 
     private readonly Core.PN.Contracts.Services.IDevicesService gsdDevicesService = gsdDevicesService;
     private readonly Core.IOL.Contracts.Services.IDevicesService IoddDevicesService = IoddDevicesService;
@@ -46,8 +47,9 @@ public class ApplicationHostService(IServiceProvider serviceProvider, INavigatio
         if (!isInitialized)
         {
             persistAndRestoreService.RestoreData();
-            themeSelectorService.InitializeTheme();
             settingsService.InitializeSettings();
+            themeSelectorService.InitializeTheme();
+            cultureSelectorService.InitializeCulture();
 
             await Task.CompletedTask;
 
