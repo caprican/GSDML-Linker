@@ -30,10 +30,21 @@
             <RowDefinition/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <TextBlock Grid.Row="0" Text="Inputs" Style="{StaticResource SubtitleTextStyle}"/>
+        <TextBlock Grid.Row="0" Text="Inputs">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock" BasedOn="{StaticResource SubtitleTextStyle}">
+                    <Setter Property="Visibility" Value="Visible"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ProcessDataIn}" Value="{x:Null}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
 
         <ListView Grid.Row="1" ItemsSource="{Binding ProcessDataIn}"
-                  Style="{StaticResource MahApps.Styles.ListView}">
+                  Style="{StaticResource MahApps.Styles.ListView}" FlowDirection="RightToLeft">
             <ListView.ItemTemplateSelector>
                 <selector:ProcessDataTemplateSelector>
                     <selector:ProcessDataTemplateSelector.ColumnDataTemplate>
@@ -46,11 +57,6 @@
                             <TextBlock/>
                         </DataTemplate>
                     </selector:ProcessDataTemplateSelector.RowDataTemplate>
-                    <!--<selector:ProcessDataTemplateSelector.ItemDataTemplate>
-                        <DataTemplate DataType="{x:Type models:ProcessDataItem}">
-                            <TextBlock Text="  " FontSize="16" ToolTip="{Binding Name}" Background="{Binding Color}"/>
-                        </DataTemplate>
-                    </selector:ProcessDataTemplateSelector.ItemDataTemplate>-->
                 </selector:ProcessDataTemplateSelector>
             </ListView.ItemTemplateSelector>
             <ListView.ItemsPanel>
@@ -60,9 +66,23 @@
             </ListView.ItemsPanel>
         </ListView>
 
-        <TextBlock Grid.Row="2" Text="Outputs" Style="{StaticResource SubtitleTextStyle}"/>
+        <TextBlock Grid.Row="2" Text="Outputs">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock" BasedOn="{StaticResource SubtitleTextStyle}">
+                    <Setter Property="Visibility" Value="Visible"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ProcessDataOut}" Value="{x:Null}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                        <!--<DataTrigger Binding="{Binding ProcessDataOut.Count}" Value="0">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>-->
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
         <ListView Grid.Row="3" ItemsSource="{Binding ProcessDataOut}"
-          Style="{StaticResource MahApps.Styles.ListView}">
+                  Style="{StaticResource MahApps.Styles.ListView}" FlowDirection="RightToLeft">
             <ListView.ItemTemplateSelector>
                 <selector:ProcessDataTemplateSelector>
                     <selector:ProcessDataTemplateSelector.ColumnDataTemplate>
@@ -85,7 +105,7 @@
         </ListView>
 
         <Button Grid.Row="4" Command="{Binding CloseCommand}"
-                Style="{DynamicResource MahApps.Styles.Button.Dialogs}">
+                Style="{DynamicResource MahApps.Styles.Button.Dialogs}" Margin="{StaticResource SmallMargin}">
             <TextBlock Text="{x:Static properties:Resources.AppDialogCloseText}"/>
         </Button>
     </Grid>

@@ -13,6 +13,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GsdmlLinker.Core.IOL", "Gsd
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GsdmlLinker.Core.PN", "GsdmlLinker.Core.PN\GsdmlLinker.Core.PN.csproj", "{3C7F624B-A3D7-44C9-AC60-D0FE633C0CBD}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Éléments de solution", "Éléments de solution", "{BEE5FECF-D0B1-432E-9DB0-37E6AB544736}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "GsdmlLinker.Setup", "GsdmlLinker.Setup\GsdmlLinker.Setup.vdproj", "{F80CE742-E5D4-41B4-8DB2-55629491FF8B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +46,8 @@ Global
 		{3C7F624B-A3D7-44C9-AC60-D0FE633C0CBD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3C7F624B-A3D7-44C9-AC60-D0FE633C0CBD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3C7F624B-A3D7-44C9-AC60-D0FE633C0CBD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F80CE742-E5D4-41B4-8DB2-55629491FF8B}.Debug|Any CPU.ActiveCfg = Debug
+		{F80CE742-E5D4-41B4-8DB2-55629491FF8B}.Release|Any CPU.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -179,6 +179,30 @@ public class IOLinkDeviceViewModel(Core.IOL.Contracts.Services.IDevicesService i
                     {
                         processDataIn ??= [];
 
+                        //item.ProcessDataIn.ProcessData.Reverse();
+                        foreach (var dtIn in item.ProcessDataIn.ProcessData.Where(w => w.DataType != DeviceDatatypes.RecordT).GroupBy(g => g.Index))
+                        {
+                            for (int i = 0; i < dtIn.Count(); i++)
+                            {
+                                var processDataItem = dtIn.ToArray()[i];
+
+                                var random = new Random();
+                                var color = string.Format("#{0:X6}", random.Next(0x1000000));
+
+                                for (var j = 0; j < processDataItem.BitLength; j++)
+                                {
+                                    processDataIn.Add(new ProcessDataItem
+                                    {
+                                        Name = processDataItem.Name,
+                                        Datatype = processDataItem.DataType,
+                                        //Color = $"#{(128 + i * 8):X2}8{(255 - (int)processDataItem.BitOffset! * 8):X2}8"
+                                        //Color = $"#{(128 + (processDataItem.BitOffset ?? 0) * 8):X3}{(255 - (i+1) * 8):X2}8"
+                                        Color = color,
+                                    });
+                                }
+                            }
+                        }
+                        
                         processDataIn.Add(new ProcessDataColumn { Header = "1.7" });
                         processDataIn.Add(new ProcessDataColumn { Header = "1.6" });
                         processDataIn.Add(new ProcessDataColumn { Header = "1.5" });
@@ -196,55 +220,14 @@ public class IOLinkDeviceViewModel(Core.IOL.Contracts.Services.IDevicesService i
                         processDataIn.Add(new ProcessDataColumn { Header = "0.1" });
                         processDataIn.Add(new ProcessDataColumn { Header = "0.0" });
 
-                        foreach (var dtIn in item.ProcessDataIn.ProcessData.Where(w => w.DataType != DeviceDatatypes.RecordT).GroupBy(g => g.Index))
-                        {
-                            for (int i = 0; i < dtIn.Count(); i++)
-                            {
-                                var processDataItem = dtIn.ToArray()[i];
-
-                                var random = new Random();
-                                var color = string.Format("#{0:X6}", random.Next(0x1000000));
-
-                                for (var j = 0; j < processDataItem.BitLength; j++)
-                                {
-                                    processDataIn.Add(new ProcessDataItem
-                                    {
-                                        Name = processDataItem.Name,
-                                        Datatype = processDataItem.DataType,
-                                        //Color = $"#{(128 + i * 8):X2}8{(255 - (int)processDataItem.BitOffset! * 8):X2}8"
-                                        Color = $"#{(128 + (processDataItem.BitOffset ?? 0) * 8):X3}{(255 - (i+1) * 8):X2}8"
-                                    });
-                                }
-                            }
-                        }
+                        processDataIn.Reverse();
                     }
-                    //if (item.ProcessDataOut?.ProcessData is not null)
-                    //{
-                    //    processDataOut ??= [];
-                    //    processDataOut.AddRange(item.ProcessDataOut.ProcessData.Where(w => w.DataType != DeviceDatatypes.RecordT));
-                    //}
 
                     if (item.ProcessDataOut?.ProcessData is not null)
                     {
                         processDataOut ??= [];
 
-                        processDataOut.Add(new ProcessDataColumn { Header = "1.7" });
-                        processDataOut.Add(new ProcessDataColumn { Header = "1.6" });
-                        processDataOut.Add(new ProcessDataColumn { Header = "1.5" });
-                        processDataOut.Add(new ProcessDataColumn { Header = "1.4" });
-                        processDataOut.Add(new ProcessDataColumn { Header = "1.3" });
-                        processDataOut.Add(new ProcessDataColumn { Header = "1.2" });
-                        processDataOut.Add(new ProcessDataColumn { Header = "1.1" });
-                        processDataOut.Add(new ProcessDataColumn { Header = "1.0" });
-                        processDataOut.Add(new ProcessDataColumn { Header = "0.7" });
-                        processDataOut.Add(new ProcessDataColumn { Header = "0.6" });
-                        processDataOut.Add(new ProcessDataColumn { Header = "0.5" });
-                        processDataOut.Add(new ProcessDataColumn { Header = "0.4" });
-                        processDataOut.Add(new ProcessDataColumn { Header = "0.3" });
-                        processDataOut.Add(new ProcessDataColumn { Header = "0.2" });
-                        processDataOut.Add(new ProcessDataColumn { Header = "0.1" });
-                        processDataOut.Add(new ProcessDataColumn { Header = "0.0" });
-
+                        item.ProcessDataOut.ProcessData.Reverse();
                         foreach (var dtOut in item.ProcessDataOut.ProcessData.Where(w => w.DataType != DeviceDatatypes.RecordT).GroupBy(g => g.Index))
                         {
                             for (int i = 0; i < dtOut.Count(); i++)
@@ -262,6 +245,25 @@ public class IOLinkDeviceViewModel(Core.IOL.Contracts.Services.IDevicesService i
                                 }
                             }
                         }
+                        
+                        processDataOut.Add(new ProcessDataColumn { Header = "1.7" });
+                        processDataOut.Add(new ProcessDataColumn { Header = "1.6" });
+                        processDataOut.Add(new ProcessDataColumn { Header = "1.5" });
+                        processDataOut.Add(new ProcessDataColumn { Header = "1.4" });
+                        processDataOut.Add(new ProcessDataColumn { Header = "1.3" });
+                        processDataOut.Add(new ProcessDataColumn { Header = "1.2" });
+                        processDataOut.Add(new ProcessDataColumn { Header = "1.1" });
+                        processDataOut.Add(new ProcessDataColumn { Header = "1.0" });
+                        processDataOut.Add(new ProcessDataColumn { Header = "0.7" });
+                        processDataOut.Add(new ProcessDataColumn { Header = "0.6" });
+                        processDataOut.Add(new ProcessDataColumn { Header = "0.5" });
+                        processDataOut.Add(new ProcessDataColumn { Header = "0.4" });
+                        processDataOut.Add(new ProcessDataColumn { Header = "0.3" });
+                        processDataOut.Add(new ProcessDataColumn { Header = "0.2" });
+                        processDataOut.Add(new ProcessDataColumn { Header = "0.1" });
+                        processDataOut.Add(new ProcessDataColumn { Header = "0.0" });
+
+                        processDataOut.Reverse();
                     }
                 }
             }
