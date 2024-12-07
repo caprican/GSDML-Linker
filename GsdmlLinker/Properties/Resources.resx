@@ -234,4 +234,11 @@
   <data name="AppDialogCloseText" xml:space="preserve">
     <value>Close</value>
   </data>
+  <data name="AppMessageNoFoundIoddTitle" xml:space="preserve">
+    <value>IODD Finder</value>
+  </data>
+  <data name="AppMessageNoFoundIoddText" xml:space="preserve">
+    <value>Description not founded in IODD Finder.
+Manual install IODD file.</value>
+  </data>
 </root>

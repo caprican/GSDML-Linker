@@ -115,6 +115,25 @@ namespace GsdmlLinker.Properties {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Description not founded in IODD Finder.
+        ///Manual install IODD file..
+        /// </summary>
+        public static string AppMessageNoFoundIoddText {
+            get {
+                return ResourceManager.GetString("AppMessageNoFoundIoddText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à IODD Finder.
+        /// </summary>
+        public static string AppMessageNoFoundIoddTitle {
+            get {
+                return ResourceManager.GetString("AppMessageNoFoundIoddTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à Build new description in.
         /// </summary>
         public static string AppMessageSaveGsdMessage {

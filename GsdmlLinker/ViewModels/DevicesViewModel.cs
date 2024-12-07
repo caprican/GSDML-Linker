@@ -10,9 +10,7 @@ using CommunityToolkit.Mvvm.Input;
 
 using GsdmlLinker.Contracts.ViewModels;
 using GsdmlLinker.Core.Contracts.Services;
-using GsdmlLinker.Core.Models;
 using GsdmlLinker.Core.Models.IoddFinder;
-using GsdmlLinker.Models;
 
 using MahApps.Metro.Controls.Dialogs;
 
@@ -587,11 +585,9 @@ public class DevicesViewModel(Contracts.Services.ISettingsService settingsServic
                         }
                     }
                 }
-
-                //CollectionViewSource.GetDefaultView(SlaveParameters).Refresh();
             }
         }
-        else if (MasterModuleSelected is not null && SlaveVendors is not null)
+        else if (MasterModuleSelected?.DeviceId > 0 && SlaveVendors is not null)
         {
             SlaveDeviceSelected = SlaveVendors.FirstOrDefault(f => f.Id == MasterModuleSelected.VendorId.ToString())?.Devices?.FirstOrDefault(f => f.DeviceId == MasterModuleSelected.DeviceId.ToString());
 
@@ -605,7 +601,7 @@ public class DevicesViewModel(Contracts.Services.ISettingsService settingsServic
                     {
                         case 0:
                         case null:
-                            await dialogCoordinator.ShowMessageAsync(App.Current.MainWindow.DataContext, "", "");
+                            await dialogCoordinator.ShowMessageAsync(App.Current.MainWindow.DataContext, Properties.Resources.AppMessageNoFoundIoddTitle, Properties.Resources.AppMessageNoFoundIoddText);
                             break;
                         case 1:
                             await LoaadIodd(productionVariant[0]);
@@ -900,8 +896,8 @@ public class DevicesViewModel(Contracts.Services.ISettingsService settingsServic
         if (SlaveDeviceSelected is null) return;
         var processData = iolDevicesService.GetProcessData(SlaveDeviceSelected.VendorId, SlaveDeviceSelected.DeviceId);
 
-        List<ProcessDataBase>? processDataIn = null;
-        List<ProcessDataBase>? processDataOut = null;
+        List<Models.ProcessDataBase>? processDataIn = null;
+        List<Models.ProcessDataBase>? processDataOut = null;
 
         if (processData?.Where(data => data.Any(a => a.Condition is null)) is IEnumerable<IGrouping<string?, Core.Models.DeviceProcessData>> processDatasIO)
         {
@@ -913,31 +909,31 @@ public class DevicesViewModel(Contracts.Services.ISettingsService settingsServic
                     {
                         processDataIn ??= [];
 
-                        processDataIn.Add(new ProcessDataColumn { Header = "1.7" });
-                        processDataIn.Add(new ProcessDataColumn { Header = "1.6" });
-                        processDataIn.Add(new ProcessDataColumn { Header = "1.5" });
-                        processDataIn.Add(new ProcessDataColumn { Header = "1.4" });
-                        processDataIn.Add(new ProcessDataColumn { Header = "1.3" });
-                        processDataIn.Add(new ProcessDataColumn { Header = "1.2" });
-                        processDataIn.Add(new ProcessDataColumn { Header = "1.1" });
-                        processDataIn.Add(new ProcessDataColumn { Header = "1.0" });
-                        processDataIn.Add(new ProcessDataColumn { Header = "0.7" });
-                        processDataIn.Add(new ProcessDataColumn { Header = "0.6" });
-                        processDataIn.Add(new ProcessDataColumn { Header = "0.5" });
-                        processDataIn.Add(new ProcessDataColumn { Header = "0.4" });
-                        processDataIn.Add(new ProcessDataColumn { Header = "0.3" });
-                        processDataIn.Add(new ProcessDataColumn { Header = "0.2" });
-                        processDataIn.Add(new ProcessDataColumn { Header = "0.1" });
-                        processDataIn.Add(new ProcessDataColumn { Header = "0.0" });
+                        processDataIn.Add(new Models.ProcessDataColumn { Header = "1.7" });
+                        processDataIn.Add(new Models.ProcessDataColumn { Header = "1.6" });
+                        processDataIn.Add(new Models.ProcessDataColumn { Header = "1.5" });
+                        processDataIn.Add(new Models.ProcessDataColumn { Header = "1.4" });
+                        processDataIn.Add(new Models.ProcessDataColumn { Header = "1.3" });
+                        processDataIn.Add(new Models.ProcessDataColumn { Header = "1.2" });
+                        processDataIn.Add(new Models.ProcessDataColumn { Header = "1.1" });
+                        processDataIn.Add(new Models.ProcessDataColumn { Header = "1.0" });
+                        processDataIn.Add(new Models.ProcessDataColumn { Header = "0.7" });
+                        processDataIn.Add(new Models.ProcessDataColumn { Header = "0.6" });
+                        processDataIn.Add(new Models.ProcessDataColumn { Header = "0.5" });
+                        processDataIn.Add(new Models.ProcessDataColumn { Header = "0.4" });
+                        processDataIn.Add(new Models.ProcessDataColumn { Header = "0.3" });
+                        processDataIn.Add(new Models.ProcessDataColumn { Header = "0.2" });
+                        processDataIn.Add(new Models.ProcessDataColumn { Header = "0.1" });
+                        processDataIn.Add(new Models.ProcessDataColumn { Header = "0.0" });
 
-                        foreach (var dtIn in item.ProcessDataIn.ProcessData.Where(w => w.DataType != DeviceDatatypes.RecordT).GroupBy(g => g.Index))
+                        foreach (var dtIn in item.ProcessDataIn.ProcessData.Where(w => w.DataType != Core.Models.DeviceDatatypes.RecordT).GroupBy(g => g.Index))
                         {
                             for (int i = 0; i < dtIn.Count(); i++)
                             {
                                 var processDataItem = dtIn.ToArray()[i];
                                 for (var j = 0; j < processDataItem.BitLength; j++)
                                 {
-                                    processDataIn.Add(new ProcessDataItem
+                                    processDataIn.Add(new Models.ProcessDataItem
                                     {
                                         Name = processDataItem.Name,
                                         Datatype = processDataItem.DataType,
@@ -953,31 +949,31 @@ public class DevicesViewModel(Contracts.Services.ISettingsService settingsServic
                     {
                         processDataOut ??= [];
 
-                        processDataOut.Add(new ProcessDataColumn { Header = "1.7" });
-                        processDataOut.Add(new ProcessDataColumn { Header = "1.6" });
-                        processDataOut.Add(new ProcessDataColumn { Header = "1.5" });
-                        processDataOut.Add(new ProcessDataColumn { Header = "1.4" });
-                        processDataOut.Add(new ProcessDataColumn { Header = "1.3" });
-                        processDataOut.Add(new ProcessDataColumn { Header = "1.2" });
-                        processDataOut.Add(new ProcessDataColumn { Header = "1.1" });
-                        processDataOut.Add(new ProcessDataColumn { Header = "1.0" });
-                        processDataOut.Add(new ProcessDataColumn { Header = "0.7" });
-                        processDataOut.Add(new ProcessDataColumn { Header = "0.6" });
-                        processDataOut.Add(new ProcessDataColumn { Header = "0.5" });
-                        processDataOut.Add(new ProcessDataColumn { Header = "0.4" });
-                        processDataOut.Add(new ProcessDataColumn { Header = "0.3" });
-                        processDataOut.Add(new ProcessDataColumn { Header = "0.2" });
-                        processDataOut.Add(new ProcessDataColumn { Header = "0.1" });
-                        processDataOut.Add(new ProcessDataColumn { Header = "0.0" });
+                        processDataOut.Add(new Models.ProcessDataColumn { Header = "1.7" });
+                        processDataOut.Add(new Models.ProcessDataColumn { Header = "1.6" });
+                        processDataOut.Add(new Models.ProcessDataColumn { Header = "1.5" });
+                        processDataOut.Add(new Models.ProcessDataColumn { Header = "1.4" });
+                        processDataOut.Add(new Models.ProcessDataColumn { Header = "1.3" });
+                        processDataOut.Add(new Models.ProcessDataColumn { Header = "1.2" });
+                        processDataOut.Add(new Models.ProcessDataColumn { Header = "1.1" });
+                        processDataOut.Add(new Models.ProcessDataColumn { Header = "1.0" });
+                        processDataOut.Add(new Models.ProcessDataColumn { Header = "0.7" });
+                        processDataOut.Add(new Models.ProcessDataColumn { Header = "0.6" });
+                        processDataOut.Add(new Models.ProcessDataColumn { Header = "0.5" });
+                        processDataOut.Add(new Models.ProcessDataColumn { Header = "0.4" });
+                        processDataOut.Add(new Models.ProcessDataColumn { Header = "0.3" });
+                        processDataOut.Add(new Models.ProcessDataColumn { Header = "0.2" });
+                        processDataOut.Add(new Models.ProcessDataColumn { Header = "0.1" });
+                        processDataOut.Add(new Models.ProcessDataColumn { Header = "0.0" });
 
-                        foreach (var dtOut in item.ProcessDataOut.ProcessData.Where(w => w.DataType != DeviceDatatypes.RecordT).GroupBy(g => g.Index))
+                        foreach (var dtOut in item.ProcessDataOut.ProcessData.Where(w => w.DataType != Core.Models.DeviceDatatypes.RecordT).GroupBy(g => g.Index))
                         {
                             for (int i = 0; i < dtOut.Count(); i++)
                             {
                                 var processDataItem = dtOut.ToArray()[i];
                                 for (var j = 0; j < processDataItem.BitLength; j++)
                                 {
-                                    processDataOut.Add(new ProcessDataItem
+                                    processDataOut.Add(new Models.ProcessDataItem
                                     {
                                         Name = processDataItem.Name,
                                         Datatype = processDataItem.DataType,
