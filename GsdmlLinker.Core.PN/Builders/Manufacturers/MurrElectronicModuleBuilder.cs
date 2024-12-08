@@ -351,11 +351,6 @@ public class MurrElectronicModuleBuilder(Core.Models.Device masterDevice) : Modu
         return parameters;
     }
 
-    public override void DeletModule(string moduleId)
-    {
-
-    }
-
     internal static GSDML.DeviceProfile.IODataTDataItem PQIBuid() =>
     new()
     {
@@ -375,5 +370,27 @@ public class MurrElectronicModuleBuilder(Core.Models.Device masterDevice) : Modu
 
     public override void UpdateModule(Core.Models.Device? device, string indentNumber, string categoryRef, string categoryVendor, string deviceName)
     {
+    }
+
+    public override void DeletModule(string moduleId)
+    {
+        //((Models.Device)masterDevice).SubmoduleList?.RemoveAll(a => a.ID == moduleId);
+
+        //foreach (var dap in ((Models.Device)masterDevice).DeviceAccessPoints)
+        //{
+        //    if (dap.Modules is not null)
+        //    {
+        //        foreach (var module in dap.Modules)
+        //        {
+        //            if (module.Submodules is not null)
+        //            {
+        //                foreach (var submodule in module.Submodules.Where(w => w.ProfinetDeviceId == moduleId).ToArray())
+        //                {
+        //                    module.Submodules.Remove(submodule);
+        //                }
+        //            }
+        //        }
+        //    }
+        //}
     }
 }

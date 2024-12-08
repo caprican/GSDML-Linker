@@ -25,7 +25,7 @@ public abstract class ModuleBuilder(Core.Models.Device masterDevice) : IModuleBu
 
     public abstract void UpdateModule(Core.Models.Device? device, string indentNumber, string categoryRef, string categoryVendor, string deviceName);
 
-    public abstract void DeletModule(string moduleID);
+    public abstract void DeletModule(string moduleId);
 
     internal protected (uint, GSDML.DeviceProfile.RecordDataRefT) BoolToRecordDataRef(string textId, uint byteOffset, Core.Models.DeviceParameter parameter, Dictionary<string, Core.Models.ExternalTextItem>? IOLExternalText)
     {
@@ -102,7 +102,8 @@ public abstract class ModuleBuilder(Core.Models.Device masterDevice) : IModuleBu
             Index = (ushort)index,
             Subindex =  (ushort)subIndex,
             DataType = Core.Models.DeviceDatatypes.BooleanT,
-            DefaultValue = defaultValue
+            DefaultValue = defaultValue,
+            IsLocked = (defaultValue == recordDataRef.AllowedValues)
         };
 
         return boolParameter;
@@ -214,9 +215,10 @@ public abstract class ModuleBuilder(Core.Models.Device masterDevice) : IModuleBu
                 GSDML.Primitives.RecordDataRefTypeEnumT.Unsigned32 => Core.Models.DeviceDatatypes.UIntegerT,
                 GSDML.Primitives.RecordDataRefTypeEnumT.Integer64 => Core.Models.DeviceDatatypes.IntegerT,
                 GSDML.Primitives.RecordDataRefTypeEnumT.Unsigned64 => Core.Models.DeviceDatatypes.UIntegerT,
-                _ => Core.Models.DeviceDatatypes.BooleanT
+                _ => Core.Models.DeviceDatatypes.IntegerT
             },
             DefaultValue = recordDataRef.DefaultValue ?? string.Empty,
+            IsLocked = (recordDataRef.DefaultValue == recordDataRef.AllowedValues)
         };
     }
 
@@ -296,6 +298,22 @@ public abstract class ModuleBuilder(Core.Models.Device masterDevice) : IModuleBu
         return (byteCount, stringDataRef);
     }
 
+    internal protected Core.Models.DeviceParameter RecordDataRefToString(GSDML.DeviceProfile.RecordDataRefT recordDataRef, int index, int subindex)
+    {
+        string defString = string.Empty;
+
+        ///TODO : read string
+
+        return new Core.Models.DeviceParameter
+        {
+            Index = (ushort)index,
+            Subindex = (ushort)subindex,
+            DataType = Core.Models.DeviceDatatypes.OctetStringT,
+            FixedLength = recordDataRef.Length,
+            DefaultValue = defString,
+        };
+    }
+
     internal GSDML.DeviceProfile.ModuleInfoT ModuleInfo(string categoryRef, string subCategoryRef, string identNumber, string name)
     {
         var txtId = $"IOLD_ProductName_{identNumber}";
@@ -317,7 +335,9 @@ public abstract class ModuleBuilder(Core.Models.Device masterDevice) : IModuleBu
         {
             GSDML.Primitives.RecordDataRefTypeEnumT.Boolean => RecordDataRefToBool(recordDataRef, index, subindex),
             GSDML.Primitives.RecordDataRefTypeEnumT.Bit => RecordDataRefToBool(recordDataRef, index, subindex),
-            GSDML.Primitives.RecordDataRefTypeEnumT.BitArea => RecordDataRefToBool(recordDataRef, index, subindex),
+
+            GSDML.Primitives.RecordDataRefTypeEnumT.BitArea => RecordDataRefToInteger(recordDataRef, index, subindex),
+
             GSDML.Primitives.RecordDataRefTypeEnumT.Integer8 => RecordDataRefToInteger(recordDataRef, index, subindex),
             GSDML.Primitives.RecordDataRefTypeEnumT.Unsigned8 => RecordDataRefToInteger(recordDataRef, index, subindex),
             GSDML.Primitives.RecordDataRefTypeEnumT.Integer16 => RecordDataRefToInteger(recordDataRef, index, subindex),
@@ -326,6 +346,9 @@ public abstract class ModuleBuilder(Core.Models.Device masterDevice) : IModuleBu
             GSDML.Primitives.RecordDataRefTypeEnumT.Unsigned32 => RecordDataRefToInteger(recordDataRef, index, subindex),
             GSDML.Primitives.RecordDataRefTypeEnumT.Integer64 => RecordDataRefToInteger(recordDataRef, index, subindex),
             GSDML.Primitives.RecordDataRefTypeEnumT.Unsigned64 => RecordDataRefToInteger(recordDataRef, index, subindex),
+
+            GSDML.Primitives.RecordDataRefTypeEnumT.OctetString => RecordDataRefToString(recordDataRef, index, subindex),
+            GSDML.Primitives.RecordDataRefTypeEnumT.VisibleString => RecordDataRefToString(recordDataRef, index, subindex),
 
             _ => throw new NotImplementedException()
         };

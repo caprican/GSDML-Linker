@@ -71,23 +71,23 @@ public class XDocumentService(IOptions<Core.Models.AppConfig> appConfig) : IXDoc
 
         var encoding = Encoding.GetEncoding(xDevice.Declaration?.Encoding!);
 
-        var deviceAccessPointList = (from d in xDevice.Descendants() where d.Name.LocalName == "DeviceAccessPointList" select d).First();
-        var moduleList = (from d in xDevice.Descendants() where d.Name.LocalName == "ModuleList" select d).First();
-        var submoduleList = (from d in xDevice.Descendants() where d.Name.LocalName == "SubmoduleList" select d).First();
-        var valueList = (from d in xDevice.Descendants() where d.Name.LocalName == "ValueList" select d).First();
+        var deviceAccessPointList = (from d in xDevice.Descendants() where d.Name.LocalName == "DeviceAccessPointList" select d).FirstOrDefault();
+        var moduleList = (from d in xDevice.Descendants() where d.Name.LocalName == "ModuleList" select d).FirstOrDefault();
+        var submoduleList = (from d in xDevice.Descendants() where d.Name.LocalName == "SubmoduleList" select d).FirstOrDefault();
+        var valueList = (from d in xDevice.Descendants() where d.Name.LocalName == "ValueList" select d).FirstOrDefault();
 
-        var categoryList = (from d in xDevice.Descendants() where d.Name.LocalName == "CategoryList" select d).First();
-        var graphicList = (from d in xDevice.Descendants() where d.Name.LocalName == "GraphicsList" select d).First();
+        var categoryList = (from d in xDevice.Descendants() where d.Name.LocalName == "CategoryList" select d).FirstOrDefault();
+        var graphicList = (from d in xDevice.Descendants() where d.Name.LocalName == "GraphicsList" select d).FirstOrDefault();
         
-        var ExternalTextList = (from d in xDevice.Descendants() where d.Name.LocalName == "ExternalTextList" select d).First();
-        var primaryLanguage = (from d in xDevice.Descendants() where d.Name.LocalName == "PrimaryLanguage" select d).First();
+        var ExternalTextList = (from d in xDevice.Descendants() where d.Name.LocalName == "ExternalTextList" select d).FirstOrDefault();
+        var primaryLanguage = (from d in xDevice.Descendants() where d.Name.LocalName == "PrimaryLanguage" select d).FirstOrDefault();
         
         var xCommentElement = (from d in xDevice.Nodes() where d is XComment select d).FirstOrDefault();
-        var deviceIdentity = (from d in xDevice.Descendants() where d.Name.LocalName == "DeviceIdentity" select d).First();
+        var deviceIdentity = (from d in xDevice.Descendants() where d.Name.LocalName == "DeviceIdentity" select d).FirstOrDefault();
 
         var resumeActions = "";
 
-        if (device.ModuleList?.Count > 0)
+        if (device.ModuleList?.Count > 0 && moduleList is not null && deviceAccessPointList is not null)
         {
             foreach (var module in device.ModuleList)
             {
@@ -168,7 +168,7 @@ public class XDocumentService(IOptions<Core.Models.AppConfig> appConfig) : IXDoc
             }
         }
 
-        if (device.SubmoduleList?.Count > 0)
+        if (device.SubmoduleList?.Count > 0 && moduleList is not null && submoduleList is not null)
         {
             foreach (var submodule in device.SubmoduleList)
             {
@@ -248,7 +248,7 @@ public class XDocumentService(IOptions<Core.Models.AppConfig> appConfig) : IXDoc
             }
         }
 
-        if (device.ValueList?.Count > 0)
+        if (device.ValueList?.Count > 0 && valueList is not null)
         {
             //valueList.Add(new XComment($"GSDML linker - Add {DateTime.Today.ToShortDateString()}"));
             foreach (var value in device.ValueList)
@@ -261,7 +261,7 @@ public class XDocumentService(IOptions<Core.Models.AppConfig> appConfig) : IXDoc
                         {
                             using TextWriter streamWriterValueList = new StreamWriter(memoryStreamValueList);
                             var xmlSerializer = new XmlSerializer(typeof(GSDML.DeviceProfile.ValueItemT[]), ns.NamespaceName);
-                            xmlSerializer.Serialize(streamWriterValueList, new GSDML.DeviceProfile.ValueItemT[] { new GSDML.DeviceProfile.ValueItemT  { ID = value.Key, Assignments = valueItem.Assigments.ToArray()/*[.. value.Value]*/ } });
+                            xmlSerializer.Serialize(streamWriterValueList, new GSDML.DeviceProfile.ValueItemT[] { new() { ID = value.Key, Assignments = valueItem.Assigments.ToArray()/*[.. value.Value]*/ } });
 
                             var xelement = XElement.Parse(encoding.GetString(memoryStreamValueList.ToArray()));
                             valueList.Add(xelement.Elements());
@@ -275,7 +275,7 @@ public class XDocumentService(IOptions<Core.Models.AppConfig> appConfig) : IXDoc
             }
         }
 
-        if (device.CategoryList?.Count > 0)
+        if (device.CategoryList?.Count > 0 && categoryList is not null)
         {
             //categoryList.Add(new XComment($"GSDML linker - Add {DateTime.Today.ToShortDateString()}"));
             foreach (var category in device.CategoryList)
@@ -294,7 +294,7 @@ public class XDocumentService(IOptions<Core.Models.AppConfig> appConfig) : IXDoc
             }
         }
 
-        if (device.GraphicsList?.Count > 0)
+        if (device.GraphicsList?.Count > 0 && graphicList is not null)
         {
             //graphicList.Add(new XComment($"GSDML linker - Add {DateTime.Today.ToShortDateString()}"));
             foreach (var graphic in device.GraphicsList)
@@ -323,7 +323,7 @@ public class XDocumentService(IOptions<Core.Models.AppConfig> appConfig) : IXDoc
             }
         }
 
-        if (device.ExternalTextList?.Count > 0)
+        if (device.ExternalTextList?.Count > 0 && ExternalTextList is not null && primaryLanguage is not null)
         {
             //primaryLanguage.Add(new XComment($"GSDML linker - Add {DateTime.Today.ToShortDateString()}"));
             foreach (var primaryText in device.ExternalTextList)
@@ -342,7 +342,7 @@ public class XDocumentService(IOptions<Core.Models.AppConfig> appConfig) : IXDoc
             }
         }
 
-        if (device.DeviceAccessPoints.Count > 0) 
+        if (device.DeviceAccessPoints.Count > 0 && deviceAccessPointList is not null && primaryLanguage is not null) 
         {
             foreach (var dap in device.DeviceAccessPoints)
             {
@@ -360,8 +360,8 @@ public class XDocumentService(IOptions<Core.Models.AppConfig> appConfig) : IXDoc
             }
         }
 
-        var infoText = deviceIdentity.Descendants(ns + "InfoText").Single()?.Attribute("TextId")?.Value;
-        if (infoText is not null)
+        var infoText = deviceIdentity?.Descendants(ns + "InfoText").Single()?.Attribute("TextId")?.Value;
+        if (infoText is not null && primaryLanguage is not null)
         {
             if (primaryLanguage.Descendants(ns + "Text").Any(e => e.Attribute("TextId")!.Value == infoText))
             {

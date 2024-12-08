@@ -45,7 +45,12 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice) : ModuleBuilder(m
         {
             State = Core.Models.ItemState.Created
         };
-
+        submodule.Name = ExternalTextGet(submodule.ModuleInfo?.Name?.TextId) ?? string.Empty;
+        submodule.Description = ExternalTextGet(submodule.ModuleInfo?.InfoText?.TextId) ?? string.Empty;
+        submodule.CategoryRef = ((Models.Device)masterDevice).GetCategoryText(submodule.ModuleInfo?.CategoryRef);
+        submodule.SubCategoryRef = ((Models.Device)masterDevice).GetCategoryText(submodule.ModuleInfo?.SubCategory1Ref);
+        submodule.VendorId = Convert.ToUInt16(device.VendorId);
+        submodule.DeviceId = Convert.ToUInt32(device.DeviceId);
         //((Models.Device)masterDevice).UseableSubmodules?.Add(new GSDML.DeviceProfile.UseableSubmodulesTSubmoduleItemRef
         //{
         //    AllowedInSubslots="2..9",
@@ -61,21 +66,7 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice) : ModuleBuilder(m
                 foreach (var module in dap.Modules)
                 {
                     module.Submodules ??= [];
-                    module.Submodules.Add(new Core.Models.Module
-                    {
-                        Name = ExternalTextGet(submodule.ModuleInfo?.Name?.TextId) ?? string.Empty,
-                        Description = ExternalTextGet(submodule.ModuleInfo?.InfoText?.TextId) ?? string.Empty,
-                        VendorName = submodule.ModuleInfo?.VendorName?.Value ?? string.Empty,
-                        OrderNumber = submodule.ModuleInfo?.OrderNumber?.Value ?? string.Empty,
-                        HardwareRelease = submodule.ModuleInfo?.HardwareRelease?.Value ?? string.Empty,
-                        SoftwareRelease = submodule.ModuleInfo?.SoftwareRelease?.Value ?? string.Empty,
-                        CategoryRef = ((Models.Device)masterDevice).GetCategoryText(submodule.ModuleInfo?.CategoryRef),
-                        SubCategoryRef = ((Models.Device)masterDevice).GetCategoryText(submodule.ModuleInfo?.SubCategory1Ref),
-
-                        VendorId = Convert.ToUInt16(device.VendorId),
-                        DeviceId = Convert.ToUInt32(device.DeviceId),
-                        ProfinetDeviceId = submodule.ID
-                    });
+                    module.Submodules.Add(submodule);
                 }
             }
         }
@@ -83,7 +74,75 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice) : ModuleBuilder(m
 
     public override void UpdateModule(Core.Models.Device? device, string indentNumber, string categoryRef, string categoryVendor, string deviceName)
     {
+        if (device is null) return;
 
+        var ioData = new GSDML.DeviceProfile.SubmoduleItemBaseTIOData
+        {
+            Input = new GSDML.DeviceProfile.IODataT
+            {
+                Consistency = GSDML.Primitives.IODataConsistencyEnumT.AllItemsConsistency,
+                DataItem = [.. inputDatas]
+            }
+        };
+        if (outputDatas?.Count > 0)
+        {
+            ioData.Output = new GSDML.DeviceProfile.IODataT
+            {
+                Consistency = GSDML.Primitives.IODataConsistencyEnumT.AllItemsConsistency,
+                DataItem = [.. outputDatas]
+            };
+        }
+
+        var submodule = new Models.SubmoduleItem(new GSDML.DeviceProfile.SubmoduleItemT
+        {
+            ID = $"IDS {deviceName} {indentNumber}",
+            SubmoduleIdentNumber = indentNumber,
+            API = 19969,
+            MayIssueProcessAlarm = false,
+            ModuleInfo = ModuleInfo(categoryRef, categoryVendor, indentNumber, deviceName),
+            IOData = ioData,
+            RecordDataList = new GSDML.DeviceProfile.SubmoduleItemBaseTRecordDataList
+            {
+                ParameterRecordDataItem = [.. RecordDataList]
+            },
+            //Graphics = graphics is not null ? [.. graphics] : null
+        })
+        {
+            State = Core.Models.ItemState.Created
+        };
+        submodule.Name = ExternalTextGet(submodule.ModuleInfo?.Name?.TextId) ?? string.Empty;
+        submodule.Description = ExternalTextGet(submodule.ModuleInfo?.InfoText?.TextId) ?? string.Empty;
+        submodule.CategoryRef = ((Models.Device)masterDevice).GetCategoryText(submodule.ModuleInfo?.CategoryRef);
+        submodule.SubCategoryRef = ((Models.Device)masterDevice).GetCategoryText(submodule.ModuleInfo?.SubCategory1Ref);
+        submodule.VendorId = Convert.ToUInt16(device.VendorId);
+        submodule.DeviceId = Convert.ToUInt32(device.DeviceId);
+        //((Models.Device)masterDevice).UseableSubmodules?.Add(new GSDML.DeviceProfile.UseableSubmodulesTSubmoduleItemRef
+        //{
+        //    AllowedInSubslots="2..9",
+        //    SubmoduleItemTarget = submodule.ID
+
+        //});
+
+        var index = ((Models.Device)masterDevice).SubmoduleList?.FindIndex(s => s.ProfinetDeviceId == submodule.ID);
+        if (index is not null && index >= 0)
+        {
+            ((Models.Device)masterDevice).SubmoduleList[(int)index] = submodule;
+        }
+
+        foreach (var dap in ((Models.Device)masterDevice).DeviceAccessPoints)
+        {
+            if (dap.Modules is not null)
+            {
+                foreach (var module in dap.Modules)
+                {
+                    module.Submodules ??= [];
+
+                    var source = module.Submodules.SingleOrDefault(s => s.ProfinetDeviceId == submodule.ProfinetDeviceId);
+                    module.Submodules.Insert(module.Submodules.IndexOf(source), submodule);
+                    module.Submodules.Remove(source);
+                }
+            }
+        }
     }
 
     public override GSDML.DeviceProfile.ParameterRecordDataT? BuildRecordParameter(string textId, uint index, ushort transfertSequence, 
@@ -397,13 +456,13 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice) : ModuleBuilder(m
     {
         ((Models.Device)masterDevice).SubmoduleList?.RemoveAll(a => a.ID == moduleId);
 
-        foreach(var dap in ((Models.Device)masterDevice).DeviceAccessPoints)
+        foreach (var dap in ((Models.Device)masterDevice).DeviceAccessPoints)
         {
-            if(dap.Modules is not null)
+            if (dap.Modules is not null)
             {
-                foreach(var module in dap.Modules)
+                foreach (var module in dap.Modules)
                 {
-                    if(module.Submodules is not null)
+                    if (module.Submodules is not null)
                     {
                         foreach (var submodule in module.Submodules.Where(w => w.ProfinetDeviceId == moduleId).ToArray())
                         {
@@ -566,7 +625,7 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice) : ModuleBuilder(m
             Index = $"{index}",
             Length = 5,
             TransferSequence = transfertSequence,
-            Name = new GSDML.Primitives.ExternalTextRefT { TextId = "T_ParamDownloadStart" },
+            Name = new GSDML.Primitives.ExternalTextRefT { TextId = txtId },
             Items = [new GSDML.DeviceProfile.RecordDataConstT { Data = "0x00,0x02,0x00,0x01,0x03" }]
         };
     }

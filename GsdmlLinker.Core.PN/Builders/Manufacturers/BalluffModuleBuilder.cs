@@ -1,6 +1,4 @@
-﻿using GsdmlLinker.Core.Models;
-
-using GSDML = ISO15745.GSDML;
+﻿using GSDML = ISO15745.GSDML;
 
 namespace GsdmlLinker.Core.PN.Builders.Manufacturers;
 
@@ -8,14 +6,17 @@ public class BalluffModuleBuilder(Core.Models.Device masterDevice) : ModuleBuild
 {
     public override void BuildModule(Core.Models.Device device, string indentNumber, string categoryRef, string categoryVendor, string deviceName)
     {
-        var ioData = new GSDML.DeviceProfile.SubmoduleItemBaseTIOData
+        if (device is null) return;
+
+        var ioData = new GSDML.DeviceProfile.SubmoduleItemBaseTIOData();
+        if (inputDatas?. Count > 0)
         {
-            Input = new GSDML.DeviceProfile.IODataT
+            ioData.Input = new GSDML.DeviceProfile.IODataT
             {
                 Consistency = GSDML.Primitives.IODataConsistencyEnumT.AllItemsConsistency,
                 DataItem = [.. inputDatas]
-            }
-        };
+            };
+        }
         if (outputDatas?.Count > 0)
         {
             ioData.Output = new GSDML.DeviceProfile.IODataT
@@ -34,7 +35,7 @@ public class BalluffModuleBuilder(Core.Models.Device masterDevice) : ModuleBuild
             VirtualSubmoduleList = [
                 new GSDML.DeviceProfile.BuiltInSubmoduleItemT
                 {
-                    ID = "",
+                    ID = indentNumber.Substring(2),
                     SubmoduleIdentNumber = "0x0001",
                     MayIssueProcessAlarm = true,
                     IOData = ioData,
@@ -50,28 +51,208 @@ public class BalluffModuleBuilder(Core.Models.Device masterDevice) : ModuleBuild
         { 
             State = Core.Models.ItemState.Created
         };
+
+        module.Name = ExternalTextGet(module.ModuleInfo?.Name?.TextId) ?? string.Empty;
+        module.Description = ExternalTextGet(module.ModuleInfo?.InfoText?.TextId) ?? string.Empty;
+        module.CategoryRef = ((Models.Device)masterDevice).GetCategoryText(module.ModuleInfo?.CategoryRef);
+        module.SubCategoryRef = ((Models.Device)masterDevice).GetCategoryText(module.ModuleInfo?.SubCategory1Ref);
+        module.VendorId = Convert.ToUInt16(device.VendorId);
+        module.DeviceId = Convert.ToUInt32(device.DeviceId);
+        //((Models.Device)masterDevice).UseableSubmodules?.Add(new GSDML.DeviceProfile.UseableSubmodulesTSubmoduleItemRef
+        //{
+        //    AllowedInSubslots="2..9",
+        //    SubmoduleItemTarget = submodule.ID
+        //});
+
         ((Models.Device)masterDevice).ModuleList?.Add(module);
 
         foreach (var dap in ((Models.Device)masterDevice).DeviceAccessPoints)
         {
-            if (dap?.Modules is not null)
-            {
-                dap.Modules.Add(new Core.Models.Module
-                {
-                    Name = (!string.IsNullOrEmpty(module.ModuleInfo?.Name?.TextId) ? masterDevice.ExternalTextList?[module.ModuleInfo.Name.TextId].Item : string.Empty) ?? string.Empty,
-                    Description = !string.IsNullOrEmpty(module.ModuleInfo?.InfoText?.TextId) ? masterDevice.ExternalTextList?[module.ModuleInfo.InfoText.TextId].Item : string.Empty,
-                    VendorName = module.ModuleInfo?.VendorName?.Value ?? string.Empty,
-                    OrderNumber = module.ModuleInfo?.OrderNumber?.Value ?? string.Empty,
-                    HardwareRelease = module.ModuleInfo?.HardwareRelease?.Value ?? string.Empty,
-                    SoftwareRelease = module.ModuleInfo?.SoftwareRelease?.Value ?? string.Empty,
-                    CategoryRef = ((Models.Device)masterDevice).GetCategoryText(module.ModuleInfo?.CategoryRef),
-                    SubCategoryRef = ((Models.Device)masterDevice).GetCategoryText(module.ModuleInfo?.SubCategory1Ref),
+            dap.Modules!.Add(module);
+            //if (dap?.Modules is not null)
+            //{
+            //    dap.Modules.Add(new Core.Models.Module
+            //    {
+            //        Name = (!string.IsNullOrEmpty(module.ModuleInfo?.Name?.TextId) ? masterDevice.ExternalTextList?[module.ModuleInfo.Name.TextId].Item : string.Empty) ?? string.Empty,
+            //        Description = !string.IsNullOrEmpty(module.ModuleInfo?.InfoText?.TextId) ? masterDevice.ExternalTextList?[module.ModuleInfo.InfoText.TextId].Item : string.Empty,
+            //        VendorName = module.ModuleInfo?.VendorName?.Value ?? string.Empty,
+            //        OrderNumber = module.ModuleInfo?.OrderNumber?.Value ?? string.Empty,
+            //        HardwareRelease = module.ModuleInfo?.HardwareRelease?.Value ?? string.Empty,
+            //        SoftwareRelease = module.ModuleInfo?.SoftwareRelease?.Value ?? string.Empty,
+            //        CategoryRef = ((Models.Device)masterDevice).GetCategoryText(module.ModuleInfo?.CategoryRef),
+            //        SubCategoryRef = ((Models.Device)masterDevice).GetCategoryText(module.ModuleInfo?.SubCategory1Ref),
 
-                    VendorId = Convert.ToUInt16(device.VendorId),
-                    DeviceId = Convert.ToUInt32(device.DeviceId),
-                    ProfinetDeviceId = module.ID
-                });
+            //        VendorId = Convert.ToUInt16(device.VendorId),
+            //        DeviceId = Convert.ToUInt32(device.DeviceId),
+            //        ProfinetDeviceId = module.ID
+            //    });
+            //}
+        }
+    }
+
+    public override void UpdateModule(Core.Models.Device? device, string indentNumber, string categoryRef, string categoryVendor, string deviceName)
+    {
+        if (device is null) return;
+
+        var ioData = new GSDML.DeviceProfile.SubmoduleItemBaseTIOData();
+        if (inputDatas?.Count > 0)
+        {
+            ioData.Input = new GSDML.DeviceProfile.IODataT
+            {
+                Consistency = GSDML.Primitives.IODataConsistencyEnumT.AllItemsConsistency,
+                DataItem = [.. inputDatas]
+            };
+        }
+        if (outputDatas?.Count > 0)
+        {
+            ioData.Output = new GSDML.DeviceProfile.IODataT
+            {
+                Consistency = GSDML.Primitives.IODataConsistencyEnumT.AllItemsConsistency,
+                DataItem = [.. outputDatas]
+            };
+        }
+
+        var module = new Models.ModuleItem(new GSDML.DeviceProfile.ModuleItemT
+        {
+            ID = $"ID_Mod_{deviceName}_{indentNumber}",
+            ModuleIdentNumber = indentNumber,
+            //API = 19969,
+            ModuleInfo = ModuleInfo(categoryRef, categoryVendor, indentNumber, deviceName),
+            VirtualSubmoduleList = [
+                new GSDML.DeviceProfile.BuiltInSubmoduleItemT
+                {
+                    ID = indentNumber.Substring(2),
+                    SubmoduleIdentNumber = "0x0001",
+                    MayIssueProcessAlarm = true,
+                    IOData = ioData,
+                    RecordDataList = new GSDML.DeviceProfile.SubmoduleItemBaseTRecordDataList
+                    {
+                        ParameterRecordDataItem = [.. RecordDataList]
+                    },
+                    ModuleInfo = ModuleInfo(categoryRef, categoryVendor, indentNumber, deviceName),
+                }
+            ]
+            //Graphics = graphics is not null ? [.. graphics] : null
+        })
+        {
+            State = Core.Models.ItemState.Modified
+        };
+
+        module.Name = ExternalTextGet(module.ModuleInfo?.Name?.TextId) ?? string.Empty;
+        module.Description = ExternalTextGet(module.ModuleInfo?.InfoText?.TextId) ?? string.Empty;
+        module.CategoryRef = ((Models.Device)masterDevice).GetCategoryText(module.ModuleInfo?.CategoryRef);
+        module.SubCategoryRef = ((Models.Device)masterDevice).GetCategoryText(module.ModuleInfo?.SubCategory1Ref);
+        module.VendorId = Convert.ToUInt16(device.VendorId);
+        module.DeviceId = Convert.ToUInt32(device.DeviceId);
+        //((Models.Device)masterDevice).UseableSubmodules?.Add(new GSDML.DeviceProfile.UseableSubmodulesTSubmoduleItemRef
+        //{
+        //    AllowedInSubslots="2..9",
+        //    SubmoduleItemTarget = submodule.ID
+        //});
+
+        ((Models.Device)masterDevice).ModuleList?.Add(module);
+        var index = ((Models.Device)masterDevice).ModuleList?.FindIndex(s => s.ProfinetDeviceId == module.ID);
+        if (index is not null && index >= 0)
+        {
+            ((Models.Device)masterDevice).ModuleList[(int)index] = module;
+        }
+
+        foreach (var dap in ((Models.Device)masterDevice).DeviceAccessPoints)
+        {
+            dap.Modules!.Add(module);
+
+            var source = dap.Modules.SingleOrDefault(s => s.ProfinetDeviceId == module.ProfinetDeviceId);
+            dap.Modules.Insert(dap.Modules.IndexOf(source), module);
+            dap.Modules.Remove(source);
+        }
+    }
+
+    public override void CreateRecordParameters(Core.Models.Device? device, Core.Models.DeviceDataStorage dataStorage, bool supportBlockParameter, string indentNumber,
+                                            IEnumerable<IGrouping<ushort, Core.Models.DeviceParameter>> parameters)
+    {
+        ushort transfertSequence = 5;
+        uint index = 16;
+
+        if (device is not null) return;
+
+        RecordDataList = [
+            BuildPortParameter1(),
+            BuildPortParameter2(),
+            BuildPortParameter3(dataStorage, masterDevice.VendorId, masterDevice.DeviceId),
+            BuildPortParameter4()
+        ];
+
+        if (parameters?.Count() > 0)
+        {
+            //if (supportBlockParameter)
+            //{
+            //    var startRecor = BuildStartRecord(index, transfertSequence);
+
+            //    if (startRecor is not null)
+            //    {
+            //        RecordDataList.Add(startRecor);
+            //        index++;
+            //        transfertSequence++;
+            //    }
+            //}
+
+            foreach (var variable in parameters)
+            {
+                var recordData = BuildRecordParameter($"TOK_{indentNumber}_Par{variable.Key:D3}", index, transfertSequence, variable, device.ExternalTextList);
+
+                if (recordData is not null)
+                {
+                    RecordDataList.Add(recordData);
+
+                    index++;
+                    transfertSequence++;
+                }
             }
+
+            //if (supportBlockParameter)
+            //{
+            //    RecordDataList.Add(BuildEndRecord(index, transfertSequence));
+            //}
+        }
+    }
+
+    public override void CreateDataProcess(string indentNumber, IEnumerable<IGrouping<string?, Core.Models.DeviceProcessData>> processDatas)
+    {
+        inputDatas = [];
+        ushort processDataIndex = 1;
+
+        foreach (var processData in processDatas)
+        {
+            var inputLength = processData.Max(g => g.ProcessDataIn?.BitLength);
+            var outputLength = processData.Max(g => g.ProcessDataOut?.BitLength);
+
+            if (inputLength is not null)
+            {
+                var id = $"TOK_Input_DataItem_{indentNumber}_{processDataIndex:D2}";
+                inputDatas.Add(new GSDML.DeviceProfile.IODataTDataItem
+                {
+                    DataType = GSDML.Primitives.DataItemTypeEnumT.OctetString,
+                    Length = (ushort)(inputLength / 8),
+                    LengthSpecified = true,
+                    TextId = id
+                });
+                masterDevice.ExternalTextList?.Add(id, new(id, $"Input data {inputLength} bits"));
+            }
+
+            if (outputLength is not null)
+            {
+                var id = $"TOK_Output_DataItem_{indentNumber}_{processDataIndex:D2}";
+                outputDatas ??= [];
+                outputDatas.Add(new GSDML.DeviceProfile.IODataTDataItem
+                {
+                    DataType = GSDML.Primitives.DataItemTypeEnumT.OctetString,
+                    Length = (ushort)(outputLength / 8),
+                    LengthSpecified = true,
+                    TextId = id
+                });
+                masterDevice.ExternalTextList?.Add(id, new(id, $"Output data {outputLength} bits"));
+            }
+            processDataIndex++;
         }
     }
 
@@ -249,145 +430,61 @@ public class BalluffModuleBuilder(Core.Models.Device masterDevice) : ModuleBuild
         return parameterRecord;
     }
 
-    public override void CreateDataProcess(string indentNumber, IEnumerable<IGrouping<string?, Core.Models.DeviceProcessData>> processDatas)
-    {
-        inputDatas = [];
-        ushort processDataIndex = 1;
-
-        foreach (var processData in processDatas)
-        {
-            var inputLength = processData.Max(g => g.ProcessDataIn?.BitLength);
-            var outputLength = processData.Max(g => g.ProcessDataOut?.BitLength);
-
-            if (inputLength is not null)
-            {
-                var id = $"TOK_Input_DataItem_{indentNumber}_{processDataIndex:D2}";
-                inputDatas.Add(new GSDML.DeviceProfile.IODataTDataItem
-                {
-                    DataType = GSDML.Primitives.DataItemTypeEnumT.OctetString,
-                    Length = (ushort)(inputLength / 8),
-                    LengthSpecified = true,
-                    TextId = id
-                });
-                masterDevice.ExternalTextList?.Add(id, new(id, $"Input data {inputLength} bits"));
-            }
-
-            if (outputLength is not null)
-            {
-                var id = $"TOK_Output_DataItem_{indentNumber}_{processDataIndex:D2}";
-                outputDatas ??= [];
-                outputDatas.Add(new GSDML.DeviceProfile.IODataTDataItem
-                {
-                    DataType = GSDML.Primitives.DataItemTypeEnumT.OctetString,
-                    Length = (ushort)(outputLength / 8),
-                    LengthSpecified = true,
-                    TextId = id
-                });
-                masterDevice.ExternalTextList?.Add(id, new(id, $"Output data {outputLength} bits"));
-            }
-            processDataIndex++;
-        }
-    }
-
-    public override void CreateRecordParameters(Core.Models.Device? device, Core.Models.DeviceDataStorage dataStorage, bool supportBlockParameter, string indentNumber, 
-                                                IEnumerable<IGrouping<ushort, Core.Models.DeviceParameter>> parameters)
-    {
-        ushort transfertSequence = 5;
-        uint index = 16;
-
-        if (device is not null) return;
-
-        RecordDataList = [
-            BuildPortParameter1(),
-            BuildPortParameter2(),
-            BuildPortParameter3(dataStorage, masterDevice.VendorId, masterDevice.DeviceId),
-            BuildPortParameter4()
-        ];
-
-        if (parameters?.Count() > 0)
-        {
-            //if (supportBlockParameter)
-            //{
-            //    var startRecor = BuildStartRecord(index, transfertSequence);
-
-            //    if (startRecor is not null)
-            //    {
-            //        RecordDataList.Add(startRecor);
-            //        index++;
-            //        transfertSequence++;
-            //    }
-            //}
-
-            foreach (var variable in parameters)
-            {
-                var recordData = BuildRecordParameter($"TOK_{indentNumber}_Par{variable.Key:D3}", index, transfertSequence, variable, device.ExternalTextList);
-
-                if (recordData is not null)
-                {
-                    RecordDataList.Add(recordData);
-
-                    index++;
-                    transfertSequence++;
-                }
-            }
-
-            //if (supportBlockParameter)
-            //{
-            //    RecordDataList.Add(BuildEndRecord(index, transfertSequence));
-            //}
-        }
-    }
-
     public override List<Core.Models.DeviceParameter> ReadRecordParameter(string deviceId)
     {
         var parameters = new List<Core.Models.DeviceParameter>();
 
-        if (((Models.Device)masterDevice).ModuleList is IEnumerable<GSDML.DeviceProfile.ModuleItemT> moduleList)
+        if (((Models.Device)masterDevice).ModuleList is IEnumerable<Models.ModuleItem> moduleList)
         {
-            if(moduleList.SingleOrDefault(s => s.ID == deviceId)?.VirtualSubmoduleList is GSDML.DeviceProfile.BuiltInSubmoduleItemT[] virtualSubmoduleList)
+            var module = moduleList.SingleOrDefault(s => s.ID == deviceId);
+            if (module is null) return parameters;
+
+            var parameterRecordDatas = module.VirtualSubmoduleList?.SingleOrDefault()?.RecordDataList?.ParameterRecordDataItem;
+            if (parameterRecordDatas is not null)
             {
-                foreach (var virtualSubmodule in virtualSubmoduleList)
+                foreach (var parameterRecordData in parameterRecordDatas.Where(w => int.Parse(w.Index ?? "0") >= 16))
                 {
-                    var parameterRecordDatas = virtualSubmodule?.RecordDataList?.ParameterRecordDataItem;
-                    if (parameterRecordDatas is not null)
+                    if (parameterRecordData.Items is not null)
                     {
-                        foreach (var parameterRecordData in parameterRecordDatas)
+                        var indexRecord = parameterRecordData.Items.OfType<GSDML.DeviceProfile.RecordDataRefT>().SingleOrDefault(s => s.ByteOffset == 0);
+                        var subindexRecord = parameterRecordData.Items.OfType<GSDML.DeviceProfile.RecordDataRefT>().SingleOrDefault(s => s?.ByteOffset == 2);
+                        var lenghtRecord = parameterRecordData.Items.OfType<GSDML.DeviceProfile.RecordDataRefT>().SingleOrDefault(s => s?.ByteOffset == 3);
+
+                        var index = int.Parse(indexRecord?.DefaultValue ?? "0");
+                        var subindex = int.Parse(subindexRecord?.DefaultValue ?? "0");
+                        var items = parameterRecordData.Items.OfType<GSDML.DeviceProfile.RecordDataRefT>().Where(w => w.BitOffset >= 4).ToArray();
+                        if (items.Length == 1)
                         {
-                            if (parameterRecordData.Items is not null)
+                            parameters.Add(ReadRecordParameter(items[0], index));
+                        }
+                        else
+                        {
+                            for (var i = 0; i < items.Length; i++)
                             {
-                                //int.TryParse(parameterRecordData.Index, out var index);
-                                //parameterRecordData.Items.First()
-                                //var items = parameterRecordData.Items.Where(w => w is GSDML.DeviceProfile.RecordDataRefT).Cast<GSDML.DeviceProfile.RecordDataRefT>().ToArray();
-                                //if (items.Length == 1)
-                                //{
-                                //    parameters.Add(ReadRecordParameter(items[0], index));
-                                //}
-                                //else
-                                //{
-                                //    for (var i = 0; i < items.Length; i++)
-                                //    {
-                                //        parameters.Add(ReadRecordParameter(items[i], index, i + 1));
-                                //    }
-                                //}
+                                parameters.Add(ReadRecordParameter(items[i], index, i + 1));
                             }
                         }
                     }
                 }
-
             }
-
         }
         return parameters;
     }
 
-    public override void UpdateModule(Device? device, string indentNumber, string categoryRef, string categoryVendor, string deviceName)
-    {
-
-    }
-
     public override void DeletModule(string moduleId)
     {
+        ((Models.Device)masterDevice).ModuleList?.RemoveAll(a => a.ID == moduleId);
 
+        foreach (var dap in ((Models.Device)masterDevice).DeviceAccessPoints)
+        {
+            if (dap.Modules is not null)
+            {
+                foreach (var module in dap.Modules.Where(w => w.ProfinetDeviceId == moduleId).ToArray())
+                {
+                    dap.Modules.Remove(module);
+                }
+            }
+        }
     }
 
     internal static GSDML.DeviceProfile.ParameterRecordDataT BuildPortParameter1() =>

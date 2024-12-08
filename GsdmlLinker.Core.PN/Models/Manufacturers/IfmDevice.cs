@@ -1,5 +1,4 @@
-﻿using System.Reflection.Metadata;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 
 using GSDML = ISO15745.GSDML;
 
@@ -60,11 +59,4 @@ public record IfmDevice(string filePath, Match? match) : Device(filePath, match)
     public override string SetModuleDeviceId(uint Id) => $"{Id}";
 
     public override string SetModuleVendorId(ushort Id) => $"{Id}";
-
-    //public override List<Core.Models.DeviceParameter> GetRecordParameter()
-    //{
-    //    var parameter = new List<Core.Models.DeviceParameter>();
-
-    //    return parameter;
-    //}
 }

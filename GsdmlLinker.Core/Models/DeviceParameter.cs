@@ -60,7 +60,7 @@ public record DeviceParameter : INotifyPropertyChanged
         }
     }
 
-    public byte FixedLength { get; init; }
+    public ushort FixedLength { get; init; }
 
     public DeviceDatatypes? DataType { get; init; }
     public ushort BitLength { get; init; }

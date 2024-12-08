@@ -10,7 +10,6 @@ public class ModuleTreeItem : ObservableObject
 {
     private ItemState state;
     private readonly Module? module;
-    private bool canDelet = false;
 
     public string Name { get; init; } = string.Empty;
 
@@ -33,11 +32,7 @@ public class ModuleTreeItem : ObservableObject
         }
     }
 
-    public bool CanDelet
-    {
-        get => module?.DeviceId > 0;
-        //set => SetProperty(ref canDelet, value);
-    }
+    public bool CanDelet => module?.DeviceId > 0;
 
     public ObservableCollection<ModuleTreeItem>? SubmodulesCaterogies { get; set; }
 

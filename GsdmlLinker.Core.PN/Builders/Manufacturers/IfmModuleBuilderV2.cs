@@ -8,14 +8,15 @@ public class IfmModuleBuilderV2(Core.Models.Device masterDevice) : IfmModuleBuil
     {
         if (device is null) return;
 
-        var ioData = new GSDML.DeviceProfile.SubmoduleItemBaseTIOData
+        var ioData = new GSDML.DeviceProfile.SubmoduleItemBaseTIOData();
+        if (inputDatas?.Count > 0)
         {
-            Input = new GSDML.DeviceProfile.IODataT
+            ioData.Input = new GSDML.DeviceProfile.IODataT
             {
                 Consistency = GSDML.Primitives.IODataConsistencyEnumT.AllItemsConsistency,
                 DataItem = [.. inputDatas]
-            }
-        };
+            };
+        }
         if (outputDatas?.Count > 0)
         {
             ioData.Output = new GSDML.DeviceProfile.IODataT
@@ -52,7 +53,6 @@ public class IfmModuleBuilderV2(Core.Models.Device masterDevice) : IfmModuleBuil
         //{
         //    AllowedInSubslots="2..9",
         //    SubmoduleItemTarget = submodule.ID
-
         //});
 
         ((Models.Device)masterDevice).SubmoduleList?.Add(submodule);
@@ -60,7 +60,7 @@ public class IfmModuleBuilderV2(Core.Models.Device masterDevice) : IfmModuleBuil
         {
             if (dap.Modules is not null)
             {
-                foreach (var module in dap.Modules/*.Where(module => module.Submodules?.Contains(submodule) != true)*/)
+                foreach (var module in dap.Modules)
                 {
                     module.Submodules ??= [];
                     module.Submodules.Add(submodule);
@@ -73,14 +73,15 @@ public class IfmModuleBuilderV2(Core.Models.Device masterDevice) : IfmModuleBuil
     {
         if (device is null) return;
 
-        var ioData = new GSDML.DeviceProfile.SubmoduleItemBaseTIOData
+        var ioData = new GSDML.DeviceProfile.SubmoduleItemBaseTIOData();
+        if(inputDatas?.Count > 0)
         {
-            Input = new GSDML.DeviceProfile.IODataT
+            ioData.Input = new GSDML.DeviceProfile.IODataT
             {
                 Consistency = GSDML.Primitives.IODataConsistencyEnumT.AllItemsConsistency,
                 DataItem = [.. inputDatas]
-            }
-        };
+            };
+        }
         if (outputDatas?.Count > 0)
         {
             ioData.Output = new GSDML.DeviceProfile.IODataT
@@ -130,7 +131,7 @@ public class IfmModuleBuilderV2(Core.Models.Device masterDevice) : IfmModuleBuil
         {
             if (dap.Modules is not null)
             {
-                foreach (var module in dap.Modules/*.Where(module => module.Submodules?.Contains(submodule) != true)*/)
+                foreach (var module in dap.Modules)
                 {
                     module.Submodules ??= [];
 
@@ -142,7 +143,8 @@ public class IfmModuleBuilderV2(Core.Models.Device masterDevice) : IfmModuleBuil
         }
     }
 
-    public override void CreateRecordParameters(Core.Models.Device? device, Core.Models.DeviceDataStorage dataStorage, bool supportBlockParameter, string indentNumber, IEnumerable<IGrouping<ushort, Core.Models.DeviceParameter>> parameters)
+    public override void CreateRecordParameters(Core.Models.Device? device, Core.Models.DeviceDataStorage dataStorage, bool supportBlockParameter, string indentNumber, 
+                                                IEnumerable<IGrouping<ushort, Core.Models.DeviceParameter>> parameters)
     {
         ushort transfertSequence = 3;
         uint index = 1024;
@@ -447,7 +449,7 @@ public class IfmModuleBuilderV2(Core.Models.Device masterDevice) : IfmModuleBuil
     internal new GSDML.DeviceProfile.ParameterRecordDataT BuildStartRecord(uint index, ushort transfertSequence)
     {
         var txtId = "T_ParamDownloadStart";
-        var Textadded = masterDevice.ExternalTextList?.TryAdd(txtId, new(txtId, "Blockparameterization ParamDownloadStart") { State = Core.Models.ItemState.Created });
+        masterDevice.ExternalTextList?.TryAdd(txtId, new(txtId, "Blockparameterization ParamDownloadStart") { State = Core.Models.ItemState.Created });
 
         return new GSDML.DeviceProfile.ParameterRecordDataT
         {
@@ -462,7 +464,7 @@ public class IfmModuleBuilderV2(Core.Models.Device masterDevice) : IfmModuleBuil
     internal new GSDML.DeviceProfile.ParameterRecordDataT BuildEndRecord(uint index, ushort transfertSequence)
     {
         var txtId = "T_ParamDownloadEnd";
-        var Textadded = masterDevice.ExternalTextList?.TryAdd(txtId, new(txtId, "Blockparameterization ParamDownloadEnd") { State = Core.Models.ItemState.Created });
+        masterDevice.ExternalTextList?.TryAdd(txtId, new(txtId, "Blockparameterization ParamDownloadEnd") { State = Core.Models.ItemState.Created });
 
         return new GSDML.DeviceProfile.ParameterRecordDataT
         {
