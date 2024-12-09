@@ -79,17 +79,24 @@ public class IoddfinderViewModel(IOptions<Core.Models.AppConfig> appConfig, IDia
 
     public void OnNavigatedFrom()
     {
-        
+        devicesService.DeviceAdded -= OnDeviceAdded; ;
     }
 
     public async void OnNavigatedTo(object parameter)
     {
+        devicesService.DeviceAdded += OnDeviceAdded; ;
         await OnGetVendorList();
+    }
+
+    private void OnDeviceAdded(object? sender, Core.Models.DeviceEventArgs e)
+    {
+        dialogCoordinator.ShowMessageAsync(App.Current.MainWindow.DataContext, Properties.Resources.AppMessageNewIoddTitle, $"{Properties.Resources.AppMessageNewIoddMessage} {e.Device?.Name}", MessageDialogStyle.Affirmative);
     }
 
     private async Task OnGetVendorList()
     {
-        ProgressDialogController controller = await dialogCoordinator.ShowProgressAsync(App.Current.MainWindow.DataContext, "", "", true);
+        ProgressDialogController controller = await dialogCoordinator.ShowProgressAsync(App.Current.MainWindow.DataContext, Properties.Resources.IoddfinderPageLoadingTitle, 
+                                                                                        Properties.Resources.IoddfinderPageLoadingText, true);
         controller.SetIndeterminate();
         try
         {
@@ -107,7 +114,8 @@ public class IoddfinderViewModel(IOptions<Core.Models.AppConfig> appConfig, IDia
         catch (Exception ex) 
         {
             await controller.CloseAsync();
-            await dialogCoordinator.ShowMessageAsync(App.Current.MainWindow.DataContext, "IODD Finder", "no response", MessageDialogStyle.Affirmative);
+            await dialogCoordinator.ShowMessageAsync(App.Current.MainWindow.DataContext, Properties.Resources.IoddfinderPageNoConnectTitle, 
+                                                     Properties.Resources.IoddfinderPageNoConnectText, MessageDialogStyle.Affirmative);
         }
     }
 
@@ -138,8 +146,6 @@ public class IoddfinderViewModel(IOptions<Core.Models.AppConfig> appConfig, IDia
     {
         ProductDetail = await ioddfinderService.GetProductVariantAsync(productvariantId);
     }
-
-
 
     private async Task OnLoadDevice(Core.Models.IoddFinder.Iodd? iodd)
     {

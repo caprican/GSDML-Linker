@@ -241,4 +241,16 @@
     <value>Description not founded in IODD Finder.
 Manual install IODD file.</value>
   </data>
+  <data name="IoddfinderPageLoadingTitle" xml:space="preserve">
+    <value>Loading</value>
+  </data>
+  <data name="IoddfinderPageLoadingText" xml:space="preserve">
+    <value>Loading vendors list from Iodd finder</value>
+  </data>
+  <data name="IoddfinderPageNoConnectTitle" xml:space="preserve">
+    <value>Iodd finder</value>
+  </data>
+  <data name="IoddfinderPageNoConnectText" xml:space="preserve">
+    <value>No response from https://ioddfinder.io-link.com/</value>
+  </data>
 </root>

@@ -44,7 +44,7 @@
                     <RowDefinition/>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
-                <UniformGrid Grid.Row="0" Margin="{StaticResource SmallTopBottomMargin}" Rows="1">
+                <!--<UniformGrid Grid.Row="0" Margin="{StaticResource SmallTopBottomMargin}" Rows="1">
                     <Button Command="{Binding GetVendorListCommmand}" Margin="{StaticResource SmallLeftRightMargin}">
                         <TextBlock Text="Vendors"/>
                     </Button>
@@ -60,7 +60,7 @@
                         <TextBlock />
                     </Button>
                     <TextBox DockPanel.Dock="Left"/>
-                </DockPanel>
+                </DockPanel>-->
 
                 <Grid Grid.Row="2">
                     <Grid.ColumnDefinitions>

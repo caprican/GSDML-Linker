@@ -240,4 +240,16 @@
   <data name="AppMessageNoFoundIoddText" xml:space="preserve">
     <value>??</value>
   </data>
+  <data name="IoddfinderPageLoadingTitle" xml:space="preserve">
+    <value>??</value>
+  </data>
+  <data name="IoddfinderPageLoadingText" xml:space="preserve">
+    <value>??</value>
+  </data>
+  <data name="IoddfinderPageNoConnectTitle" xml:space="preserve">
+    <value>Iodd finder</value>
+  </data>
+  <data name="IoddfinderPageNoConnectText" xml:space="preserve">
+    <value>https://ioddfinder.io-link.com/</value>
+  </data>
 </root>

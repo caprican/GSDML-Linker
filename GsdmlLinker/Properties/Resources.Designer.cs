@@ -197,6 +197,42 @@ namespace GsdmlLinker.Properties {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Loading vendors list from Iodd finder.
+        /// </summary>
+        public static string IoddfinderPageLoadingText {
+            get {
+                return ResourceManager.GetString("IoddfinderPageLoadingText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Loading.
+        /// </summary>
+        public static string IoddfinderPageLoadingTitle {
+            get {
+                return ResourceManager.GetString("IoddfinderPageLoadingTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à No response from https://ioddfinder.io-link.com/.
+        /// </summary>
+        public static string IoddfinderPageNoConnectText {
+            get {
+                return ResourceManager.GetString("IoddfinderPageNoConnectText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Iodd finder.
+        /// </summary>
+        public static string IoddfinderPageNoConnectTitle {
+            get {
+                return ResourceManager.GetString("IoddfinderPageNoConnectTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une chaîne localisée semblable à IO mapping.
         /// </summary>
         public static string IOLinkDeviceMappingTitle {

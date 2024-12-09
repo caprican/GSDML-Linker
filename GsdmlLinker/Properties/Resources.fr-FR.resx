@@ -240,4 +240,16 @@
   <data name="AppMessageNoFoundIoddText" xml:space="preserve">
     <value>Description non trouvé dans IODD Finder. Installer manuellement le fichier IODD.</value>
   </data>
+  <data name="IoddfinderPageLoadingTitle" xml:space="preserve">
+    <value>Chargement</value>
+  </data>
+  <data name="IoddfinderPageLoadingText" xml:space="preserve">
+    <value>Chargement de la liste des vendeurs depuis Iodd finder</value>
+  </data>
+  <data name="IoddfinderPageNoConnectTitle" xml:space="preserve">
+    <value>Iodd finder</value>
+  </data>
+  <data name="IoddfinderPageNoConnectText" xml:space="preserve">
+    <value>Pas de réponse de https://ioddfinder.io-link.com/</value>
+  </data>
 </root>
