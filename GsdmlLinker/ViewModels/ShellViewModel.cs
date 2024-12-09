@@ -142,15 +142,15 @@ public class ShellViewModel(INavigationService navigationService, IDialogCoordin
                     {
                         var folderPath = Unzip(filePath, appConfig.GSDMLFolder);
                     }
-                    else if (Core.PN.Regexs.FileNameRegex().Match(fileName).Success || fileName.Contains("gsdml", StringComparison.InvariantCultureIgnoreCase))
+                    else if (Core.PN.Regexs.FileNameRegex().Match(fileName).Success /*|| fileName.Contains("gsdml", StringComparison.InvariantCultureIgnoreCase)*/)
                     {
-                        gsdDevicesService.AddDevice(folderName);
+                        gsdDevicesService.AddDevice(filePath);
                  
                         //_navigationService.NavigateTo(typeof(ProfinetDeviceViewModel).FullName!);
                     }
-                    else if (Core.IOL.Regexs.FileNameRegex().Match(fileName).Success || fileName.Contains("iodd", StringComparison.InvariantCultureIgnoreCase))
+                    else if (Core.IOL.Regexs.FileNameRegex().Match(fileName).Success /*|| fileName.Contains("iodd", StringComparison.InvariantCultureIgnoreCase)*/)
                     {
-                        iodDevicesService.AddDevice(folderName);
+                        iodDevicesService.AddDevice(filePath);
 
                         //_navigationService.NavigateTo(typeof(IOLinkDeviceViewModel).FullName!);
                     }

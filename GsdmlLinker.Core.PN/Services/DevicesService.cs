@@ -43,40 +43,40 @@ public class DevicesService(IOptions<Core.Models.AppConfig> appConfig, IDevicesF
 
     public void AddDevice(string path)
     {
-        foreach (var filePath in Directory.EnumerateFiles(path, "*.xml"))
+        //foreach (var filePath in Directory.EnumerateFiles(path, "*.xml"))
+        //{
+        var fileName = Path.GetFileNameWithoutExtension(path);
+        //GSDML-V<Version>-<NomFabricant>-<NomProduit>-<Date>(-<heure>)?(-<langue>)?(-<Commentaire>)?
+        if (Regexs.FileNameRegex().Match(fileName) is Match GSDmatch && GSDmatch.Success)
         {
-            var fileName = Path.GetFileNameWithoutExtension(filePath);
-            //GSDML-V<Version>-<NomFabricant>-<NomProduit>-<Date>(-<heure>)?(-<langue>)?(-<Commentaire>)?
-            if (Regexs.FileNameRegex().Match(fileName) is Match GSDmatch && GSDmatch.Success)
+            var schematicVersion = GSDmatch.Groups[1].Value;
+            var manufacturerName = GSDmatch.Groups[3].Value;
+            var deviceFamily = GSDmatch.Groups[4].Value;
+
+            var localFilePath = Path.Combine(localAppData, appConfig.Value.GSDMLFolder, manufacturerName, $"{deviceFamily}-V{schematicVersion}");
+            if (!Directory.Exists(localFilePath))
             {
-                var schematicVersion = GSDmatch.Groups[1].Value;
-                var manufacturerName = GSDmatch.Groups[3].Value;
-                var deviceFamily = GSDmatch.Groups[4].Value;
-
-                var localFilePath = Path.Combine(localAppData, appConfig.Value.GSDMLFolder, manufacturerName, $"{deviceFamily}-V{schematicVersion}");
-                if(!Directory.Exists(localFilePath))
-                {
-                    Directory.CreateDirectory(localFilePath);
-                }
-
-                File.Copy(filePath, Path.Combine(localFilePath, Path.GetFileName(filePath)), true);
-
-                var device = devicesFactory.CreateDevice(Path.Combine(localFilePath, Path.GetFileName(filePath)), GSDmatch);
-
-                if (device.GraphicsList is not null)
-                {
-                    var folderPath = Path.GetDirectoryName(filePath);
-                    foreach (var graphic in device.GraphicsList)
-                    {
-                        File.Copy(Path.Combine(folderPath!, graphic.Value + ".bmp"), Path.Combine(localFilePath, graphic.Value + ".bmp"), true);
-                    }
-                }
-
-                devices.Add(device);
-
-                DeviceAdded?.Invoke(this, new Core.Models.DeviceEventArgs { Device = device });
+                Directory.CreateDirectory(localFilePath);
             }
+
+            File.Copy(path, Path.Combine(localFilePath, Path.GetFileName(path)), true);
+
+            var device = devicesFactory.CreateDevice(Path.Combine(localFilePath, Path.GetFileName(path)), GSDmatch);
+
+            if (device.GraphicsList is not null)
+            {
+                var folderPath = Path.GetDirectoryName(path);
+                foreach (var graphic in device.GraphicsList)
+                {
+                    File.Copy(Path.Combine(folderPath!, graphic.Value.Item + ".bmp"), Path.Combine(localFilePath, graphic.Value.Item + ".bmp"), true);
+                }
+            }
+
+            devices.Add(device);
+
+            DeviceAdded?.Invoke(this, new Core.Models.DeviceEventArgs { Device = device });
         }
+        //}
     }
 
     public IEnumerable<Core.Models.Module>? GetModules(string vendorId, string deviceId, string deviceAccessId, DateTime? version)

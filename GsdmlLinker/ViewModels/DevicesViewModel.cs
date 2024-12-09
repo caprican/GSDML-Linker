@@ -253,7 +253,7 @@ public class DevicesViewModel(Contracts.Services.ISettingsService settingsServic
 
     private void PnDevicesService_DeviceAdded(object? sender, Core.Models.DeviceEventArgs e)
     {
-        dialogCoordinator.ShowMessageAsync(App.Current.MainWindow.DataContext, Properties.Resources.AppMessageNewGsdTitle, $"{Properties.Resources.AppMessageNewGsdMessage} ({e.Device?.Name})", MessageDialogStyle.Affirmative);
+        dialogCoordinator.ShowMessageAsync(App.Current.MainWindow.DataContext, Properties.Resources.AppMessageNewGsdTitle, $"{Properties.Resources.AppMessageNewGsdMessage} ({e.Device?.Name ?? e.Device?.DeviceFamily})", MessageDialogStyle.Affirmative);
         GetMasterDevices();
     }
 
