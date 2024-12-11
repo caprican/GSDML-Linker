@@ -13,11 +13,13 @@ public abstract class ModuleBuilder(Core.Models.Device masterDevice) : IModuleBu
 
     internal Core.Models.Device masterDevice = masterDevice;
 
-    public abstract void CreateRecordParameters(Core.Models.Device? device, Core.Models.DeviceDataStorage dataStorage, bool supportBlockParameter, string indentNumber, IEnumerable<IGrouping<ushort, Core.Models.DeviceParameter>> parameters);
+    public abstract void CreateRecordParameters(Core.Models.Device? device, Core.Models.DeviceDataStorage dataStorage, bool supportBlockParameter, string indentNumber, IEnumerable<IGrouping<ushort, Core.Models.DeviceParameter>> parameters, bool unloclDeviceId);
 
     public abstract void CreateDataProcess(string indentNumber, IEnumerable<IGrouping<string?, Core.Models.DeviceProcessData>> ProcessDatas);
 
-    public abstract List<Core.Models.DeviceParameter> ReadRecordParameter(string deviceId);
+    public abstract List<Core.Models.DeviceParameter> GetRecordParameters(string deviceId);
+
+    public abstract List<Core.Models.DeviceParameter> GetPortParameters(string deviceId);
 
     public abstract void BuildModule(Core.Models.Device device, string indentNumber, string categoryRef, string categoryVendor, string deviceName);
 
@@ -103,7 +105,7 @@ public abstract class ModuleBuilder(Core.Models.Device masterDevice) : IModuleBu
             Subindex =  (ushort)subIndex,
             DataType = Core.Models.DeviceDatatypes.BooleanT,
             DefaultValue = defaultValue,
-            IsLocked = (defaultValue == recordDataRef.AllowedValues)
+            IsLocked = !recordDataRef.Changeable
         };
 
         return boolParameter;
@@ -218,7 +220,7 @@ public abstract class ModuleBuilder(Core.Models.Device masterDevice) : IModuleBu
                 _ => Core.Models.DeviceDatatypes.IntegerT
             },
             DefaultValue = recordDataRef.DefaultValue ?? string.Empty,
-            IsLocked = (recordDataRef.DefaultValue == recordDataRef.AllowedValues)
+            IsLocked = !recordDataRef.Changeable
         };
     }
 

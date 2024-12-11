@@ -366,7 +366,7 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice) : ModuleBuilder(m
     }
     
     public override void CreateRecordParameters(Core.Models.Device? device, Core.Models.DeviceDataStorage dataStorage, bool supportBlockParameter, string indentNumber, 
-                                                IEnumerable<IGrouping<ushort, Core.Models.DeviceParameter>> parameters)
+                                                IEnumerable<IGrouping<ushort, Core.Models.DeviceParameter>> parameters, bool unloclDeviceId)
     {
         ushort transfertSequence = 3;
         uint index = 1024;
@@ -375,7 +375,7 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice) : ModuleBuilder(m
 
         RecordDataList = [
             BuildPortParameters(dataStorage, ((Models.Device)masterDevice).SetModuleVendorId(Convert.ToUInt16(device.VendorId)), 
-                                             ((Models.Device)masterDevice).SetModuleDeviceId(Convert.ToUInt32(device.DeviceId))),
+                                             ((Models.Device)masterDevice).SetModuleDeviceId(Convert.ToUInt32(device.DeviceId)), unloclDeviceId),
             BuildSafeRecord()
         ];
 
@@ -413,7 +413,7 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice) : ModuleBuilder(m
         }
     }
 
-    public override List<Core.Models.DeviceParameter> ReadRecordParameter(string deviceId)
+    public override List<Core.Models.DeviceParameter> GetRecordParameters(string deviceId)
     {
         var parameters = new List<Core.Models.DeviceParameter>();
 
@@ -432,7 +432,7 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice) : ModuleBuilder(m
                         {
                             var index = IntValue(string.Join("", recordConstSplit[..2]));
 
-                            var items = parameterRecordData.Items.Where(w => w is GSDML.DeviceProfile.RecordDataRefT).Cast<GSDML.DeviceProfile.RecordDataRefT>().ToArray();
+                            var items = parameterRecordData.Items.OfType<GSDML.DeviceProfile.RecordDataRefT>().ToArray();
                             if (items.Length == 1)
                             {
                                 parameters.Add(ReadRecordParameter(items[0], index));
@@ -442,6 +442,43 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice) : ModuleBuilder(m
                                 for (var i = 0; i < items.Length; i++)
                                 {
                                     parameters.Add(ReadRecordParameter(items[i], index, i + 1));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return parameters;
+    }
+
+    public override List<Core.Models.DeviceParameter> GetPortParameters(string deviceId)
+    {
+        var parameters = new List<Core.Models.DeviceParameter>();
+
+        if (((Models.Device)masterDevice).SubmoduleList is IEnumerable<Models.SubmoduleItem> submoduleList)
+        {
+            var parameterRecordDatas = submoduleList.SingleOrDefault(s => s.ID == deviceId)?.RecordDataList?.ParameterRecordDataItem;
+            if (parameterRecordDatas is not null)
+            {
+                foreach (var parameterRecordData in parameterRecordDatas.Where(w => w.Index == "45312"))
+                {
+                    if (parameterRecordData.Items is not null)
+                    {
+                        var recordConst = (GSDML.DeviceProfile.RecordDataConstT?)parameterRecordData.Items.FirstOrDefault(f => f is GSDML.DeviceProfile.RecordDataConstT);
+                        var recordConstSplit = recordConst?.Data?.Split(',');
+                        if (recordConstSplit?.Length >= 2)
+                        {
+                            var items = parameterRecordData.Items.Where(w => w is GSDML.DeviceProfile.RecordDataRefT).Cast<GSDML.DeviceProfile.RecordDataRefT>().ToArray();
+                            if (items.Length == 1)
+                            {
+                                parameters.Add(ReadRecordParameter(items[0], 0));
+                            }
+                            else
+                            {
+                                for (var i = 0; i < items.Length; i++)
+                                {
+                                    parameters.Add(ReadRecordParameter(items[i], 0));
                                 }
                             }
                         }
@@ -474,91 +511,91 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice) : ModuleBuilder(m
         }
     }
 
-    internal static GSDML.DeviceProfile.ParameterRecordDataT BuildPortParameters(Core.Models.DeviceDataStorage dataStorage, string vendorId, string deviceId) =>
-     new()
-     {
-         Index = "45312",
-         Length = 12,
-         TransferSequence = 1,
-         Name = new GSDML.Primitives.ExternalTextRefT { TextId = "Port parameters" },
-         Items =
-         [
-             new GSDML.DeviceProfile.RecordDataConstT
+    internal static GSDML.DeviceProfile.ParameterRecordDataT BuildPortParameters(Core.Models.DeviceDataStorage dataStorage, string vendorId, string deviceId, bool unloclDeviceId) =>
+        new()
+        {
+            Index = "45312",
+            Length = 12,
+            TransferSequence = 1,
+            Name = new GSDML.Primitives.ExternalTextRefT { TextId = "Port parameters" },
+            Items =
+            [
+                new GSDML.DeviceProfile.RecordDataConstT
                 {
                     ByteOffset = 0,
                     Data = "0x00,0x01,0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00"
                 },
-            new GSDML.DeviceProfile.RecordDataRefT
-            {
-                ValueItemTarget = "VAL_PortMode",
-                DataType = GSDML.Primitives.RecordDataRefTypeEnumT.BitArea,
-                BitLength = "4",
-                ByteOffset = 2,
-                BitOffset = 0,
-                DefaultValue = "11",
-                Changeable = true,
-                AllowedValues = "11",
-                TextId = "RecIOL_PortMode",
-            },
-            new GSDML.DeviceProfile.RecordDataRefT
-            {
-                ValueItemTarget = "M_Cycle",
-                DataType = GSDML.Primitives.RecordDataRefTypeEnumT.BitArea,
-                ByteOffset = 4,
-                BitOffset = 0,
-                BitLength = "8",
-                DefaultValue = "0",
-                AllowedValues = "0 20 40 68 88 128 148 188",
-                TextId = "CycleTime",
-                Visible = true,
-                Changeable = true,
-            },
-            new GSDML.DeviceProfile.RecordDataRefT
-            {
-                ValueItemTarget = "I_Level",
-                DataType = GSDML.Primitives.RecordDataRefTypeEnumT.BitArea,
-                ByteOffset = 3,
-                BitOffset = 1,
-                BitLength = "3",
-                DefaultValue = $"{dataStorage}",
-                AllowedValues = "0..4",
-                TextId = "IntegrationLevel",
-                Visible = true,
-                Changeable = false,
-            },
-            new GSDML.DeviceProfile.RecordDataRefT
-            {
-                DataType = GSDML.Primitives.RecordDataRefTypeEnumT.Unsigned16,
-                ByteOffset = 5,
-                DefaultValue = vendorId,//"0",
-                AllowedValues = vendorId,//"0..65535",
-                TextId = "VendorID",
-                Changeable = false,
-                Visible = true,
-            },
-            new GSDML.DeviceProfile.RecordDataRefT
-            {
-                DataType = GSDML.Primitives.RecordDataRefTypeEnumT.Unsigned32,
-                ByteOffset = 7,
-                DefaultValue = deviceId,//"0",
-                AllowedValues = deviceId, //"0..16777215",
-                TextId = "DeviceID",
-                Changeable = false,
-            },
-            new GSDML.DeviceProfile.RecordDataRefT
-            {
-                ValueItemTarget = "VAL_DisableEvents",
-                DataType = GSDML.Primitives.RecordDataRefTypeEnumT.BitArea,
-                BitLength = "1",
-                ByteOffset = 11,
-                BitOffset = 0,
-                DefaultValue = "0",
-                Changeable = true,
-                AllowedValues = "0 1",
-                TextId = "RecIOL_DisableEvents"
-            },
-         ],
-     };
+                new GSDML.DeviceProfile.RecordDataRefT
+                {
+                    ValueItemTarget = "VAL_PortMode",
+                    DataType = GSDML.Primitives.RecordDataRefTypeEnumT.BitArea,
+                    BitLength = "4",
+                    ByteOffset = 2,
+                    BitOffset = 0,
+                    DefaultValue = "11",
+                    Changeable = true,
+                    AllowedValues = "11",
+                    TextId = "RecIOL_PortMode",
+                },
+                new GSDML.DeviceProfile.RecordDataRefT
+                {
+                    ValueItemTarget = "M_Cycle",
+                    DataType = GSDML.Primitives.RecordDataRefTypeEnumT.BitArea,
+                    ByteOffset = 4,
+                    BitOffset = 0,
+                    BitLength = "8",
+                    DefaultValue = "0",
+                    AllowedValues = "0 20 40 68 88 128 148 188",
+                    TextId = "CycleTime",
+                    Visible = true,
+                    Changeable = true,
+                },
+                new GSDML.DeviceProfile.RecordDataRefT
+                {
+                    ValueItemTarget = "I_Level",
+                    DataType = GSDML.Primitives.RecordDataRefTypeEnumT.BitArea,
+                    ByteOffset = 3,
+                    BitOffset = 1,
+                    BitLength = "3",
+                    DefaultValue = $"{dataStorage}",
+                    AllowedValues = "0..4",
+                    TextId = "IntegrationLevel",
+                    Visible = true,
+                    Changeable = false,
+                },
+                new GSDML.DeviceProfile.RecordDataRefT
+                {
+                    DataType = GSDML.Primitives.RecordDataRefTypeEnumT.Unsigned16,
+                    ByteOffset = 5,
+                    DefaultValue = vendorId,//"0",
+                    AllowedValues = vendorId,//"0..65535",
+                    TextId = "VendorID",
+                    Changeable = false,
+                    Visible = true,
+                },
+                new GSDML.DeviceProfile.RecordDataRefT
+                {
+                    DataType = GSDML.Primitives.RecordDataRefTypeEnumT.Unsigned32,
+                    ByteOffset = 7,
+                    DefaultValue = deviceId,//"0",
+                    AllowedValues = !unloclDeviceId ? deviceId : "0..16777215",
+                    TextId = "DeviceID",
+                    Changeable = unloclDeviceId,
+                },
+                new GSDML.DeviceProfile.RecordDataRefT
+                {
+                    ValueItemTarget = "VAL_DisableEvents",
+                    DataType = GSDML.Primitives.RecordDataRefTypeEnumT.BitArea,
+                    BitLength = "1",
+                    ByteOffset = 11,
+                    BitOffset = 0,
+                    DefaultValue = "0",
+                    Changeable = true,
+                    AllowedValues = "0 1",
+                    TextId = "RecIOL_DisableEvents"
+                },
+            ],
+        };
 
     internal static GSDML.DeviceProfile.ParameterRecordDataT BuildSafeRecord() =>
         new()

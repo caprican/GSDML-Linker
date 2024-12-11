@@ -100,7 +100,7 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <StackPanel Orientation="Horizontal">
-                        <ToggleButton IsChecked="{Binding SlaveDeviceSelected.UnlockId}" Margin="{StaticResource SmallMargin}">
+                        <ToggleButton IsChecked="{Binding SlaveDeviceSelected.UnlockId, Mode=TwoWay}" Margin="{StaticResource SmallMargin}">
                             <ToggleButton.Style>
                                 <Style TargetType="ToggleButton">
                                     <Setter Property="Template">

@@ -17,6 +17,9 @@ public record Device : Core.Models.Device
     public Core.Models.DeviceDataStorage DataStorage { get; }
     public bool SupportBlockParameter { get; }
 
+    public bool UnlockId { get; set; } = false;
+
+
     public List<DeviceVariantDescription>? Variants { get; init; }
 
     public Dictionary<string, DatatypeItem>? DatatypeList { get; }

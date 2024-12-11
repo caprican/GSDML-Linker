@@ -585,6 +585,14 @@ public class DevicesViewModel(Contracts.Services.ISettingsService settingsServic
                         }
                     }
                 }
+
+                pnParameters = pnDevicesService.GetPortParameters(MasterDeviceSelected.VendorId, MasterDeviceSelected.DeviceId, MasterDeviceSelected.Version, MasterModuleSelected.ProfinetDeviceId);
+                if (pnParameters is not null)
+                {
+                    /// TODO : Create type of port parameter
+                    var p = pnParameters.SingleOrDefault(s => s.DefaultValue == SlaveDeviceSelected.DeviceId);
+                    SlaveDeviceSelected.UnlockId = !p?.IsLocked ?? false;
+                }
             }
         }
         else if (MasterModuleSelected?.DeviceId > 0 && SlaveVendors is not null)

@@ -144,7 +144,7 @@ public class IfmModuleBuilderV2(Core.Models.Device masterDevice) : IfmModuleBuil
     }
 
     public override void CreateRecordParameters(Core.Models.Device? device, Core.Models.DeviceDataStorage dataStorage, bool supportBlockParameter, string indentNumber, 
-                                                IEnumerable<IGrouping<ushort, Core.Models.DeviceParameter>> parameters)
+                                                IEnumerable<IGrouping<ushort, Core.Models.DeviceParameter>> parameters, bool unloclDeviceId)
     {
         ushort transfertSequence = 3;
         uint index = 1024;
@@ -153,7 +153,7 @@ public class IfmModuleBuilderV2(Core.Models.Device masterDevice) : IfmModuleBuil
 
         RecordDataList = [
             BuildPortParameters(dataStorage, ((Models.Device)masterDevice).SetModuleVendorId(Convert.ToUInt16(device.VendorId)),
-                                             ((Models.Device)masterDevice).SetModuleDeviceId(Convert.ToUInt32(device.DeviceId))),
+                                             ((Models.Device)masterDevice).SetModuleDeviceId(Convert.ToUInt32(device.DeviceId)), unloclDeviceId),
             BuildSafeRecord()
         ];
 
@@ -233,7 +233,44 @@ public class IfmModuleBuilderV2(Core.Models.Device masterDevice) : IfmModuleBuil
         inputDatas.Add(PQIBuid());
     }
 
-    internal new static GSDML.DeviceProfile.ParameterRecordDataT BuildPortParameters(Core.Models.DeviceDataStorage dataStorage, string vendorId, string deviceId) =>
+    public override List<Core.Models.DeviceParameter> GetPortParameters(string deviceId)
+    {
+        var parameters = new List<Core.Models.DeviceParameter>();
+
+        if (((Models.Device)masterDevice).SubmoduleList is IEnumerable<Models.SubmoduleItem> submoduleList)
+        {
+            var parameterRecordDatas = submoduleList.SingleOrDefault(s => s.ID == deviceId)?.RecordDataList?.ParameterRecordDataItem;
+            if (parameterRecordDatas is not null)
+            {
+                foreach (var parameterRecordData in parameterRecordDatas.Where(w => w.Index == "47360"))
+                {
+                    if (parameterRecordData.Items is not null)
+                    {
+                        var recordConst = (GSDML.DeviceProfile.RecordDataConstT?)parameterRecordData.Items.FirstOrDefault(f => f is GSDML.DeviceProfile.RecordDataConstT);
+                        var recordConstSplit = recordConst?.Data?.Split(',');
+                        if (recordConstSplit?.Length >= 2)
+                        {
+                            var items = parameterRecordData.Items.Where(w => w is GSDML.DeviceProfile.RecordDataRefT).Cast<GSDML.DeviceProfile.RecordDataRefT>().ToArray();
+                            if (items.Length == 1)
+                            {
+                                parameters.Add(ReadRecordParameter(items[0], 0));
+                            }
+                            else
+                            {
+                                for (var i = 0; i < items.Length; i++)
+                                {
+                                    parameters.Add(ReadRecordParameter(items[i], 0));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return parameters;
+    }
+
+    internal new static GSDML.DeviceProfile.ParameterRecordDataT BuildPortParameters(Core.Models.DeviceDataStorage dataStorage, string vendorId, string deviceId, bool unloclDeviceId) =>
         new()
         {
             Index = "47360",
@@ -372,9 +409,9 @@ public class IfmModuleBuilderV2(Core.Models.Device masterDevice) : IfmModuleBuil
                         TextId = "T_Validation_DeviceID",
                         ID = "ID_Validation_DeviceID",
                         DataType = GSDML.Primitives.RecordDataRefTypeEnumT.Unsigned32,
-                        DefaultValue = $"{deviceId}",
-                        AllowedValues = $"{deviceId}",
-                        Changeable = false
+                        DefaultValue = deviceId,
+                        AllowedValues = !unloclDeviceId ? deviceId : "0..16777215",
+                        Changeable = unloclDeviceId
                     }
             ],
             MenuList =

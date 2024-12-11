@@ -297,7 +297,7 @@ public class MurrElectronicModuleBuilder(Core.Models.Device masterDevice) : Modu
         inputDatas.Add(PQIBuid());
     }
 
-    public override void CreateRecordParameters(Core.Models.Device? device, Core.Models.DeviceDataStorage dataStorage, bool supportBlockParameter, string indentNumber, IEnumerable<IGrouping<ushort, Core.Models.DeviceParameter>> parameters)
+    public override void CreateRecordParameters(Core.Models.Device? device, Core.Models.DeviceDataStorage dataStorage, bool supportBlockParameter, string indentNumber, IEnumerable<IGrouping<ushort, Core.Models.DeviceParameter>> parameters, bool unloclDeviceId)
     {
         ushort transfertSequence = 3;
         uint index = 1024;
@@ -343,11 +343,19 @@ public class MurrElectronicModuleBuilder(Core.Models.Device masterDevice) : Modu
         }
     }
 
-    public override List<Core.Models.DeviceParameter> ReadRecordParameter(string deviceId)
+    public override List<Core.Models.DeviceParameter> GetRecordParameters(string deviceId)
     {
         var parameters = new List<Core.Models.DeviceParameter>();
 
 
+        return parameters;
+    }
+
+    public override List<Core.Models.DeviceParameter> GetPortParameters(string deviceId)
+    {
+        var parameters = new List<Core.Models.DeviceParameter>();
+
+        /// TODO : Get port paramters
         return parameters;
     }
 

@@ -168,7 +168,7 @@ public class BalluffModuleBuilder(Core.Models.Device masterDevice) : ModuleBuild
     }
 
     public override void CreateRecordParameters(Core.Models.Device? device, Core.Models.DeviceDataStorage dataStorage, bool supportBlockParameter, string indentNumber,
-                                            IEnumerable<IGrouping<ushort, Core.Models.DeviceParameter>> parameters)
+                                            IEnumerable<IGrouping<ushort, Core.Models.DeviceParameter>> parameters, bool unloclDeviceId)
     {
         ushort transfertSequence = 5;
         uint index = 16;
@@ -430,7 +430,7 @@ public class BalluffModuleBuilder(Core.Models.Device masterDevice) : ModuleBuild
         return parameterRecord;
     }
 
-    public override List<Core.Models.DeviceParameter> ReadRecordParameter(string deviceId)
+    public override List<Core.Models.DeviceParameter> GetRecordParameters(string deviceId)
     {
         var parameters = new List<Core.Models.DeviceParameter>();
 
@@ -468,6 +468,14 @@ public class BalluffModuleBuilder(Core.Models.Device masterDevice) : ModuleBuild
                 }
             }
         }
+        return parameters;
+    }
+
+    public override List<Core.Models.DeviceParameter> GetPortParameters(string deviceId)
+    {
+        var parameters = new List<Core.Models.DeviceParameter>();
+
+        /// TODO : Get port paramters
         return parameters;
     }
 
