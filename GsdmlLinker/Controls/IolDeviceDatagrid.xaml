@@ -16,6 +16,7 @@
         <converters:InvertBoolConverter x:Key="InvertBoolConverter"/>
         <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
         <converters:BoolToHiddenConverter x:Key="BoolToHiddenConverter"/>
+        <converters:LockVisibiltyConverter x:Key="LockVisibiltyConverter"/>
 
         <DataTemplate x:Key="BoolTemplate">
             <CheckBox IsChecked="{Binding DefaultValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
@@ -169,7 +170,8 @@
                     <DataGridTemplateColumn>
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <ToggleButton IsChecked="{Binding IsLocked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                <ToggleButton IsChecked="{Binding IsLocked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                              Visibility="{Binding Converter={StaticResource LockVisibiltyConverter}}">
                                     <ToggleButton.Style>
                                         <Style TargetType="ToggleButton">
                                             <Setter Property="Template">
@@ -188,17 +190,6 @@
                                                 </Setter.Value>
                                             </Setter>
                                             <Setter Property="Visibility" Value="Collapsed"/>
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                                                    <Setter Property="Visibility" Value="Visible"/>
-                                                </DataTrigger>
-                                                <!--<DataTrigger Binding="{Binding Subindex}" Value="{x:Null}">
-                                                    <Setter Property="Visibility" Value="Visible"/>
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding Subindex}" Value="0">
-                                                    <Setter Property="Visibility" Value="Visible"/>
-                                                </DataTrigger>-->
-                                            </Style.Triggers>
                                         </Style>
                                     </ToggleButton.Style>
                                 </ToggleButton>
