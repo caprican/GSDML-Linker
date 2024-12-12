@@ -227,7 +227,7 @@ public class IOLinkDeviceViewModel(Core.IOL.Contracts.Services.IDevicesService i
                     {
                         processDataOut ??= [];
 
-                        item.ProcessDataOut.ProcessData.Reverse();
+                        //item.ProcessDataOut.ProcessData.Reverse();
                         foreach (var dtOut in item.ProcessDataOut.ProcessData.Where(w => w.DataType != DeviceDatatypes.RecordT).GroupBy(g => g.Index))
                         {
                             for (int i = 0; i < dtOut.Count(); i++)
