@@ -19,7 +19,7 @@ public abstract class ModuleBuilder(Core.Models.Device masterDevice) : IModuleBu
 
     public abstract List<Core.Models.DeviceParameter> GetRecordParameters(string deviceId);
 
-    public abstract List<Core.Models.DeviceParameter> GetPortParameters(string deviceId);
+    public abstract Core.Models.DevicePortParameter GetPortParameters(string deviceId);
 
     public abstract void BuildModule(Core.Models.Device device, string indentNumber, string categoryRef, string categoryVendor, string deviceName);
 
@@ -79,7 +79,7 @@ public abstract class ModuleBuilder(Core.Models.Device masterDevice) : IModuleBu
             //boolDataRef.AllowedValues = string.Join(" ", parameter.Values.Select(s => s.Key));
         }
 
-        if(parameter.IsLocked)
+        if(parameter.Changeable)
         {
             boolDataRef.AllowedValues = boolDataRef.DefaultValue;
         }
@@ -105,7 +105,7 @@ public abstract class ModuleBuilder(Core.Models.Device masterDevice) : IModuleBu
             Subindex =  (ushort)subIndex,
             DataType = Core.Models.DeviceDatatypes.BooleanT,
             DefaultValue = defaultValue,
-            IsLocked = !recordDataRef.Changeable
+            Changeable = !recordDataRef.Changeable
         };
 
         return boolParameter;
@@ -193,7 +193,7 @@ public abstract class ModuleBuilder(Core.Models.Device masterDevice) : IModuleBu
             intDataRef.AllowedValues = $"{parameter.Minimum}..{parameter.Maximum}";
         }
 
-        if (parameter.IsLocked)
+        if (parameter.Changeable)
         {
             intDataRef.AllowedValues = intDataRef.DefaultValue;
         }
@@ -220,7 +220,7 @@ public abstract class ModuleBuilder(Core.Models.Device masterDevice) : IModuleBu
                 _ => Core.Models.DeviceDatatypes.IntegerT
             },
             DefaultValue = recordDataRef.DefaultValue ?? string.Empty,
-            IsLocked = !recordDataRef.Changeable
+            Changeable = !recordDataRef.Changeable
         };
     }
 
@@ -248,7 +248,7 @@ public abstract class ModuleBuilder(Core.Models.Device masterDevice) : IModuleBu
             DefaultValue = parameter.DefaultValue
         };
 
-        if (parameter.IsLocked)
+        if (parameter.Changeable)
         {
             floatDataRef.AllowedValues = floatDataRef.DefaultValue;
         }
@@ -292,7 +292,7 @@ public abstract class ModuleBuilder(Core.Models.Device masterDevice) : IModuleBu
             DefaultValue = defString
         };
 
-        if (parameter.IsLocked)
+        if (parameter.Changeable)
         {
             stringDataRef.AllowedValues = stringDataRef.DefaultValue;
         }

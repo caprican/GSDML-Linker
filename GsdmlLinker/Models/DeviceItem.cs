@@ -7,7 +7,7 @@ public record DeviceItem : INotifyPropertyChanged
 {
     public readonly Core.Models.Device? Device;
 
-    private bool unlockId;
+    private bool deviceIdChangeable;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -15,13 +15,13 @@ public record DeviceItem : INotifyPropertyChanged
     public string VendorId {  get; init; } = string.Empty;
     public string DeviceId { get; init; } = string.Empty;
 
-    public bool UnlockId 
+    public bool DeviceIdChangeable 
     {
-        get => unlockId; 
+        get => deviceIdChangeable; 
         set
         {
-            unlockId = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(UnlockId)));
+            deviceIdChangeable = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DeviceIdChangeable)));
         }
     }
 

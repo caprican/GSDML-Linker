@@ -1,4 +1,6 @@
-﻿using GSDML = ISO15745.GSDML;
+﻿using GsdmlLinker.Core.Models;
+
+using GSDML = ISO15745.GSDML;
 
 namespace GsdmlLinker.Core.PN.Builders.Manufacturers;
 
@@ -351,9 +353,9 @@ public class MurrElectronicModuleBuilder(Core.Models.Device masterDevice) : Modu
         return parameters;
     }
 
-    public override List<Core.Models.DeviceParameter> GetPortParameters(string deviceId)
+    public override DevicePortParameter GetPortParameters(string deviceId)
     {
-        var parameters = new List<Core.Models.DeviceParameter>();
+        var parameters = new DevicePortParameter();
 
         /// TODO : Get port paramters
         return parameters;

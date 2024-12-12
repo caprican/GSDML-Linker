@@ -35,7 +35,7 @@ public class ModuleBuilder(Core.PN.Contracts.Services.IDevicesService gsdDevices
         categoryVendor = AddCategoryVendor(MasterDevice.ExternalTextList!, MasterDevice.CategoryList!, Device.VendorId, Device.VendorName);
         indentNumber = MasterDevice.GetLastIndentNumber(MasterDevice.IdentNumberList);
 
-        Builder.CreateRecordParameters(Device, Device.DataStorage, Device.SupportBlockParameter, indentNumber, parameters, slaveDevice.UnlockId);
+        Builder.CreateRecordParameters(Device, Device.DataStorage, Device.SupportBlockParameter, indentNumber, parameters, slaveDevice.DeviceIdChangeable);
 
         if (Device.ProcessDatas is not null)
         {
@@ -102,7 +102,7 @@ public class ModuleBuilder(Core.PN.Contracts.Services.IDevicesService gsdDevices
         categoryVendor = AddCategoryVendor(MasterDevice.ExternalTextList!, MasterDevice.CategoryList!, Device.VendorId, Device.VendorName);
         indentNumber = MasterDevice.IdentNumberList.Find(f => moduleID.EndsWith(f)) ?? string.Empty;
         
-        Builder.CreateRecordParameters(Device, Device.DataStorage, Device.SupportBlockParameter, indentNumber, parameters, slaveDevice.UnlockId);
+        Builder.CreateRecordParameters(Device, Device.DataStorage, Device.SupportBlockParameter, indentNumber, parameters, slaveDevice.DeviceIdChangeable);
 
         if (Device.ProcessDatas is not null)
         {

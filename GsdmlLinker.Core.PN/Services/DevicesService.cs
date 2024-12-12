@@ -108,19 +108,15 @@ public class DevicesService(IOptions<Core.Models.AppConfig> appConfig, IDevicesF
         return parameters;
     }
 
-    public IEnumerable<Core.Models.DeviceParameter> GetPortParameters(string vendorId, string deviceId, DateTime? version, string profinetDeviceId)
+    public Core.Models.DevicePortParameter? GetPortParameters(string vendorId, string deviceId, DateTime? version, string profinetDeviceId)
     {
         var device = devices.SingleOrDefault(f => f.VendorId == vendorId && f.DeviceId == deviceId && f.Version == version);
-        var parameters = new List<Core.Models.DeviceParameter>();
 
-        if (device is not null)
-        {
-            var factory = devicesFactory.CreateModule(device);
-            if (factory is null) return parameters;
+        if (device is null) return null;
+        
+        var factory = devicesFactory.CreateModule(device);
+        if (factory is null) return null;
 
-            parameters.AddRange(factory.GetPortParameters(profinetDeviceId));
-        }
-
-        return parameters;
+        return factory.GetPortParameters(profinetDeviceId);
     }
 }

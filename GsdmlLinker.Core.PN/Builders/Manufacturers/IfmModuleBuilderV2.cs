@@ -1,4 +1,6 @@
-﻿using GSDML = ISO15745.GSDML;
+﻿using GsdmlLinker.Core.Models;
+
+using GSDML = ISO15745.GSDML;
 
 namespace GsdmlLinker.Core.PN.Builders.Manufacturers;
 
@@ -233,9 +235,9 @@ public class IfmModuleBuilderV2(Core.Models.Device masterDevice) : IfmModuleBuil
         inputDatas.Add(PQIBuid());
     }
 
-    public override List<Core.Models.DeviceParameter> GetPortParameters(string deviceId)
+    public override Core.Models.DevicePortParameter GetPortParameters(string deviceId)
     {
-        var parameters = new List<Core.Models.DeviceParameter>();
+        var parameters = new DevicePortParameter();
 
         if (((Models.Device)masterDevice).SubmoduleList is IEnumerable<Models.SubmoduleItem> submoduleList)
         {
@@ -246,20 +248,19 @@ public class IfmModuleBuilderV2(Core.Models.Device masterDevice) : IfmModuleBuil
                 {
                     if (parameterRecordData.Items is not null)
                     {
-                        var recordConst = (GSDML.DeviceProfile.RecordDataConstT?)parameterRecordData.Items.FirstOrDefault(f => f is GSDML.DeviceProfile.RecordDataConstT);
-                        var recordConstSplit = recordConst?.Data?.Split(',');
-                        if (recordConstSplit?.Length >= 2)
+                        if (parameterRecordData.Items is not null)
                         {
-                            var items = parameterRecordData.Items.Where(w => w is GSDML.DeviceProfile.RecordDataRefT).Cast<GSDML.DeviceProfile.RecordDataRefT>().ToArray();
-                            if (items.Length == 1)
+                            foreach (var item in parameterRecordData.Items.OfType<GSDML.DeviceProfile.RecordDataRefT>())
                             {
-                                parameters.Add(ReadRecordParameter(items[0], 0));
-                            }
-                            else
-                            {
-                                for (var i = 0; i < items.Length; i++)
+                                switch (item.ID)
                                 {
-                                    parameters.Add(ReadRecordParameter(items[i], 0));
+                                    case "ID_Validation_VendorID":
+                                        parameters.VendorId = ushort.Parse(item.DefaultValue ?? string.Empty);
+                                        break;
+                                    case "ID_Validation_DeviceID":
+                                        parameters.DeviceId = uint.Parse(item.DefaultValue ?? string.Empty);
+                                        parameters.DeviceIdChangeable = item.Changeable;
+                                        break;
                                 }
                             }
                         }
@@ -283,136 +284,136 @@ public class IfmModuleBuilderV2(Core.Models.Device masterDevice) : IfmModuleBuil
                     {
                         Data = "0x01,0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00"
                     },
-                    new GSDML.DeviceProfile.RecordDataRefT
-                    {
-                        ByteOffset = 3,
-                        BitOffset = 0,
-                        TextId = "T_Enable_Port_Diagnosis",
-                        ID = "ID_PNPC_Bit_0",
-                        DataType = GSDML.Primitives.RecordDataRefTypeEnumT.Bit,
-                        DefaultValue = "1"
-                    },
-                    new GSDML.DeviceProfile.RecordDataRefT
-                    {
-                        ByteOffset = 3,
-                        BitOffset = 1,
-                        TextId = "T_Enable_Process_Alarm",
-                        ID = "ID_PNPC_Bit_1",
-                        DataType = GSDML.Primitives.RecordDataRefTypeEnumT.Bit,
-                        DefaultValue = "1",
-                        Changeable = false
-                    },
-                    new GSDML.DeviceProfile.RecordDataRefT
-                    {
-                        ByteOffset = 3,
-                        BitOffset = 2,
-                        TextId = "T_PortConfigSource",
-                        ID = "ID_PNPC_Bit_2",
-                        DataType = GSDML.Primitives.RecordDataRefTypeEnumT.Bit,
-                        DefaultValue = "1"
-                    },
-                    new GSDML.DeviceProfile.RecordDataRefT
-                    {
-                        ByteOffset = 3,
-                        BitOffset = 3,
-                        TextId = "T_Enable_Input_fraction",
-                        ID = "ID_PNPC_Bit_3",
-                        DataType = GSDML.Primitives.RecordDataRefTypeEnumT.Bit,
-                        DefaultValue = "0",
-                        Changeable = false
-                    },
-                    new GSDML.DeviceProfile.RecordDataRefT
-                    {
-                        ByteOffset = 3,
-                        BitOffset = 4,
-                        TextId = "T_Enable_Pull_Plug",
-                        ID = "ID_PNPC_Bit_4",
-                        DataType = GSDML.Primitives.RecordDataRefTypeEnumT.Bit,
-                        DefaultValue = "1"
-                    },
-                    new GSDML.DeviceProfile.RecordDataRefT
-                    {
-                        ByteOffset = 4,
-                        TextId = "T_hidden",
-                        ID = "ID_PNPC_PDin_Length",
-                        DataType = GSDML.Primitives.RecordDataRefTypeEnumT.Unsigned8,
-                        DefaultValue = "0",
-                        Changeable = false,
-                        Visible = false
-                    },
-                    new GSDML.DeviceProfile.RecordDataRefT
-                    {
-                        ByteOffset = 5,
-                        TextId = "T_hidden",
-                        ID = "ID_PNPC_PDout_Length",
-                        DataType = GSDML.Primitives.RecordDataRefTypeEnumT.Unsigned8,
-                        DefaultValue = "2",
-                        Changeable = false,
-                        Visible = false
-                    },
-                    new GSDML.DeviceProfile.RecordDataRefT
-                    {
-                        ValueItemTarget = "V_PortModeIOL",
-                        ByteOffset = 6,
-                        TextId = "T_PortModeIOL",
-                        ID = "ID_PortModeIOL",
-                        DataType = GSDML.Primitives.RecordDataRefTypeEnumT.Unsigned8,
-                        DefaultValue = "1",
-                        AllowedValues = "1",
-                        Changeable = false
-                    },
-                    new GSDML.DeviceProfile.RecordDataRefT
-                    {
-                        ValueItemTarget = "V_Validation_Backup",
-                        ByteOffset = 7,
-                        TextId = "T_Validation_Backup",
-                        ID = "ID_Validation_Backup",
-                        DataType = GSDML.Primitives.RecordDataRefTypeEnumT.Unsigned8,
-                        DefaultValue = $"{(uint)dataStorage}",
-                        AllowedValues = "2",
-                        Changeable = false
-                    },
-                    new GSDML.DeviceProfile.RecordDataRefT
-                    {
-                        ValueItemTarget = "V_PNPC_PortIQ_Behaviour",
-                        ByteOffset = 8,
-                        TextId = "T_PNPC_PortIQ_Behaviour",
-                        ID = "ID_PNPC_PortIQ_Behaviour",
-                        DataType = GSDML.Primitives.RecordDataRefTypeEnumT.Unsigned8,
-                        DefaultValue = "0",
-                        Changeable = false,
-                        Visible = false
-                    },
-                    new GSDML.DeviceProfile.RecordDataRefT
-                    {
-                        ValueItemTarget = "V_MasterCycleTime",
-                        ByteOffset = 9,
-                        TextId = "T_MasterCycleTime",
-                        ID = "ID_MasterCycleTime",
-                        DataType = GSDML.Primitives.RecordDataRefTypeEnumT.Unsigned8,
-                        DefaultValue = "0",
-                        AllowedValues = "0 20 40 68 88 128 148 188"
-                    },
-                    new GSDML.DeviceProfile.RecordDataRefT
-                    {
-                        ByteOffset = 10,
-                        TextId = "T_Validation_VendorID",
-                        ID = "ID_Validation_VendorID",
-                        DataType = GSDML.Primitives.RecordDataRefTypeEnumT.Unsigned16,
-                        DefaultValue = $"{vendorId}",
-                        AllowedValues = $"{vendorId}",
-                        Changeable = false
-                    },
-                    new GSDML.DeviceProfile.RecordDataRefT
-                    {
-                        ByteOffset = 12,
-                        TextId = "T_Validation_DeviceID",
-                        ID = "ID_Validation_DeviceID",
-                        DataType = GSDML.Primitives.RecordDataRefTypeEnumT.Unsigned32,
-                        DefaultValue = deviceId,
-                        AllowedValues = !unloclDeviceId ? deviceId : "0..16777215",
-                        Changeable = unloclDeviceId
-                    }
+                new GSDML.DeviceProfile.RecordDataRefT
+                {
+                    ByteOffset = 3,
+                    BitOffset = 0,
+                    TextId = "T_Enable_Port_Diagnosis",
+                    ID = "ID_PNPC_Bit_0",
+                    DataType = GSDML.Primitives.RecordDataRefTypeEnumT.Bit,
+                    DefaultValue = "1"
+                },
+                new GSDML.DeviceProfile.RecordDataRefT
+                {
+                    ByteOffset = 3,
+                    BitOffset = 1,
+                    TextId = "T_Enable_Process_Alarm",
+                    ID = "ID_PNPC_Bit_1",
+                    DataType = GSDML.Primitives.RecordDataRefTypeEnumT.Bit,
+                    DefaultValue = "1",
+                    Changeable = false
+                },
+                new GSDML.DeviceProfile.RecordDataRefT
+                {
+                    ByteOffset = 3,
+                    BitOffset = 2,
+                    TextId = "T_PortConfigSource",
+                    ID = "ID_PNPC_Bit_2",
+                    DataType = GSDML.Primitives.RecordDataRefTypeEnumT.Bit,
+                    DefaultValue = "1"
+                },
+                new GSDML.DeviceProfile.RecordDataRefT
+                {
+                    ByteOffset = 3,
+                    BitOffset = 3,
+                    TextId = "T_Enable_Input_fraction",
+                    ID = "ID_PNPC_Bit_3",
+                    DataType = GSDML.Primitives.RecordDataRefTypeEnumT.Bit,
+                    DefaultValue = "0",
+                    Changeable = false
+                },
+                new GSDML.DeviceProfile.RecordDataRefT
+                {
+                    ByteOffset = 3,
+                    BitOffset = 4,
+                    TextId = "T_Enable_Pull_Plug",
+                    ID = "ID_PNPC_Bit_4",
+                    DataType = GSDML.Primitives.RecordDataRefTypeEnumT.Bit,
+                    DefaultValue = "1"
+                },
+                new GSDML.DeviceProfile.RecordDataRefT
+                {
+                    ByteOffset = 4,
+                    TextId = "T_hidden",
+                    ID = "ID_PNPC_PDin_Length",
+                    DataType = GSDML.Primitives.RecordDataRefTypeEnumT.Unsigned8,
+                    DefaultValue = "0",
+                    Changeable = false,
+                    Visible = false
+                },
+                new GSDML.DeviceProfile.RecordDataRefT
+                {
+                    ByteOffset = 5,
+                    TextId = "T_hidden",
+                    ID = "ID_PNPC_PDout_Length",
+                    DataType = GSDML.Primitives.RecordDataRefTypeEnumT.Unsigned8,
+                    DefaultValue = "2",
+                    Changeable = false,
+                    Visible = false
+                },
+                new GSDML.DeviceProfile.RecordDataRefT
+                {
+                    ValueItemTarget = "V_PortModeIOL",
+                    ByteOffset = 6,
+                    TextId = "T_PortModeIOL",
+                    ID = "ID_PortModeIOL",
+                    DataType = GSDML.Primitives.RecordDataRefTypeEnumT.Unsigned8,
+                    DefaultValue = "1",
+                    AllowedValues = "1",
+                    Changeable = false
+                },
+                new GSDML.DeviceProfile.RecordDataRefT
+                {
+                    ValueItemTarget = "V_Validation_Backup",
+                    ByteOffset = 7,
+                    TextId = "T_Validation_Backup",
+                    ID = "ID_Validation_Backup",
+                    DataType = GSDML.Primitives.RecordDataRefTypeEnumT.Unsigned8,
+                    DefaultValue = $"{(uint)dataStorage}",
+                    AllowedValues = "2",
+                    Changeable = false
+                },
+                new GSDML.DeviceProfile.RecordDataRefT
+                {
+                    ValueItemTarget = "V_PNPC_PortIQ_Behaviour",
+                    ByteOffset = 8,
+                    TextId = "T_PNPC_PortIQ_Behaviour",
+                    ID = "ID_PNPC_PortIQ_Behaviour",
+                    DataType = GSDML.Primitives.RecordDataRefTypeEnumT.Unsigned8,
+                    DefaultValue = "0",
+                    Changeable = false,
+                    Visible = false
+                },
+                new GSDML.DeviceProfile.RecordDataRefT
+                {
+                    ValueItemTarget = "V_MasterCycleTime",
+                    ByteOffset = 9,
+                    TextId = "T_MasterCycleTime",
+                    ID = "ID_MasterCycleTime",
+                    DataType = GSDML.Primitives.RecordDataRefTypeEnumT.Unsigned8,
+                    DefaultValue = "0",
+                    AllowedValues = "0 20 40 68 88 128 148 188"
+                },
+                new GSDML.DeviceProfile.RecordDataRefT
+                {
+                    ByteOffset = 10,
+                    TextId = "T_Validation_VendorID",
+                    ID = "ID_Validation_VendorID",
+                    DataType = GSDML.Primitives.RecordDataRefTypeEnumT.Unsigned16,
+                    DefaultValue = $"{vendorId}",
+                    AllowedValues = $"{vendorId}",
+                    Changeable = false
+                },
+                new GSDML.DeviceProfile.RecordDataRefT
+                {
+                    ByteOffset = 12,
+                    TextId = "T_Validation_DeviceID",
+                    ID = "ID_Validation_DeviceID",
+                    DataType = GSDML.Primitives.RecordDataRefTypeEnumT.Unsigned32,
+                    DefaultValue = deviceId,
+                    AllowedValues = !unloclDeviceId ? deviceId : "0..16777215",
+                    Changeable = unloclDeviceId
+                }
             ],
             MenuList =
             [

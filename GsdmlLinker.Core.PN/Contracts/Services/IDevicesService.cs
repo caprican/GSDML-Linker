@@ -12,5 +12,5 @@ public interface IDevicesService
     public IEnumerable<Core.Models.Module>? GetModules(string vendorId, string deviceId, string deviceAccessId, DateTime? version);
 
     public IEnumerable<Core.Models.DeviceParameter> GetRecordParameters(string vendorId, string deviceId, DateTime? version, string profinetDeviceId);
-    public IEnumerable<Core.Models.DeviceParameter> GetPortParameters(string vendorId, string deviceId, DateTime? version, string profinetDeviceId);
+    public Core.Models.DevicePortParameter? GetPortParameters(string vendorId, string deviceId, DateTime? version, string profinetDeviceId);
 }

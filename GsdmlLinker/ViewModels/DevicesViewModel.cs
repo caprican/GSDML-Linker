@@ -586,12 +586,10 @@ public class DevicesViewModel(Contracts.Services.ISettingsService settingsServic
                     }
                 }
 
-                pnParameters = pnDevicesService.GetPortParameters(MasterDeviceSelected.VendorId, MasterDeviceSelected.DeviceId, MasterDeviceSelected.Version, MasterModuleSelected.ProfinetDeviceId);
-                if (pnParameters is not null)
+                var pnPortParameters = pnDevicesService.GetPortParameters(MasterDeviceSelected.VendorId, MasterDeviceSelected.DeviceId, MasterDeviceSelected.Version, MasterModuleSelected.ProfinetDeviceId);
+                if (pnPortParameters is not null)
                 {
-                    /// TODO : Create type of port parameter
-                    var p = pnParameters.SingleOrDefault(s => s.DefaultValue == SlaveDeviceSelected.DeviceId);
-                    SlaveDeviceSelected.UnlockId = !p?.IsLocked ?? false;
+                    SlaveDeviceSelected.DeviceIdChangeable = pnPortParameters.DeviceIdChangeable;
                 }
             }
         }

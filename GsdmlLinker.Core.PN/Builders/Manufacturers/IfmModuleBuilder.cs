@@ -1,4 +1,6 @@
-﻿using GSDML = ISO15745.GSDML;
+﻿using GsdmlLinker.Core.Models;
+
+using GSDML = ISO15745.GSDML;
 
 namespace GsdmlLinker.Core.PN.Builders.Manufacturers;
 
@@ -452,9 +454,9 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice) : ModuleBuilder(m
         return parameters;
     }
 
-    public override List<Core.Models.DeviceParameter> GetPortParameters(string deviceId)
+    public override Core.Models.DevicePortParameter GetPortParameters(string deviceId)
     {
-        var parameters = new List<Core.Models.DeviceParameter>();
+        var parameters = new DevicePortParameter();
 
         if (((Models.Device)masterDevice).SubmoduleList is IEnumerable<Models.SubmoduleItem> submoduleList)
         {
@@ -465,21 +467,17 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice) : ModuleBuilder(m
                 {
                     if (parameterRecordData.Items is not null)
                     {
-                        var recordConst = (GSDML.DeviceProfile.RecordDataConstT?)parameterRecordData.Items.FirstOrDefault(f => f is GSDML.DeviceProfile.RecordDataConstT);
-                        var recordConstSplit = recordConst?.Data?.Split(',');
-                        if (recordConstSplit?.Length >= 2)
+                        foreach(var item in parameterRecordData.Items.OfType<GSDML.DeviceProfile.RecordDataRefT>())
                         {
-                            var items = parameterRecordData.Items.Where(w => w is GSDML.DeviceProfile.RecordDataRefT).Cast<GSDML.DeviceProfile.RecordDataRefT>().ToArray();
-                            if (items.Length == 1)
+                            switch(item.TextId)
                             {
-                                parameters.Add(ReadRecordParameter(items[0], 0));
-                            }
-                            else
-                            {
-                                for (var i = 0; i < items.Length; i++)
-                                {
-                                    parameters.Add(ReadRecordParameter(items[i], 0));
-                                }
+                                case "VendorID":
+                                    parameters.VendorId = ushort.Parse(item.DefaultValue ?? string.Empty);
+                                    break;
+                                case "DeviceID":
+                                    parameters.DeviceId = uint.Parse(item.DefaultValue ?? string.Empty);
+                                    parameters.DeviceIdChangeable = item.Changeable;
+                                    break;
                             }
                         }
                     }

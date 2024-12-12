@@ -16,7 +16,7 @@
         <converters:InvertBoolConverter x:Key="InvertBoolConverter"/>
         <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
         <converters:BoolToHiddenConverter x:Key="BoolToHiddenConverter"/>
-        <converters:LockVisibiltyConverter x:Key="LockVisibiltyConverter"/>
+        <converters:ChangeableParameterConverter x:Key="ChangeableParameterConverter"/>
 
         <DataTemplate x:Key="BoolTemplate">
             <CheckBox IsChecked="{Binding DefaultValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
@@ -101,7 +101,7 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <StackPanel Orientation="Horizontal">
-                        <ToggleButton IsChecked="{Binding SlaveDeviceSelected.UnlockId, Mode=TwoWay}" Margin="{StaticResource SmallMargin}">
+                        <ToggleButton IsChecked="{Binding SlaveDeviceSelected.DeviceIdChangeable, Mode=TwoWay}" Margin="{StaticResource SmallMargin}">
                             <ToggleButton.Style>
                                 <Style TargetType="ToggleButton">
                                     <Setter Property="Template">
@@ -170,8 +170,8 @@
                     <DataGridTemplateColumn>
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <ToggleButton IsChecked="{Binding IsLocked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                              Visibility="{Binding Converter={StaticResource LockVisibiltyConverter}}">
+                                <ToggleButton IsChecked="{Binding Changeable, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                              Visibility="{Binding Converter={StaticResource ChangeableParameterConverter}}">
                                     <ToggleButton.Style>
                                         <Style TargetType="ToggleButton">
                                             <Setter Property="Template">
@@ -189,7 +189,6 @@
                                                     </ControlTemplate>
                                                 </Setter.Value>
                                             </Setter>
-                                            <Setter Property="Visibility" Value="Collapsed"/>
                                         </Style>
                                     </ToggleButton.Style>
                                 </ToggleButton>

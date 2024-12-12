@@ -13,7 +13,8 @@ public interface IModuleBuilder
     public GSDML.DeviceProfile.ParameterRecordDataT? BuildRecordParameter(string textId, uint index, ushort transfertSequence, IGrouping<ushort, Core.Models.DeviceParameter>? variable, Dictionary<string, Core.Models.ExternalTextItem>? externalTextList);
 
     public List<Core.Models.DeviceParameter> GetRecordParameters(string deviceId);
-    public List<Core.Models.DeviceParameter> GetPortParameters(string deviceId);
+
+    public Core.Models.DevicePortParameter GetPortParameters(string deviceId);
 
     public void UpdateModule(Core.Models.Device device, string indentNumber, string categoryRef, string categoryVendor, string deviceName);
 
