@@ -172,7 +172,7 @@
     <value>Options</value>
   </data>
   <data name="ShellProfinetDevicePage" xml:space="preserve">
-    <value>Appreils Profinet</value>
+    <value>Appareils Profinet</value>
   </data>
   <data name="ShellIOLinkDevicesPage" xml:space="preserve">
     <value>Appareils IO-Link</value>
