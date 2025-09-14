@@ -20,13 +20,14 @@
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
-    <PackageReference Include="MahApps.Metro" Version="3.0.0-alpha0513" />
-    <PackageReference Include="MahApps.Metro.IconPacks" Version="5.1.0" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.2" />
-    <PackageReference Include="System.Text.Json" Version="9.0.2" />
+    <PackageReference Include="MahApps.Metro" Version="3.0.0-rc0525" />
+    <PackageReference Include="MahApps.Metro.IconPacks" Version="6.1.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.9" />
+    <PackageReference Include="System.Text.Json" Version="9.0.9" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\ISO15745\ISO15745.csproj" />
     <ProjectReference Include="..\GsdmlLinker.Core.IOL\GsdmlLinker.Core.IOL.csproj" />
     <ProjectReference Include="..\GsdmlLinker.Core.PN\GsdmlLinker.Core.PN.csproj" />
   </ItemGroup>

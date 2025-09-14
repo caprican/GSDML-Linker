@@ -61,8 +61,8 @@ public class SettingsViewModel(IOptions<Core.Models.AppConfig> appConfig, ISetti
 
     public LanguageItem[] Languages
     {
-        get => new[] 
-        {
+        get =>
+        [
             new LanguageItem{ Name = "English", Culture = "en-US" },
             new LanguageItem{ Name = "Deutsch", Culture = "de-DE" },
             new LanguageItem{ Name = "Français", Culture = "fr-FR" },
@@ -72,7 +72,7 @@ public class SettingsViewModel(IOptions<Core.Models.AppConfig> appConfig, ISetti
             //new LanguageItem{ Name = "рyсский", Culture = "de-DE" },
             //new LanguageItem{ Name = "日本語", Culture = "de-DE" },
             //new LanguageItem{ Name = "한국어", Culture = "de-DE" },
-        };
+        ];
     }
 
     public LanguageItem? Language
@@ -81,8 +81,8 @@ public class SettingsViewModel(IOptions<Core.Models.AppConfig> appConfig, ISetti
         set
         {
             SetProperty(ref language, value);
-            App.Current.Properties[nameof(settingsService.CurrentCulture)] = Language?.Culture;
-            var info = CultureInfo.CreateSpecificCulture(Language?.Culture);
+            var info = CultureInfo.CreateSpecificCulture(Language?.Culture ?? "en-US");
+            App.Current.Properties[nameof(settingsService.CurrentCulture)] = info.Name;
             Thread.CurrentThread.CurrentCulture = info;
             Thread.CurrentThread.CurrentUICulture = info;
 
@@ -99,11 +99,9 @@ public class SettingsViewModel(IOptions<Core.Models.AppConfig> appConfig, ISetti
     public void OnNavigatedTo(object parameter)
     {
         VersionDescription = $"{Properties.Resources.AppDisplayName} - {applicationInfoService.GetVersion()}";
-
+        Theme = themeSelectorService.GetCurrentTheme();
         language = Languages.SingleOrDefault(s => s.Culture == settingsService.CurrentCulture);
 
-        Theme = themeSelectorService.GetCurrentTheme();
-        
         GsdmlFolder = Path.Combine(localAppData, appConfig.GSDMLFolder);
         IoddFolder = Path.Combine(localAppData, appConfig.IODDFolder);
     }

@@ -111,8 +111,6 @@
                             </DataTemplate>
                         </ComboBox.ItemTemplate>
                     </ComboBox>
-
-
                 </StackPanel>
                 <!--<TextBlock Margin="{StaticResource SmallTopMargin}" Style="{StaticResource SubtitleTextStyle}" Text="{x:Static properties:Resources.SettingsPageAboutTitle}" />
                 <TextBlock
