@@ -9,6 +9,8 @@ public interface IDevicesService
     public void InitializeSettings();
 
     public void AddDevice(string path);
+    public void AddDevice(string localFilePath, string fileName, List<string> graphicsPath);
+
     public IEnumerable<Core.Models.Module>? GetModules(string vendorId, string deviceId, string deviceAccessId, DateTime? version);
 
     public IEnumerable<Core.Models.DeviceParameter> GetRecordParameters(string vendorId, string deviceId, DateTime? version, string profinetDeviceId);

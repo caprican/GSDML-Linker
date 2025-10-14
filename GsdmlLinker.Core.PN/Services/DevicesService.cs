@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.IO;
+using System.Text.RegularExpressions;
 
 using GsdmlLinker.Core.PN.Contracts.Factories;
 using GsdmlLinker.Core.PN.Contracts.Services;
@@ -43,8 +44,6 @@ public class DevicesService(IOptions<Core.Models.AppConfig> appConfig, IDevicesF
 
     public void AddDevice(string path)
     {
-        //foreach (var filePath in Directory.EnumerateFiles(path, "*.xml"))
-        //{
         var fileName = Path.GetFileNameWithoutExtension(path);
         //GSDML-V<Version>-<NomFabricant>-<NomProduit>-<Date>(-<heure>)?(-<langue>)?(-<Commentaire>)?
         if (Regexs.FileNameRegex().Match(fileName) is Match GSDmatch && GSDmatch.Success)
@@ -76,7 +75,30 @@ public class DevicesService(IOptions<Core.Models.AppConfig> appConfig, IDevicesF
 
             DeviceAdded?.Invoke(this, new Core.Models.DeviceEventArgs { Device = device });
         }
-        //}
+    }
+
+    public void AddDevice(string localFilePath, string fileName, List<string> graphicsPath)
+    {
+        if (Regexs.FileNameRegex().Match(fileName) is Match GSDmatch && GSDmatch.Success)
+        {
+            var schematicVersion = GSDmatch.Groups[1].Value;
+            var manufacturerName = GSDmatch.Groups[3].Value;
+            var deviceFamily = GSDmatch.Groups[4].Value;
+
+            var device = devicesFactory.CreateDevice(Path.Combine(localFilePath, $"{fileName}.xml"), GSDmatch);
+
+            //if (device.GraphicsList is not null)
+            //{
+            //    foreach (var graphic in device.GraphicsList)
+            //    {
+            //        File.Copy(Path.Combine(graphicPath!, graphic.Value.Item + ".bmp"), Path.Combine(localFilePath, graphic.Value.Item + ".bmp"), true);
+            //    }
+            //}
+
+            devices.Add(device);
+
+            DeviceAdded?.Invoke(this, new Core.Models.DeviceEventArgs { Device = device });
+        }
     }
 
     public IEnumerable<Core.Models.Module>? GetModules(string vendorId, string deviceId, string deviceAccessId, DateTime? version)

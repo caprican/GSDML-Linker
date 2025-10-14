@@ -27,7 +27,10 @@ public class CultureSelectorService(ISettingsService settingsService) : ICulture
         if(App.Current.Properties.Contains(nameof(settingsService.CurrentCulture)))
         {
             var cultureName = App.Current.Properties[nameof(settingsService.CurrentCulture)]?.ToString();
-            return CultureInfo.CreateSpecificCulture(cultureName);
+            if (!string.IsNullOrEmpty(cultureName))
+                return CultureInfo.CreateSpecificCulture(cultureName);
+            else
+                return CultureInfo.CurrentCulture;
         }
 
         return CultureInfo.CurrentCulture;

@@ -797,8 +797,11 @@ public class DevicesViewModel(Contracts.Services.ISettingsService settingsServic
             }
             //MasterDeviceSelected.device!.Description = MasterDeviceSelected.Description;
             (var localDirectory, var fileName, var graphicsPath) = xDocumentService.Create(MasterDeviceSelected.Device as Core.PN.Models.Device, "");
+            if (!string.IsNullOrEmpty(localDirectory) && !string.IsNullOrEmpty(fileName))
+            {
+                pnDevicesService.AddDevice(localDirectory, fileName, graphicsPath);
+            }
         }
-
         MasterDeviceSelected = null;
     }
 

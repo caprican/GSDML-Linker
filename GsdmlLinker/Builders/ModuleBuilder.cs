@@ -76,8 +76,8 @@ public class ModuleBuilder(Core.PN.Contracts.Services.IDevicesService gsdDevices
         //        });
         //    }
         //}
-        
-        Builder.BuildModule(Device, indentNumber, cateroryRef, categoryVendor, Device.Name ?? "");
+
+        Builder.BuildModule(Device, indentNumber, cateroryRef, categoryVendor, Device.Name ?? slaveDevice.Name);
         MasterDevice.IdentNumberList.Add(indentNumber);
     }
 
