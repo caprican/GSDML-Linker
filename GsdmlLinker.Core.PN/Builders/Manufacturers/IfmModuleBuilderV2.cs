@@ -65,7 +65,10 @@ public class IfmModuleBuilderV2(Core.Models.Device masterDevice) : IfmModuleBuil
                 foreach (var module in dap.Modules)
                 {
                     module.Submodules ??= [];
-                    module.Submodules.Add(submodule);
+                    if(!module.Submodules.Contains(submodule))
+                    {
+                        module.Submodules.Add(submodule);
+                    }
                 }
             }
         }
