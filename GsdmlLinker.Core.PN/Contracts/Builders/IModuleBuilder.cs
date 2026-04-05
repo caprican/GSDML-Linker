@@ -1,4 +1,4 @@
-﻿using GSDML = ISO15745.GSDML;
+﻿using GSDML = ISO15745._4.A1.GSDML;
 
 namespace GsdmlLinker.Core.PN.Contracts.Builders;
 

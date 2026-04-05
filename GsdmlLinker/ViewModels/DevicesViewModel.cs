@@ -1,7 +1,9 @@
 ﻿using System.Collections.ObjectModel;
+using System.Drawing.Drawing2D;
 using System.IO;
 using System.IO.Compression;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 
@@ -22,13 +24,15 @@ public class DevicesViewModel(Contracts.Services.ISettingsService settingsServic
                               Core.IOL.Contracts.Services.IDevicesService iolDevicesService, Core.PN.Contracts.Services.IDevicesService pnDevicesService,
                               Contracts.Builders.IModuleBuilder moduleBuilder, Contracts.Services.ICaretaker caretaker,
                               Core.PN.Contracts.Services.IXDocumentService xDocumentService, IZipperService zipperService,
+                              Core.PN.Contracts.Services.ISimaticService simaticService,
                               IIoddfinderService ioddfinderService) : ObservableObject, INavigationAware
 {
     private readonly Contracts.Services.ISettingsService settingsService = settingsService;
     private readonly IDialogCoordinator dialogCoordinator = dialogCoordinator;
     private readonly Core.PN.Contracts.Services.IDevicesService pnDevicesService = pnDevicesService;
     private readonly Core.IOL.Contracts.Services.IDevicesService iolDevicesService = iolDevicesService;
-    
+    private readonly Core.PN.Contracts.Services.ISimaticService simaticService = simaticService;
+
     private readonly Contracts.Builders.IModuleBuilder moduleBuilder = moduleBuilder;
     private readonly Contracts.Services.ICaretaker caretaker = caretaker;
     private readonly Core.PN.Contracts.Services.IXDocumentService xDocumentService = xDocumentService;
@@ -46,6 +50,7 @@ public class DevicesViewModel(Contracts.Services.ISettingsService settingsServic
     private ICommand? exportMasterDeviceCommand;
     private ICommand? saveExportMasterDeviceCommand;
     private ICommand? processDataViewCommand;
+    private ICommand? createDatatypeCommand;
 
     private ObservableCollection<Models.VendorItem>? masterVendors;
     private ObservableCollection<Models.VendorItem>? slaveVendors;
@@ -234,6 +239,7 @@ public class DevicesViewModel(Contracts.Services.ISettingsService settingsServic
     public ICommand ExportMasterDeviceCommand => exportMasterDeviceCommand ??= new RelayCommand<Models.DeviceItem>(OnExportMasterDevice);
     public ICommand SaveExportMasterDeviceCommand => saveExportMasterDeviceCommand ??= new RelayCommand(OnSaveExportMasterDevice);
     public ICommand ProcessDataViewCommand => processDataViewCommand ??= new RelayCommand(OnProcessDataView);
+    public ICommand CreateDatatypeCommand => createDatatypeCommand ??= new RelayCommand(OnCreateDatatype);
 
     public void OnNavigatedTo(object parameter)
     {
@@ -1011,5 +1017,52 @@ public class DevicesViewModel(Contracts.Services.ISettingsService settingsServic
         customDialog.Content = new Views.Dialogs.IOLinkDeviceMappingDialog { DataContext = dataContext };
 
         dialogCoordinator.ShowMetroDialogAsync(App.Current.MainWindow.DataContext, customDialog);
+    }
+
+    private void OnCreateDatatype()
+    {
+        if (SlaveDeviceSelected is null) return;
+
+        string directory;
+        if (Directory.Exists(settingsService.ExportFolder))
+            directory = settingsService.ExportFolder;
+        else
+            directory = settingsService.DefaultFolder;
+
+        var directoryFolder = new OpenFolderDialog
+        {
+            InitialDirectory = directory,
+            Multiselect = false
+        };
+
+        if (directoryFolder.ShowDialog() == true)
+        {
+            var processData = iolDevicesService.GetProcessData(SlaveDeviceSelected.VendorId, SlaveDeviceSelected.DeviceId);
+
+            if (processData?.Where(data => data.Any(a => a.Condition is null)) is IEnumerable<IGrouping<string?, Core.Models.DeviceProcessData>> processDatasIO)
+            {
+                foreach (var processDataIO in processDatasIO)
+                {
+                    foreach (var item in processDataIO)
+                    {
+                        if (item.ProcessDataIn?.ProcessData is not null)
+                        {
+                            var tableInputData = pnDevicesService.GetDataProcess(item.ProcessDataIn.ProcessData, item.ProcessDataIn?.BitLength ?? 0);
+                            simaticService.CreateUdtFile(directoryFolder.FolderName, $"LIOL_type{SlaveDeviceSelected.Name}_Inputs", tableInputData);
+                        }
+
+
+                        if (item.ProcessDataOut?.ProcessData is not null)
+                        {
+                            var tableOutputData = pnDevicesService.GetDataProcess(item.ProcessDataOut.ProcessData, item.ProcessDataOut?.BitLength ?? 0);
+                            simaticService.CreateUdtFile(directoryFolder.FolderName, $"LIOL_type{SlaveDeviceSelected.Name}_Outputs", tableOutputData);
+
+                        }
+                    }
+                }
+            }
+
+            dialogCoordinator.ShowMessageAsync(App.Current.MainWindow.DataContext, Properties.Resources.AppMessageExportTableTitle, $"{Properties.Resources.AppMessageExportTableMessage} {directoryFolder.FolderName}", MessageDialogStyle.Affirmative);
+        }
     }
 }

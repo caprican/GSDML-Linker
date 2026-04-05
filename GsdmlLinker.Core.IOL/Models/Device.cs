@@ -2,8 +2,6 @@
 using System.Xml.Serialization;
 using System.Xml;
 
-using IODD = ISO15745.IODD;
-
 namespace GsdmlLinker.Core.IOL.Models;
 
 public record Device : Core.Models.Device
@@ -73,9 +71,9 @@ public record Device : Core.Models.Device
 
         if(string.IsNullOrEmpty(lang))
         {
-            var serialize = new XmlSerializer(typeof(IODD.IODevice), IolSchematicVersion);
+            var serialize = new XmlSerializer(typeof(IO_Link.Models.IODevice), IolSchematicVersion);
             using var reader = XmlReader.Create(filePath/*, settings*/);
-            var device = serialize.Deserialize(reader) as IODD.IODevice;
+            var device = (serialize.Deserialize(reader) as IO_Link.Models.IODevice);
 
             VendorId = device?.ProfileBody?.DeviceIdentity?.VendorId.ToString() ?? string.Empty;
             VendorName = device?.ProfileBody?.DeviceIdentity?.VendorName ?? string.Empty;
@@ -83,13 +81,13 @@ public record Device : Core.Models.Device
 
             DataStorage = device?.ProfileHeader?.ProfileRevision switch 
             {
-                IODD.ProfileRevision.Revision10 => Core.Models.DeviceDataStorage.CompatibleV1_0,
-                IODD.ProfileRevision.Revision11 => Core.Models.DeviceDataStorage.CompatibleV1_1,
+                "1.0" => Core.Models.DeviceDataStorage.CompatibleV1_0,
+                "1.1" => Core.Models.DeviceDataStorage.CompatibleV1_1,
                 _ => Core.Models.DeviceDataStorage.NoCheckAndClear
             };
             SupportBlockParameter = device?.ProfileBody?.DeviceFunction?.Features?.BlockParameter ?? false;
 
-            if (device?.ExternalTextCollection?.PrimaryLanguage?.Items is IODD.Primitives.TextDefinitionT[] extTexts)
+            if (device?.ExternalTexts?.PrimaryLanguage?.Items is IO_Link.Models.Primitives.TextDefinitionT[] extTexts)
             {
                 ExternalTextList = [];
                 foreach (var extText in extTexts)
@@ -110,7 +108,7 @@ public record Device : Core.Models.Device
                 }
             }
 
-            if (device?.ProfileBody?.DeviceFunction?.ProcessDataCollection?.ProcessData is not null)
+            if (device?.ProfileBody?.DeviceFunction?.ProcessDatas?.ProcessData is not null)
             {
                 var processDatas = new List<Core.Models.DeviceProcessData>();
                 foreach (var processData in device.ProfileBody.DeviceFunction.ProcessDataCollection.ProcessData)
@@ -154,7 +152,7 @@ public record Device : Core.Models.Device
                 }
             }
 
-            if (device?.ProfileBody?.DeviceIdentity is IODD.DeviceIdentityT deviceIdentity)
+            if (device?.ProfileBody?.DeviceIdentity is IO_Link.Models.DeviceIdentityT deviceIdentity)
             {
                 if (ExternalTextList is not null)
                 {
@@ -173,10 +171,10 @@ public record Device : Core.Models.Device
                     GraphicsList.Add("VendorLogo", new("VendorLogo", deviceIdentity.VendorLogo.Name));
                 }
 
-                if (deviceIdentity.DeviceVariantCollection?.DeviceVariant is not null)
+                if (deviceIdentity.DeviceVariants is not null)
                 {
                     Variants = [];
-                    foreach (var variant in deviceIdentity.DeviceVariantCollection.DeviceVariant)
+                    foreach (var variant in deviceIdentity.DeviceVariants)
                     {
                         var name = ExternalTextList is not null && !string.IsNullOrEmpty(variant.Name?.TextId) ? ExternalTextList[variant.Name.TextId].Item : string.Empty;
                         var description = ExternalTextList is not null && !string.IsNullOrEmpty(variant.Description?.TextId) ? ExternalTextList[variant.Description.TextId].Item : string.Empty;
@@ -227,23 +225,24 @@ public record Device : Core.Models.Device
         string description = string.Empty, defaultValue = string.Empty, name = string.Empty;
         ushort index = 0;
         bool isReadOnly = false, isSelected = true;
+        ushort? bitOffset = null;
 
         object? variable = deviceVariable;
-        List<IODD.Variables.RecordItemInfoT>? recordInfo = null;
+        List<IO_Link.Models.Variables.RecordItemInfoT>? recordInfo = null;
 
         switch (deviceVariable)
         {
-            case IODD.Variables.VariableCollectionTVariable tVariable:
+            case Variables.VariableCollectionTVariable tVariable:
                 description = !string.IsNullOrEmpty(tVariable.Description?.TextId) ? ExternalTextList?[tVariable.Description.TextId].Item ?? string.Empty : string.Empty;
                 defaultValue = tVariable.DefaultValue ?? string.Empty;
                 name = !string.IsNullOrEmpty(tVariable.Name?.TextId) ? ExternalTextList?[tVariable.Name.TextId].Item ?? string.Empty : string.Empty;
                 index = tVariable.Index;
 
-                isReadOnly = tVariable.AccessRights != IODD.Primitives.AccessRightsT.rw;
-                isSelected = tVariable.AccessRights == IODD.Primitives.AccessRightsT.rw;
+                isReadOnly = tVariable.AccessRights != IO_Link.Models.UserInterface.AccessRightsT.rw;
+                isSelected = tVariable.AccessRights == IO_Link.Models.UserInterface.AccessRightsT.rw;
 
                 recordInfo = tVariable.RecordItemInfo?.ToList();
-                if (tVariable.Item is IODD.Datatypes.DatatypeRefT dtref)
+                if (tVariable.Item is IO_Link.Models.Datatypes.DatatypeRefT dtref)
                 {
                     var dt = DatatypeList?[dtref.DatatypeId].Item;
                     variable = dt;
@@ -253,16 +252,18 @@ public record Device : Core.Models.Device
                     variable = tVariable.Item;
                 }
                 break;
-            case IODD.Datatypes.RecordItemT recItem:
+            case IO_Link.Models.Datatypes.RecordItemT_v11 recItem:
                 description = !string.IsNullOrEmpty(recItem.Description?.TextId) ? ExternalTextList?[recItem.Description.TextId].Item ?? string.Empty : string.Empty;
                 //defaultValue = recItem.DefaultValue ?? string.Empty;
                 name = !string.IsNullOrEmpty(recItem.Name?.TextId) ? ExternalTextList?[recItem.Name.TextId].Item ?? string.Empty : string.Empty;
                 //index = recItem.Index;
 
-                isReadOnly = recItem.AccessRightRestriction != IODD.Primitives.AccessRightsT.rw && recItem.AccessRightRestrictionSpecified;
-                isSelected = (!recItem.AccessRightRestrictionSpecified || (recItem.AccessRightRestriction == IODD.Primitives.AccessRightsT.rw));
+                bitOffset = recItem.BitOffset;
 
-                if (recItem.Item is IODD.Datatypes.DatatypeRefT itemDtref)
+                isReadOnly = recItem.AccessRightRestriction != IO_Link.Models.UserInterface.AccessRightsT.rw && recItem.AccessRightRestriction.HasValue;
+                isSelected = (recItem.AccessRightRestriction == IO_Link.Models.UserInterface.AccessRightsT.rw);
+
+                if (recItem.Item is IO_Link.Models.Datatypes.DatatypeRefT itemDtref)
                 {
                     var dt = DatatypeList?[itemDtref.DatatypeId].Item;
                     variable = dt;
@@ -276,11 +277,11 @@ public record Device : Core.Models.Device
 
         switch (variable)
         {
-            case IODD.Datatypes.ProcessDataOutUnionT pduOut:
-            case IODD.Datatypes.ProcessDataInUnionT pduIn:
-            case IODD.Datatypes.ProcessDataUnionT pdu:
+            case IO_Link.Models.Datatypes.ProcessDataOutUnionT pduOut:
+            case IO_Link.Models.Datatypes.ProcessDataInUnionT pduIn:
+            case IO_Link.Models.Datatypes.ProcessDataUnionT pdu:
                 break;
-            case IODD.Datatypes.RecordT recvar:
+            case IO_Link.Models.Datatypes.RecordT recvar:
                 if (recvar.RecordItem is not null)
                 {
                     parameters ??= [];
@@ -315,12 +316,12 @@ public record Device : Core.Models.Device
                                     Name = subParameter!.Name,
                                     Index = index,
                                     Subindex = record.Subindex,
-                                    IsReadOnly = isReadOnly || (record.AccessRightRestriction != IODD.Primitives.AccessRightsT.rw && record.AccessRightRestrictionSpecified),
+                                    IsReadOnly = isReadOnly || (record.AccessRightRestriction != IO_Link.Models.UserInterface.AccessRightsT.rw && record.AccessRightRestrictionSpecified),
                                     IsSelected = isSelected, //(record.Subindex >= 60) && (!record.AccessRightRestrictionSpecified || (record.AccessRightRestriction != AccessRightsT.ro)),
                                     IsVisible = false,
                                     DataType = subParameter.DataType,
                                     BitLength = subParameter.BitLength,
-                                    BitOffset = subParameter.BitLength % 8 != 0 ? record.BitOffset : null,
+                                    BitOffset = subParameter.BitOffset,//subParameter.BitLength % 8 != 0 ? record.BitOffset : null,
                                     Description = subParameter.Description,
                                     DefaultValue = deftValue,
                                     Values = subParameter.Values,
@@ -332,12 +333,12 @@ public record Device : Core.Models.Device
                     }
                 }
                 break;
-            case IODD.Datatypes.ArrayT arrvar:
-            case IODD.Datatypes.ComplexDatatypeT complexvar:
-            case IODD.Datatypes.TimeSpanT timespanvar:
-            case IODD.Datatypes.TimeT timevar:
+            case IO_Link.Models.Datatypes.ArrayT arrvar:
+            case IO_Link.Models.Datatypes.ComplexDatatypeT complexvar:
+            case IO_Link.Models.Datatypes.TimeSpanT timespanvar:
+            case IO_Link.Models.Datatypes.TimeT timevar:
                 break;
-            case IODD.Datatypes.StringT stringvar:
+            case IO_Link.Models.Datatypes.StringT stringvar:
                 parameters ??= [];
 
                 parameters.Add(new Core.Models.DeviceParameter
@@ -350,6 +351,7 @@ public record Device : Core.Models.Device
                     DataType = Core.Models.DeviceDatatypes.StringT,
                     FixedLength = stringvar.FixedLength,
                     //BitLength = boolvar.
+                    BitOffset = bitOffset,
                     Description = description,
                     DefaultValue = !string.IsNullOrEmpty(defaultValue) ? defaultValue : string.Empty,
                     //Values = values,
@@ -357,9 +359,9 @@ public record Device : Core.Models.Device
                     //Maximum = max
                 });
                 break;
-            case IODD.Datatypes.OctetStringT octectvar:
+            case IO_Link.Models.Datatypes.OctetStringT octectvar:
                 break;
-            case IODD.Datatypes.BooleanT boolvar:
+            case IO_Link.Models.Datatypes.BooleanT boolvar:
                 (min, values, max) = ValueDatatypeBoolean(boolvar);
                 parameters ??= [];
 
@@ -372,6 +374,7 @@ public record Device : Core.Models.Device
                     IsSelected = isSelected,
                     DataType = Core.Models.DeviceDatatypes.BooleanT,
                     BitLength = 1,
+                    BitOffset = bitOffset,
                     Description = description,
                     DefaultValue = !string.IsNullOrEmpty(defaultValue) ? defaultValue : bool.FalseString,
                     Values = values,
@@ -379,7 +382,7 @@ public record Device : Core.Models.Device
                     Maximum = max
                 });
                 break;
-            case IODD.Datatypes.Float32T floatvar:
+            case IO_Link.Models.Datatypes.Float32T floatvar:
                 (min, values, max) = ValueDatatypeFloat(floatvar);
                 parameters ??= [];
                 parameters.Add(new Core.Models.DeviceParameter
@@ -390,6 +393,7 @@ public record Device : Core.Models.Device
                     IsReadOnly = isReadOnly,
                     IsSelected = isSelected,
                     DataType = Core.Models.DeviceDatatypes.Float32T,
+                    BitOffset = bitOffset,
                     Description = description,
                     DefaultValue = !string.IsNullOrEmpty(defaultValue) ? defaultValue : "0",
                     Values = values,
@@ -397,7 +401,7 @@ public record Device : Core.Models.Device
                     Maximum = max
                 });
                 break;
-            case IODD.Datatypes.UIntegerT uintvar:
+            case IO_Link.Models.Datatypes.UIntegerT uintvar:
                 (min, values, max) = ValueDatatypeUInteger(uintvar);
                 parameters ??= [];
                 parameters.Add(new Core.Models.DeviceParameter
@@ -409,6 +413,7 @@ public record Device : Core.Models.Device
                     IsSelected = isSelected,
                     DataType = Core.Models.DeviceDatatypes.UIntegerT,
                     BitLength = uintvar.BitLength,
+                    BitOffset = bitOffset,
                     Description = description,
                     DefaultValue = !string.IsNullOrEmpty(defaultValue) ? defaultValue : $"{uint.MinValue}",
                     Values = values,
@@ -416,7 +421,7 @@ public record Device : Core.Models.Device
                     Maximum = max
                 });
                 break;
-            case IODD.Datatypes.IntegerT intvar:
+            case IO_Link.Models.Datatypes.IntegerT intvar:
                 (min, values, max) = ValueDatatypeInteger(intvar);
                 parameters ??= [];
                 parameters.Add(new Core.Models.DeviceParameter
@@ -428,6 +433,7 @@ public record Device : Core.Models.Device
                     IsSelected = isSelected,
                     DataType = Core.Models.DeviceDatatypes.IntegerT,
                     BitLength = intvar.BitLength,
+                    BitOffset = bitOffset,
                     Description = description,
                     DefaultValue = !string.IsNullOrEmpty(defaultValue) ? defaultValue : "0",
                     Values = values,
@@ -435,15 +441,15 @@ public record Device : Core.Models.Device
                     Maximum = max
                 });
                 break;
-            case IODD.Datatypes.NumberT numbervar:
-            case IODD.Datatypes.SimpleDatatypeT simplevar:
+            case IO_Link.Models.Datatypes.NumberT numbervar:
+            case IO_Link.Models.Datatypes.SimpleDatatypeT simplevar:
                 break;
         }
 
         return parameters;
     }
 
-    private (bool, Dictionary<string, string>?, bool) ValueDatatypeBoolean(IODD.Datatypes.BooleanT boolType)
+    private (bool, Dictionary<string, string>?, bool) ValueDatatypeBoolean(IO_Link.Models.Datatypes.BooleanT boolType)
     {
         Dictionary<string, string>? values = null;
         bool min = false, max = true;
@@ -451,7 +457,7 @@ public record Device : Core.Models.Device
         {
             switch (boolType.SingleValue)
             {
-                case IODD.Datatypes.BooleanValueT[] booleanValues:
+                case List<IO_Link.Models.Datatypes.BooleanValueT> booleanValues:
                     values = [];
                     foreach (var item in booleanValues)
                     {
@@ -466,7 +472,7 @@ public record Device : Core.Models.Device
         return (min, values, max);
     }
 
-    private (ulong, Dictionary<string, string>?, ulong) ValueDatatypeUInteger(IODD.Datatypes.UIntegerT uIntType)
+    private (ulong, Dictionary<string, string>?, ulong) ValueDatatypeUInteger(IO_Link.Models.Datatypes.UIntegerT uIntType)
     {
         Dictionary<string, string>? values = null;
         ulong min = 0, max = 0;
@@ -474,7 +480,7 @@ public record Device : Core.Models.Device
         {
             switch (uIntType.Items)
             {
-                case IODD.Datatypes.UIntegerValueT[] uIntegerValues:
+                case List<IO_Link.Models.Datatypes.UIntegerValueT> uIntegerValues:
                     values = [];
                     foreach (var item in uIntegerValues)
                     {
@@ -489,7 +495,7 @@ public record Device : Core.Models.Device
                     {
                         switch (item)
                         {
-                            case IODD.Datatypes.UIntegerValueT uIntegerValues:
+                            case IO_Link.Models.Datatypes.UIntegerValueT uIntegerValues:
                                 if (!string.IsNullOrEmpty(item.Name?.TextId) && ExternalTextList is not null)
                                 {
                                     values ??= [];
@@ -497,7 +503,7 @@ public record Device : Core.Models.Device
                                 }
 
                                 break;
-                            case IODD.Datatypes.UIntegerValueRangeT uIntegerValueRange:
+                            case IO_Link.Models.Datatypes.ValueRangeT<ulong> uIntegerValueRange:
                                 min = uIntegerValueRange.LowerValue;
                                 max = uIntegerValueRange.UpperValue;
                                 break;
@@ -509,7 +515,7 @@ public record Device : Core.Models.Device
         return (min, values, max);
     }
 
-    private (long, Dictionary<string, string>?, long) ValueDatatypeInteger(IODD.Datatypes.IntegerT intType)
+    private (long, Dictionary<string, string>?, long) ValueDatatypeInteger(IO_Link.Models.Datatypes.IntegerT intType)
     {
         Dictionary<string, string>? values = null;
         long min = 0, max = 0;
@@ -517,7 +523,7 @@ public record Device : Core.Models.Device
         {
             switch (intType.Items)
             {
-                case IODD.Datatypes.IntegerValueT[] integerValues:
+                case IO_Link.Models.Datatypes.IntegerValueT[] integerValues:
                     values = [];
                     foreach (var item in integerValues)
                     {
@@ -532,7 +538,7 @@ public record Device : Core.Models.Device
                     {
                         switch (item)
                         {
-                            case IODD.Datatypes.IntegerValueT integerValues:
+                            case IO_Link.Models.Datatypes.IntegerValueT integerValues:
                                 if (!string.IsNullOrEmpty(item.Name?.TextId) && ExternalTextList is not null)
                                 {
                                     values ??= [];
@@ -540,7 +546,7 @@ public record Device : Core.Models.Device
                                 }
 
                                 break;
-                            case IODD.Datatypes.IntegerValueRangeT integerValueRange:
+                            case IO_Link.Models.Datatypes.IntegerValueRangeT integerValueRange:
                                 min = integerValueRange.LowerValue;
                                 max = integerValueRange.UpperValue;
                                 break;
@@ -552,7 +558,7 @@ public record Device : Core.Models.Device
         return (min, values, max);
     }
 
-    private (float, Dictionary<string, string>?, float) ValueDatatypeFloat(IODD.Datatypes.Float32T floatType)
+    private (float, Dictionary<string, string>?, float) ValueDatatypeFloat(IO_Link.Models.Datatypes.Float32T floatType)
     {
         Dictionary<string, string>? values = null;
         float min = 0, max = 0;
@@ -560,7 +566,7 @@ public record Device : Core.Models.Device
         {
             switch (floatType.Items)
             {
-                case IODD.Datatypes.Float32ValueT[] floatValues:
+                case IO_Link.Models.Datatypes.Float32ValueT[] floatValues:
                     values = [];
                     foreach (var item in floatValues)
                     {
@@ -575,7 +581,7 @@ public record Device : Core.Models.Device
                     {
                         switch (item)
                         {
-                            case IODD.Datatypes.Float32ValueT floatValues:
+                            case IO_Link.Models.Datatypes.Float32ValueT floatValues:
                                 if (!string.IsNullOrEmpty(item.Name?.TextId) && ExternalTextList is not null)
                                 {
                                     values ??= [];
@@ -583,7 +589,7 @@ public record Device : Core.Models.Device
                                 }
 
                                 break;
-                            case IODD.Datatypes.Float32ValueRangeT floatValueRange:
+                            case IO_Link.Models.Datatypes.Float32ValueRangeT floatValueRange:
                                 min = floatValueRange.LowerValue;
                                 max = floatValueRange.UpperValue;
                                 break;

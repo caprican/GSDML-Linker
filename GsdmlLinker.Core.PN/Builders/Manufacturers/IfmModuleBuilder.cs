@@ -1,6 +1,6 @@
 ﻿using GsdmlLinker.Core.Models;
 
-using GSDML = ISO15745.GSDML;
+using GSDML = ISO15745._4.A1.GSDML;
 
 namespace GsdmlLinker.Core.PN.Builders.Manufacturers;
 
@@ -428,7 +428,7 @@ public class IfmModuleBuilder(Core.Models.Device masterDevice) : ModuleBuilder(m
                 {
                     if(parameterRecordData.Items is not null)
                     {
-                        var recordConst = (GSDML.DeviceProfile.RecordDataConstT?)parameterRecordData.Items.FirstOrDefault(f => f is GSDML.DeviceProfile.RecordDataConstT);
+                        var recordConst = (GSDML.DeviceProfile.RecordDataConstT?)parameterRecordData.Items.FirstOrDefault(f => (f is GSDML.DeviceProfile.RecordDataConstT));
                         var recordConstSplit = recordConst?.Data?.Split(',');
                         if(recordConstSplit?.Length >= 2)
                         {

@@ -252,4 +252,10 @@
   <data name="IoddfinderPageNoConnectText" xml:space="preserve">
     <value>https://ioddfinder.io-link.com/</value>
   </data>
+  <data name="AppMessageExportTableTitle" xml:space="preserve">
+    <value>Exportieren von Datentabellen</value>
+  </data>
+  <data name="AppMessageExportTableMessage" xml:space="preserve">
+    <value>Neue Datentabelle exportiert nach</value>
+  </data>
 </root>

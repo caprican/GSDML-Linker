@@ -61,11 +61,10 @@ public partial class App : Application
         services.AddTransient<IIoddfinderService, IoddfinderService>();
         
         // Profinet core services
-        services.AddSingleton<Core.PN.Contracts.Services.IDevicesService, Core.PN.Services.DevicesService>();
-        services.AddTransient<Core.PN.Contracts.Services.IXDocumentService, Core.PN.Services.XDocumentService>();
+        Core.PN.App.ConfigureServices(context, services);
 
         // IO-Link core services
-        services.AddSingleton<Core.IOL.Contracts.Services.IDevicesService, Core.IOL.Services.DevicesService>();
+        Core.IOL.App.ConfigureServices(context, services);
 
         // Services
         services.AddSingleton<ISettingsService, SettingsService>();
@@ -79,9 +78,6 @@ public partial class App : Application
 
         services.AddSingleton<ICaretaker, Caretaker>();
         services.AddTransient<IZipperService, ZipperService>();
-
-        // Core Factories
-        services.AddTransient<Core.PN.Contracts.Factories.IDevicesFactory, Core.PN.Factories.DevicesFactory>();
 
         // Builders
         services.AddTransient<Contracts.Builders.IModuleBuilder, Builders.ModuleBuilder>();

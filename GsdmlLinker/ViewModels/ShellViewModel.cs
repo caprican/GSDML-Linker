@@ -144,13 +144,13 @@ public class ShellViewModel(INavigationService navigationService, IDialogCoordin
                     }
                     else if (Core.PN.Regexs.FileNameRegex().Match(fileName).Success /*|| fileName.Contains("gsdml", StringComparison.InvariantCultureIgnoreCase)*/)
                     {
-                        gsdDevicesService.AddDevice(filePath);
+                        gsdDevicesService.AddDevice(folderName);
                  
                         //_navigationService.NavigateTo(typeof(ProfinetDeviceViewModel).FullName!);
                     }
                     else if (Core.IOL.Regexs.FileNameRegex().Match(fileName).Success /*|| fileName.Contains("iodd", StringComparison.InvariantCultureIgnoreCase)*/)
                     {
-                        iodDevicesService.AddDevice(filePath);
+                        iodDevicesService.AddDevice(folderName);
 
                         //_navigationService.NavigateTo(typeof(IOLinkDeviceViewModel).FullName!);
                     }

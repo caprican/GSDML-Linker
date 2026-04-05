@@ -15,4 +15,6 @@ public interface IDevicesService
 
     public IEnumerable<Core.Models.DeviceParameter> GetRecordParameters(string vendorId, string deviceId, DateTime? version, string profinetDeviceId);
     public Core.Models.DevicePortParameter? GetPortParameters(string vendorId, string deviceId, DateTime? version, string profinetDeviceId);
+
+    public List<Core.Models.DeviceDataStructure> GetDataProcess(List<Core.Models.DeviceParameter> processDatas, int bitLenght);
 }

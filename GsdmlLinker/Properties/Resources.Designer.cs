@@ -19,7 +19,7 @@ namespace GsdmlLinker.Properties {
     // à l'aide d'un outil, tel que ResGen ou Visual Studio.
     // Pour ajouter ou supprimer un membre, modifiez votre fichier .ResX, puis réexécutez ResGen
     // avec l'option /str ou régénérez votre projet VS.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "18.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     public class Resources {
@@ -75,6 +75,24 @@ namespace GsdmlLinker.Properties {
         public static string AppDisplayName {
             get {
                 return ResourceManager.GetString("AppDisplayName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à New data table exported into.
+        /// </summary>
+        public static string AppMessageExportTableMessage {
+            get {
+                return ResourceManager.GetString("AppMessageExportTableMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une chaîne localisée semblable à Export data table process.
+        /// </summary>
+        public static string AppMessageExportTableTitle {
+            get {
+                return ResourceManager.GetString("AppMessageExportTableTitle", resourceCulture);
             }
         }
         

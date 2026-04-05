@@ -252,4 +252,10 @@
   <data name="IoddfinderPageNoConnectText" xml:space="preserve">
     <value>Pas de réponse de https://ioddfinder.io-link.com/</value>
   </data>
+  <data name="AppMessageExportTableTitle" xml:space="preserve">
+    <value>Export table de données procces</value>
+  </data>
+  <data name="AppMessageExportTableMessage" xml:space="preserve">
+    <value>Nouvelle table de données exporté dans</value>
+  </data>
 </root>

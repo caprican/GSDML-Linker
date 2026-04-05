@@ -2,7 +2,7 @@
 using System.Xml.Serialization;
 using System.Xml;
 
-using GSDML = ISO15745.GSDML;
+using GSDML = ISO15745._4.A1.GSDML;
 using System.Collections.ObjectModel;
 
 namespace GsdmlLinker.Core.PN.Models;
@@ -37,10 +37,10 @@ public abstract record Device : Core.Models.Device
         Version = new DateTime(int.Parse(dateMatch.Groups[1].Value), int.Parse(dateMatch.Groups[2].Value), int.Parse(dateMatch.Groups[3].Value),
             timeMatch.Success ? int.Parse(timeMatch.Groups[1].Value) : 0, timeMatch.Success ? int.Parse(timeMatch.Groups[2].Value) : 0, timeMatch.Success ? int.Parse(timeMatch.Groups[3].Value) : 0);
 
-        var serializer = new XmlSerializer(typeof(GSDML.DeviceProfile.ISO15745Profile));
+        var serializer = new XmlSerializer(typeof(ISO15745._1.ISO15745Profile));
 
         using var reader = XmlReader.Create(filePath);
-        var device = serializer.Deserialize(reader) as GSDML.DeviceProfile.ISO15745Profile;
+        var device = serializer.Deserialize(reader) as ISO15745._1.ISO15745Profile;
 
         VendorId = device?.ProfileBody?.DeviceIdentity?.VendorID ?? string.Empty;
         DeviceId = device?.ProfileBody?.DeviceIdentity?.DeviceID ?? string.Empty;
@@ -204,7 +204,7 @@ public abstract record Device : Core.Models.Device
                         FixedInSlots = dap.FixedInSlots,
 
                         Version = Version,
-                        SoftwareRelease = string.IsNullOrEmpty(softVersion) ? null : new System.Version(new string(softVersion.Where(c => char.IsDigit(c) || char.IsPunctuation(c)).ToArray())),
+                        SoftwareRelease = string.IsNullOrEmpty(softVersion) ? null : new System.Version(new string([.. softVersion.Where(c => char.IsDigit(c) || char.IsPunctuation(c))])),
 
                         Symbol = symbolPath,
                         Icon = iconPath,

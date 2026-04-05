@@ -141,4 +141,46 @@ public class DevicesService(IOptions<Core.Models.AppConfig> appConfig, IDevicesF
 
         return factory.GetPortParameters(profinetDeviceId);
     }
+
+    public List<Core.Models.DeviceDataStructure> GetDataProcess(List<Core.Models.DeviceParameter> processDatasCollection, int bitLenght)
+    {
+        List<Core.Models.DeviceDataStructure> table = [];
+        List<Core.Models.DeviceDataStructure> tableResult = [];
+
+        var processData = processDatasCollection[1..].OrderBy(o => bitLenght - o.BitOffset).ToArray();
+        for (int i = 0; i < processData.Length; i++)
+        {
+            var dataItem = processData[i];
+
+            table.Add(new Core.Models.DeviceDataStructure
+            {
+                Name = dataItem.Name,
+                DataType = dataItem.DataType,
+                BitOffset = dataItem.BitOffset,
+                BitLength = dataItem.BitLength,
+                Description = dataItem.Description,
+                Order = ((bitLenght - dataItem.BitOffset - 1) / 8) + (dataItem.BitOffset % 8) / 10.0
+            });
+
+            if (i < (processData.Length - 1) && (dataItem.BitOffset - dataItem.BitLength) > processData[i + 1].BitOffset + processData[i + 1].BitLength)
+            {
+                int? bitCounter = dataItem.BitOffset;
+                while (bitCounter - dataItem.BitLength > processData[i + 1].BitOffset && bitCounter > 0)
+                {
+                    var bitOffset = bitCounter - 1;
+                    table.Add(new Core.Models.DeviceDataStructure
+                    {
+                        Name = $"Reserved_{bitCounter - 1}",
+                        DataType = Core.Models.DeviceDatatypes.BooleanT,
+                        BitOffset = bitOffset,
+                        BitLength = 1,
+                        Order = ((bitLenght - bitOffset - 1) / 8) + (bitOffset % 8) / 10.0
+                    });
+                    bitCounter--;
+                }
+            }
+        }
+
+        return [.. table.OrderBy(o => o.Order)];
+    }
 }

@@ -1,6 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 
-using ISO15745.GSDML.DeviceProfile;
+using ISO15745._4.A1.GSDML.DeviceProfile;
 
 namespace GsdmlLinker.Core.PN.Models.Manufacturers;
 

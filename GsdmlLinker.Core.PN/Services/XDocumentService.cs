@@ -6,8 +6,7 @@ using GsdmlLinker.Core.PN.Contracts.Services;
 using Microsoft.Extensions.Options;
 using System.Xml.Serialization;
 
-using GSDML = ISO15745.GSDML;
-using System.Xml;
+using GSDML = ISO15745._4.A1.GSDML;
 
 namespace GsdmlLinker.Core.PN.Services;
 

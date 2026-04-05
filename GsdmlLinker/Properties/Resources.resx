@@ -253,4 +253,10 @@ Manual install IODD file.</value>
   <data name="IoddfinderPageNoConnectText" xml:space="preserve">
     <value>No response from https://ioddfinder.io-link.com/</value>
   </data>
+  <data name="AppMessageExportTableTitle" xml:space="preserve">
+    <value>Export data table process</value>
+  </data>
+  <data name="AppMessageExportTableMessage" xml:space="preserve">
+    <value>New data table exported into</value>
+  </data>
 </root>

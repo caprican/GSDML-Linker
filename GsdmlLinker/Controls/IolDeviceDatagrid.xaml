@@ -99,6 +99,7 @@
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition/>
                         <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <StackPanel Orientation="Horizontal">
                         <ToggleButton IsChecked="{Binding SlaveDeviceSelected.DeviceIdChangeable, Mode=TwoWay}" Margin="{StaticResource SmallMargin}">
@@ -127,7 +128,17 @@
                             <TextBlock Text="{Binding SlaveDeviceSelected.DeviceId, StringFormat='{}Device ID: {0}'}" Margin="{StaticResource XSmallLeftMargin}" />
                         </StackPanel>
                     </StackPanel>
-                    <Button Grid.Column="1" Command="{Binding ProcessDataViewCommand}"
+                    <Button Grid.Column="1" Command="{Binding CreateDatatypeCommand}"
+                            Margin="{StaticResource XXSmallLeftRightMargin}">
+                        <Grid>
+                            <TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" FontSize="32" Margin="{StaticResource XSmallLeftRightMargin}"
+                                       VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                            <TextBlock Text="&#xEB11;" FontFamily="Segoe MDL2 Assets" FontSize="16" Margin="{StaticResource XXSmallMargin}" 
+                                       VerticalAlignment="Center" HorizontalAlignment="Center"
+                                       Foreground="{StaticResource MahApps.Brushes.Accent}"/>
+                        </Grid>
+                    </Button>
+                    <Button Grid.Column="2" Command="{Binding ProcessDataViewCommand}"
                             Style="{StaticResource MahApps.Styles.Button.Square.Accent}">
                         <TextBlock Text="IO" FontSize="16" Margin="{StaticResource SmallMargin}"/>
                     </Button>

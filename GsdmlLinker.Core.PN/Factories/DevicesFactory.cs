@@ -6,18 +6,15 @@ using GsdmlLinker.Core.PN.Contracts.Factories;
 using GsdmlLinker.Core.PN.Models;
 using GsdmlLinker.Core.PN.Models.Manufacturers;
 
-using GSDML = ISO15745.GSDML;
-using GsdmlLinker.Core.PN.Contracts.Builders;
-
 namespace GsdmlLinker.Core.PN.Factories;
 
 public class DevicesFactory : IDevicesFactory
 {
     public Device CreateDevice(string filePath, Match? match)
     {
-        var serializer = new XmlSerializer(typeof(GSDML.DeviceProfile.ISO15745Profile));
+        var serializer = new XmlSerializer(typeof(ISO15745._1.ISO15745Profile));
         using var reader = XmlReader.Create(filePath);
-        var device = serializer.Deserialize(reader) as GSDML.DeviceProfile.ISO15745Profile;
+        var device = serializer.Deserialize(reader) as ISO15745._1.ISO15745Profile;
         var vendorId = device?.ProfileBody?.DeviceIdentity?.VendorID ?? string.Empty;
         var deviceId = device?.ProfileBody?.DeviceIdentity?.DeviceID ?? string.Empty;
 
